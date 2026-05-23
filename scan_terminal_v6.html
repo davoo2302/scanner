@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ScanTerminal">
+<meta name="theme-color" content="#1A1200">
+<link rel="manifest" href="#" id="manifest-link">
+<title>SCAN TERMINAL v6.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: #1A1200; overflow-x: hidden; }
+body {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  color: #FFE066; min-height: 100vh; display: flex; flex-direction: column;
+  user-select: none; -webkit-user-select: none;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,180,0,0.2); border-radius: 4px; }
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+@keyframes flashOk { 0%,100%{box-shadow:0 4px 30px rgba(0,0,0,0.4)} 40%{box-shadow:0 0 40px rgba(255,210,0,0.5),inset 0 0 30px rgba(255,210,0,0.12)} }
+@keyframes flashDup { 0%,100%{box-shadow:0 4px 30px rgba(0,0,0,0.4)} 40%{box-shadow:0 0 40px rgba(255,60,60,0.5),inset 0 0 30px rgba(255,60,60,0.15)} }
+@keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes zonePopIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+
+.flash-ok { animation: flashOk 0.45s ease; border-color: #FFD200 !important; }
+.flash-dup { animation: flashDup 0.45s ease; border-color: #FF3C3C !important; }
+.live-dot { width:7px;height:7px;border-radius:50%;background:#FFD200;box-shadow:0 0 8px #FFD200;animation:pulse 1.5s ease-in-out infinite;display:inline-block; }
+.slide-in { animation: slideIn 0.25s ease; }
+
+#app { display:flex;flex-direction:column;min-height:100vh; }
+
+/* HEADER */
+.header {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.06);
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:100;flex-shrink:0;
+}
+.logo { display:flex;align-items:center;gap:10px; }
+.logo-icon {
+  width:34px;height:34px;background:linear-gradient(135deg,rgba(255,180,0,0.2),rgba(255,220,0,0.15));
+  border:1px solid rgba(255,180,0,0.5);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#FFD200;
+}
+.app-title {
+  font-size:15px;font-weight:700;letter-spacing:0.15em;
+  background:linear-gradient(90deg,#FFD200,#FF8C00);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.app-sub { font-size:9px;color:#664400;letter-spacing:0.08em;margin-top:1px; }
+.header-right { display:flex;align-items:center;gap:12px; }
+.live { display:flex;align-items:center;gap:5px; }
+.live span { font-size:10px;color:#FFD200;font-weight:700;letter-spacing:0.1em; }
+.session-time { font-size:10px;color:#996600;letter-spacing:0.05em; }
+
+/* TABS */
+.tabs {
+  display:flex;gap:4px;padding:7px 16px;
+  border-bottom:1px solid rgba(255,180,0,0.1);
+  background:rgba(0,0,0,0.3);flex-shrink:0;
+}
+.tab {
+  font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.1em;
+  padding:6px 12px;border-radius:5px;cursor:pointer;
+  border:1px solid rgba(255,180,0,0.15);
+  background:transparent;color:#664400;transition:all 0.2s;flex:1;
+}
+.tab.active { background:rgba(255,180,0,0.15);color:#FFD200;border-color:rgba(255,180,0,0.5); }
+
+/* MODE BAR */
+.mode-bar {
+  display:flex;gap:6px;padding:8px 16px;
+  border-bottom:1px solid rgba(255,180,0,0.1);
+  background:rgba(0,0,0,0.2);flex-shrink:0;align-items:center;
+}
+.mode-label { font-size:9px;color:#886600;letter-spacing:0.12em;flex-shrink:0; }
+.mode-btn {
+  font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.08em;
+  padding:8px 0;border-radius:7px;cursor:pointer;border:1px solid rgba(255,180,0,0.15);
+  background:transparent;color:#664400;transition:all 0.2s;flex:1;
+}
+.mode-btn:active { transform:scale(0.96); }
+.mode-btn.m-colecta { background:rgba(200,160,255,0.12);color:#CC99FF;border-color:rgba(200,160,255,0.45); }
+.mode-btn.m-flex    { background:rgba(0,200,255,0.10);color:#00CCFF;border-color:rgba(0,200,255,0.45); }
+.mode-btn.m-turbo   { background:rgba(255,180,0,0.15);color:#FFD200;border-color:rgba(255,180,0,0.6); }
+
+/* ZONE BAR (fija para Flex/Turbo) */
+.zone-bar {
+  display:flex;gap:6px;padding:6px 16px;
+  border-bottom:1px solid rgba(255,180,0,0.1);
+  background:rgba(10,6,0,0.4);flex-shrink:0;align-items:center;
+}
+.zone-fixed-btn {
+  font-family:inherit;font-size:11px;font-weight:700;letter-spacing:0.1em;
+  padding:10px 0;border-radius:7px;cursor:pointer;border:1px solid;
+  background:transparent;transition:all 0.2s;flex:1;
+}
+.zone-fixed-btn:active { transform:scale(0.96); }
+.zone-fixed-btn.active {
+  filter:brightness(1.3);
+  box-shadow:0 0 14px currentColor;
+}
+
+/* STATS BAR */
+.stats-bar {
+  display:flex;gap:8px;padding:8px 16px;flex-wrap:wrap;
+  border-bottom:1px solid rgba(255,180,0,0.08);
+  background:rgba(0,0,0,0.2);flex-shrink:0;
+}
+.chip {
+  background:rgba(255,180,0,0.03);border:1px solid;
+  border-radius:8px;padding:6px 10px;min-width:60px;
+}
+.chip-label { font-size:9px;color:#886600;letter-spacing:0.12em;margin-bottom:2px; }
+.chip-val { font-weight:700;letter-spacing:0.04em;line-height:1; }
+.chip-last { flex:1;min-width:160px; }
+.last-code { font-size:12px;font-weight:700;margin-top:3px;letter-spacing:0.04em; }
+
+/* PANELS */
+.panel { display:none;flex:1; }
+.panel.active { display:flex;flex-direction:column; }
+
+/* SCAN PANEL */
+.scan-main {
+  display:grid;grid-template-columns:1fr 1.1fr;gap:12px;
+  padding:12px 16px;flex:1;
+}
+@media (max-width:680px) {
+  .scan-main { grid-template-columns:1fr;padding:10px 12px; }
+  .history-col { max-height:300px; }
+}
+.left-col { display:flex;flex-direction:column;gap:10px; }
+
+/* SCAN BOX */
+.scan-box {
+  border:2px solid rgba(255,180,0,0.2);border-radius:12px;
+  padding:14px;background:rgba(0,0,0,0.35);
+  box-shadow:0 4px 30px rgba(0,0,0,0.5);transition:border-color 0.2s;
+}
+.scan-label { font-size:9px;color:#886600;letter-spacing:0.14em;margin-bottom:10px;display:flex;align-items:center;gap:6px; }
+.scan-label span { color:#FFD200;font-size:12px; }
+.input-wrap {
+  display:flex;align-items:center;background:rgba(255,180,0,0.05);
+  border:1px solid rgba(255,180,0,0.25);border-radius:8px;padding:0 12px;gap:8px;
+}
+.caret { color:#FFD200;font-size:9px;opacity:0.7; }
+#scan-input {
+  flex:1;background:none;border:none;outline:none;color:#FFD200;
+  font-size:16px;font-family:inherit;font-weight:700;
+  padding:12px 0;letter-spacing:0.07em;caret-color:#FFD200;
+}
+#scan-input::placeholder { color:rgba(255,180,0,0.25); }
+.hint { font-size:9px;color:#664400;margin-top:5px;letter-spacing:0.06em; }
+.actions { display:flex;gap:6px;margin-top:10px; }
+.btn {
+  font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.1em;
+  cursor:pointer;border-radius:6px;transition:all 0.2s;border:1px solid;
+  padding:8px 6px;flex:1;
+}
+.btn:active { transform:scale(0.96); }
+.btn-demo   { background:rgba(255,180,0,0.08);border-color:rgba(255,180,0,0.3);color:#FFD200; }
+.btn-export { background:rgba(100,255,100,0.06);border-color:rgba(100,255,100,0.2);color:#88FF88; }
+.btn-clear  { background:rgba(255,60,60,0.06);border-color:rgba(255,60,60,0.2);color:#FF6666; }
+
+/* RESULT BANNER */
+.result-banner {
+  border:1px solid;border-radius:10px;padding:10px 12px;
+  display:none;align-items:center;gap:10px;transition:all 0.3s;
+}
+.result-icon { font-size:18px;width:24px;text-align:center; }
+.result-status { font-size:10px;font-weight:700;letter-spacing:0.12em; }
+.result-code { font-size:13px;font-weight:700;color:#DDD;margin-top:2px;letter-spacing:0.04em; }
+.result-zone { font-size:11px;margin-top:2px; }
+.result-time { margin-left:auto;font-size:10px;color:#445;flex-shrink:0; }
+
+/* ZONE PICKER — aparece después de escanear Flex */
+.zone-picker {
+  display:none;border:1px solid rgba(0,212,255,0.25);border-radius:12px;
+  padding:12px;background:rgba(0,212,255,0.04);
+  animation: zonePopIn 0.2s ease;
+}
+.zone-picker-title {
+  font-size:9px;color:#00D4FF;letter-spacing:0.14em;margin-bottom:10px;text-align:center;
+}
+.zone-picker-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.zone-pick-btn {
+  font-family:inherit;font-weight:700;font-size:13px;letter-spacing:0.08em;
+  padding:16px 8px;border-radius:9px;border:2px solid;cursor:pointer;
+  transition:all 0.15s;text-align:center;
+}
+.zone-pick-btn:active { transform:scale(0.94);filter:brightness(1.2); }
+
+/* ZONES GRID */
+.zones-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.zones-section-title {
+  grid-column:1/-1;font-size:9px;color:#445;letter-spacing:0.12em;
+  margin-top:4px;padding-bottom:2px;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.zone-card { border:1px solid;border-radius:10px;padding:10px;transition:all 0.35s; }
+.zone-prefix { display:inline-block;font-size:9px;font-weight:700;letter-spacing:0.14em;border:1px solid;border-radius:4px;padding:1px 5px;margin-bottom:2px; }
+.zone-label { font-size:10px;font-weight:700;letter-spacing:0.08em; }
+.zone-count { font-size:26px;font-weight:700;line-height:1;letter-spacing:0.02em; }
+.zone-bar { height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:7px;overflow:hidden; }
+.zone-bar-fill { height:100%;border-radius:2px;transition:width 0.5s ease; }
+.zone-pct { font-size:9px;margin-top:2px;letter-spacing:0.06em; }
+
+/* HISTORY */
+.history-col {
+  display:flex;flex-direction:column;
+  background:rgba(255,180,0,0.02);border:1px solid rgba(255,180,0,0.1);
+  border-radius:12px;overflow:hidden;
+}
+.hist-header {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;border-bottom:1px solid rgba(255,180,0,0.1);flex-shrink:0;
+}
+.hist-title { font-size:9px;color:#886600;letter-spacing:0.14em;font-weight:700; }
+.hist-count { font-size:9px;color:#664400;letter-spacing:0.06em; }
+.hist-list { overflow-y:auto;flex:1;max-height:400px; }
+.hist-empty { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:8px; }
+.hist-empty-icon { font-size:30px;color:#332200; }
+.hist-empty-text { font-size:11px;color:#443300;letter-spacing:0.1em; }
+.hist-row {
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  border-left:3px solid;border-bottom:1px solid rgba(255,255,255,0.025);
+  transition:background 0.15s;
+}
+.hist-row:hover { background:rgba(255,255,255,0.02); }
+.row-code { flex:1;font-size:10px;font-weight:600;letter-spacing:0.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0; }
+.badge { font-size:9px;font-weight:700;letter-spacing:0.08em;border:1px solid;border-radius:4px;padding:1px 5px;white-space:nowrap; }
+.dup-badge { font-size:9px;font-weight:700;letter-spacing:0.08em;border:1px solid rgba(255,107,107,0.3);border-radius:4px;padding:1px 5px;color:#FF6B6B;background:rgba(255,107,107,0.06); }
+.row-time { font-size:9px;color:#334;flex-shrink:0;letter-spacing:0.03em; }
+
+/* CAMERA PANEL */
+.cam-panel { padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center; }
+.cam-title { font-size:9px;color:#445;letter-spacing:0.12em; }
+#cam-video { width:100%;max-width:380px;border-radius:12px;border:2px solid rgba(0,212,255,0.3);background:#000;display:block; }
+.cam-result { font-size:12px;font-weight:700;letter-spacing:0.05em;color:#FFD200;text-align:center;min-height:20px;word-break:break-all; }
+.cam-btns { display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%; }
+.btn-cam-on  { background:rgba(255,180,0,0.1);border-color:rgba(255,180,0,0.4);color:#FFD200;padding:10px 20px;flex:1; }
+.btn-cam-off { background:rgba(255,107,107,0.08);border-color:rgba(255,107,107,0.3);color:#FF6B6B;padding:10px 20px;flex:1; }
+.cam-info { font-size:9px;color:#664400;letter-spacing:0.07em;text-align:center;line-height:1.6; }
+#cam-status { font-size:10px;letter-spacing:0.08em;text-align:center;color:#445;margin-top:2px; }
+
+/* SESSIONS PANEL */
+.sessions-panel { padding:14px 16px; }
+.sessions-title { font-size:9px;color:#886600;letter-spacing:0.14em;font-weight:700;margin-bottom:10px; }
+.session-row { border:1px solid rgba(255,180,0,0.12);border-radius:9px;padding:10px 12px;margin-bottom:8px; }
+.session-top { display:flex;justify-content:space-between;align-items:center;margin-bottom:5px; }
+.session-date { font-size:11px;font-weight:700;color:#FFD200;letter-spacing:0.08em; }
+.session-total { font-size:11px;font-weight:700;color:#FF9900; }
+.session-zones { display:flex;gap:10px;flex-wrap:wrap; }
+.sessions-empty { font-size:11px;color:#664400;letter-spacing:0.08em;text-align:center;padding:40px 0; }
+
+/* FLASH OVERLAY */
+#flash-overlay { position:fixed;inset:0;pointer-events:none;z-index:9999;border:3px solid transparent;transition:border-color 0.1s; }
+#flash-overlay.ok  { border-color:rgba(255,210,0,0.7); }
+#flash-overlay.dup { border-color:rgba(255,60,60,0.8); }
+
+/* INSTALL BANNER */
+.install-banner {
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:rgba(255,180,0,0.12);border-top:1px solid rgba(255,180,0,0.3);
+  padding:12px 16px;z-index:200;backdrop-filter:blur(10px);
+  align-items:center;gap:10px;
+}
+.install-banner span { font-size:11px;color:#FFD200;flex:1;letter-spacing:0.06em; }
+.install-btn { font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.1em;padding:8px 14px;border-radius:6px;cursor:pointer;border:1px solid rgba(255,180,0,0.4);background:rgba(255,180,0,0.15);color:#FFD200; }
+.install-close { font-family:inherit;font-size:14px;background:none;border:none;color:#445;cursor:pointer;padding:4px; }
+</style>
+</head>
+<body>
+<div id="flash-overlay"></div>
+
+<!-- INSTALL BANNER (PWA) -->
+<div class="install-banner" id="install-banner">
+  <span>📲 Instalá como app para usar sin internet</span>
+  <button class="install-btn" id="install-btn">INSTALAR</button>
+  <button class="install-close" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+</div>
+
+<div id="app">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">▣</div>
+      <div>
+        <div class="app-title">SCAN TERMINAL</div>
+        <div class="app-sub">Logística v6.0</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live"><div class="live-dot"></div><span>EN VIVO</span></div>
+      <div class="session-time" id="session-time">—</div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('scan')">⬡ ESCANEO</button>
+    <button class="tab" onclick="switchTab('camera')">◎ CÁMARA</button>
+    <button class="tab" onclick="switchTab('sessions')">◫ SESIONES</button>
+  </div>
+
+  <!-- MODE BAR -->
+  <div class="mode-bar">
+    <span class="mode-label">MODO:</span>
+    <button class="mode-btn" id="btn-colecta" onclick="setMode('COLECTA')">📦 COLECTA</button>
+    <button class="mode-btn" id="btn-flex"    onclick="setMode('FLEX')">⚡ FLEX</button>
+    <button class="mode-btn" id="btn-turbo"   onclick="setMode('TURBO')">🚀 TURBO</button>
+  </div>
+  <!-- ZONA FIJA (visible solo en FLEX / TURBO) -->
+  <div class="zone-bar" id="zone-bar" style="display:none">
+    <span class="mode-label">ZONA:</span>
+    <button class="zone-fixed-btn" id="zf-CABA" onclick="setFixedZone('CABA')" style="color:#00D4FF;border-color:rgba(0,212,255,0.3)">CABA</button>
+    <button class="zone-fixed-btn" id="zf-GBA1" onclick="setFixedZone('GBA1')" style="color:#00FF9D;border-color:rgba(0,255,157,0.3)">GBA1</button>
+    <button class="zone-fixed-btn" id="zf-GBA2" onclick="setFixedZone('GBA2')" style="color:#FFB800;border-color:rgba(255,184,0,0.3)">GBA2</button>
+    <button class="zone-fixed-btn" id="zf-GBA3" onclick="setFixedZone('GBA3')" style="color:#FF6B6B;border-color:rgba(255,107,107,0.3)">GBA3</button>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="chip" style="border-color:rgba(0,255,157,0.25)">
+      <div class="chip-label">TOTAL</div>
+      <div class="chip-val" style="font-size:24px;color:#FFD200" id="st-total">0</div>
+    </div>
+    <div class="chip" style="border-color:rgba(255,107,107,0.2)">
+      <div class="chip-label">DUPS</div>
+      <div class="chip-val" style="font-size:18px;color:#FF5555" id="st-dups">0</div>
+    </div>
+    <div class="chip" style="border-color:rgba(255,184,0,0.2)">
+      <div class="chip-label">PROM</div>
+      <div class="chip-val" style="font-size:18px;color:#FF9900" id="st-avg">0</div>
+    </div>
+    <div class="chip chip-last" style="border-color:rgba(255,255,255,0.06)">
+      <div class="chip-label">ÚLTIMO</div>
+      <div class="last-code" id="st-last"><span style="color:#334">— esperando —</span></div>
+    </div>
+  </div>
+
+  <!-- SCAN PANEL -->
+  <div class="panel active" id="panel-scan">
+    <div class="scan-main">
+      <div class="left-col">
+
+        <div class="scan-box" id="scan-box">
+          <div class="scan-label"><span>⬡</span> ESCANEAR CÓDIGO</div>
+          <div class="input-wrap">
+            <span class="caret">▶</span>
+            <input id="scan-input" placeholder="Listo para escanear..." autocomplete="off" autocorrect="off" spellcheck="false" />
+          </div>
+          <div class="hint" id="scan-hint">Seleccioná un modo arriba · Enter para confirmar</div>
+          <div class="actions">
+            <button class="btn btn-demo" onclick="simulateScan()">⚡ DEMO</button>
+            <button class="btn btn-export" onclick="exportCSV()">↓ CSV</button>
+            <button class="btn btn-clear" onclick="clearSession()">✕ LIMPIAR</button>
+          </div>
+        </div>
+
+        <!-- ZONE PICKER para Flex/Turbo -->
+        <div class="zone-picker" id="zone-picker">
+          <div class="zone-picker-title" style="color:#FFD200">⚡ SELECCIONÁ LA ZONA DEL PAQUETE</div>
+          <div class="zone-picker-grid" id="zone-picker-grid"></div>
+        </div>
+
+        <div class="result-banner" id="result-banner">
+          <div class="result-icon" id="result-icon"></div>
+          <div style="flex:1;min-width:0">
+            <div class="result-status" id="result-status"></div>
+            <div class="result-code" id="result-code"></div>
+            <div class="result-zone" id="result-zone"></div>
+          </div>
+          <div class="result-time" id="result-time"></div>
+        </div>
+
+        <div class="zones-grid" id="zones-grid"></div>
+      </div>
+
+      <div class="history-col">
+        <div class="hist-header">
+          <span class="hist-title">HISTORIAL</span>
+          <span class="hist-count" id="hist-count">0 registros</span>
+        </div>
+        <div class="hist-list" id="hist-list">
+          <div class="hist-empty">
+            <div class="hist-empty-icon">◎</div>
+            <div class="hist-empty-text">Esperando...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMERA PANEL -->
+  <div class="panel" id="panel-camera">
+    <div class="cam-panel">
+      <div class="cam-title">MODO CÁMARA — Apuntá al QR o código de barras</div>
+      <div style="position:relative;width:100%;max-width:380px">
+        <video id="cam-video" autoplay playsinline muted style="width:100%;border-radius:12px;border:2px solid rgba(255,180,0,0.4);background:#000;display:block"></video>
+        <!-- Guía visual -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:55%;height:55%;pointer-events:none">
+          <div style="position:absolute;top:0;left:0;width:22px;height:22px;border-top:2px solid #FFD200;border-left:2px solid #FFD200;border-radius:2px 0 0 0"></div>
+          <div style="position:absolute;top:0;right:0;width:22px;height:22px;border-top:2px solid #FFD200;border-right:2px solid #FFD200;border-radius:0 2px 0 0"></div>
+          <div style="position:absolute;bottom:0;left:0;width:22px;height:22px;border-bottom:2px solid #FFD200;border-left:2px solid #FFD200;border-radius:0 0 0 2px"></div>
+          <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-bottom:2px solid #FFD200;border-right:2px solid #FFD200;border-radius:0 0 2px 0"></div>
+        </div>
+        <!-- Zone picker OVERLAY sobre la cámara -->
+        <div id="zone-picker-cam" style="display:none;position:absolute;inset:0;border-radius:12px;background:rgba(8,12,16,0.92);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px;">
+          <div style="font-size:10px;color:#FFD200;letter-spacing:0.14em;font-weight:700">⚡ ELEGÍ LA ZONA</div>
+          <div id="zone-picker-grid-cam" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%"></div>
+        </div>
+        <!-- Resultado último escaneo OVERLAY -->
+        <div id="cam-last-result" style="display:none;position:absolute;bottom:10px;left:10px;right:10px;border-radius:8px;padding:10px 12px;font-size:11px;letter-spacing:0.06em;background:rgba(8,12,16,0.88);border:1px solid"></div>
+      </div>
+      <canvas id="cam-canvas" style="display:none"></canvas>
+      <div class="cam-result" id="cam-result">—</div>
+      <div class="cam-btns">
+        <button class="btn btn-cam-on" onclick="startCamera()">◎ ACTIVAR</button>
+        <button class="btn btn-cam-off" onclick="stopCamera()">✕ DETENER</button>
+      </div>
+      <div class="cam-info">Centrá el código dentro del recuadro verde · Buena luz · Cámara trasera</div>
+      <div id="cam-status" style="color:#445">Cámara detenida</div>
+    </div>
+  </div>
+
+  <!-- SESSIONS PANEL -->
+  <div class="panel" id="panel-sessions">
+    <div class="sessions-panel">
+      <div class="sessions-title">HISTORIAL DE SESIONES</div>
+      <div id="sessions-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATOS DE ZONAS
+══════════════════════════════════════════ */
+const FLEX_ZONES = {
+  CABA: { label:'CABA',           short:'CABA', color:'#00D4FF', bg:'rgba(0,212,255,0.08)',  border:'rgba(0,212,255,0.25)' },
+  GBA1: { label:'GBA 1° Cordón',  short:'GBA1', color:'#00FF9D', bg:'rgba(0,255,157,0.08)',  border:'rgba(0,255,157,0.25)' },
+  GBA2: { label:'GBA 2° Cordón',  short:'GBA2', color:'#FFB800', bg:'rgba(255,184,0,0.08)',  border:'rgba(255,184,0,0.25)'  },
+  GBA3: { label:'GBA 3° Cordón',  short:'GBA3', color:'#FF6B6B', bg:'rgba(255,107,107,0.08)',border:'rgba(255,107,107,0.25)'},
+};
+
+const ML_HUBS = {
+  LM: { label:'Hub La Matanza', short:'HUB LM', color:'#A78BFA', bg:'rgba(167,139,250,0.08)', border:'rgba(167,139,250,0.25)' },
+};
+
+// CP ranges para clasificación automática (cuando el QR trae CP)
+function cpToZone(cp) {
+  const n = parseInt(cp);
+  if (!n) return null;
+  if (n >= 1000 && n <= 1499) return 'CABA';
+  // GBA1 CPs conocidos
+  const gba1cps = [1601,1602,1603,1604,1605,1636,1638,1640,1642,1643,1644,1645,1646,1648,
+    1650,1651,1652,1653,1654,1655,1657,1658,1659,1660,1661,1662,1663,1664,1665,1666,
+    1667,1668,1669,1670,1671,1672,1673,1674,1675,1676,1678,1679,1680,1681,1682,1683,
+    1684,1685,1686,1687,1688,1689,1690,1691,1692,1706,1708,1712,1714,1716,1718,1719,
+    1720,1722,1724,1752,1754,1756,1758,1759,1765,1766,1770,1772,1774,1776,1778,1781,
+    1784,1785,1788,1791,1792,1832,1834,1842,1846,1847,1852,1855,1856,1858,1861,1863,
+    1864,1868,1870,1872,1874,1875,1876,1878];
+  if (gba1cps.includes(n)) return 'GBA1';
+  if ((n>=1700&&n<=1751)||(n>=1757&&n<=1764)||(n>=1767&&n<=1769)||(n>=1771&&n<=1773)||
+      (n>=1775&&n<=1780)||(n>=1782&&n<=1783)||(n>=1786&&n<=1787)||(n>=1789&&n<=1790)||
+      (n>=1793&&n<=1831)||(n>=1835&&n<=1841)||(n>=1843&&n<=1845)||(n>=1848&&n<=1851)||
+      (n>=1853&&n<=1854)||(n>=1857&&n<=1860)||(n>=1865&&n<=1867)||(n>=1879&&n<=1899))
+    return 'GBA2';
+  if ((n>=1900&&n<=1999)||(n>=2700&&n<=2799)||(n>=1611&&n<=1635)||(n>=2804&&n<=2812))
+    return 'GBA3';
+  return null;
+}
+
+/* ══════════════════════════════════════════
+   ESTADO
+══════════════════════════════════════════ */
+const STORAGE_KEY  = 'sct_v6_data';
+const SESSIONS_KEY = 'sct_v6_sessions';
+
+let state = {
+  scans: [],
+  zoneCounts: { CABA:0, GBA1:0, GBA2:0, GBA3:0, LM:0 },
+  dups: 0, scanTimes: [], sessionStart: Date.now(), demoIdx: 0
+};
+let camStream=null, camInterval=null, currentTab='scan', currentMode=null;
+let pendingScan=null; // scan esperando asignación de zona (Flex sin CP)
+let fixedZone=null;   // zona fija seleccionada para lotes Flex/Turbo
+let deferInstall=null;
+
+/* ══════════════════════════════════════════
+   STORAGE
+══════════════════════════════════════════ */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      state.scans      = s.scans      || [];
+      state.zoneCounts = s.zoneCounts || {CABA:0,GBA1:0,GBA2:0,GBA3:0,LM:0};
+      state.dups       = s.dups       || 0;
+      state.sessionStart = s.sessionStart || Date.now();
+    }
+  } catch(e){}
+}
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      scans: state.scans, zoneCounts: state.zoneCounts,
+      dups: state.dups, sessionStart: state.sessionStart
+    }));
+  } catch(e){}
+}
+function savePastSession() {
+  if (!state.scans.length) return;
+  try {
+    const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY)||'[]');
+    const ok = state.scans.filter(s=>s.status==='OK').length;
+    sessions.unshift({
+      date: new Date(state.sessionStart).toLocaleDateString('es-AR'),
+      time: new Date(state.sessionStart).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
+      total: ok, dups: state.dups, zoneCounts: {...state.zoneCounts}
+    });
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions.slice(0,30)));
+  } catch(e){}
+}
+
+/* ══════════════════════════════════════════
+   AUDIO
+══════════════════════════════════════════ */
+const SFX = {
+  ctx: null,
+  init() { if(!this.ctx) this.ctx=new(window.AudioContext||window.webkitAudioContext)(); return this.ctx; },
+  beep(f,d,t='sine',v=0.2) {
+    try {
+      const c=this.init(),o=c.createOscillator(),g=c.createGain();
+      o.connect(g);g.connect(c.destination);o.type=t;
+      o.frequency.setValueAtTime(f,c.currentTime);
+      g.gain.setValueAtTime(v,c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);
+      o.start(c.currentTime);o.stop(c.currentTime+d);
+    } catch(e){}
+  },
+  ok()  { this.beep(880,0.07,'sine',0.18);setTimeout(()=>this.beep(1100,0.1,'sine',0.14),75); },
+  dup() { this.beep(220,0.12,'sawtooth',0.28);setTimeout(()=>this.beep(160,0.18,'sawtooth',0.22),100); },
+  zone(z) {
+    const tones = {CABA:[660,880,1100],GBA1:[550,660],GBA2:[770,990],GBA3:[440,550],LM:[880,660]};
+    const t = tones[z]||[880];
+    t.forEach((f,i)=>setTimeout(()=>this.beep(f,0.07,'sine',0.15),i*65));
+  }
+};
+
+/* ══════════════════════════════════════════
+   CLASIFICACIÓN
+══════════════════════════════════════════ */
+function parseQR(text) {
+  // Intentar JSON
+  try {
+    const clean = text.trim().replace(/[\x00-\x1F\x7F]/g,'');
+    const obj = JSON.parse(clean);
+
+    // Formato Flex: {"id":"...","sender_id":...}  — "id" en minúscula
+    if (obj.id && !obj.ID) {
+      const shipId = obj.id.toString();
+      // Buscar CP en el JSON
+      const cpVal = obj.zip_code || obj.postal_code || obj.cp || obj.CP;
+      const zone = cpVal ? cpToZone(cpVal.toString()) : null;
+      return { type:'FLEX', shipId, zone, autoZone: !!zone };
+    }
+
+    // Formato Colecta: {"ID":"...","T":"LM"}  — "ID" en mayúscula
+    if (obj.ID || obj.T) {
+      const shipId = (obj.ID||obj.id||'').toString();
+      const t = (obj.T||obj.t||'LM').toString().toUpperCase();
+      return { type:'ML', shipId, zone: t, autoZone: true };
+    }
+
+    // JSON desconocido — buscar número largo
+    const numMatch = JSON.stringify(obj).match(/\d{8,}/);
+    const shipId = numMatch ? numMatch[0] : 'ML-'+Date.now();
+    return { type:'ML', shipId, zone:'LM', autoZone:true };
+
+  } catch(e){}
+
+  // Número puro (lector físico)
+  if (/^\d{8,15}$/.test(text.trim()))
+    return { type:'ML', shipId: text.trim(), zone:'LM', autoZone:true };
+
+  // Número dentro de texto
+  const nm = text.match(/\d{10,15}/);
+  if (nm) return { type:'ML', shipId: nm[0], zone:'LM', autoZone:true };
+
+  return null;
+}
+
+/* ══════════════════════════════════════════
+   PROCESAMIENTO DE ESCANEO
+══════════════════════════════════════════ */
+function processScan(raw) {
+  const text = raw.trim();
+  if (!text || text.length < 3) return;
+  if (!currentMode) {
+    // Sin modo: intentar auto-detectar
+    const parsed = parseQR(text);
+    if (parsed && parsed.type === 'ML') {
+      setMode('COLECTA');
+    } else {
+      showNoModeWarning();
+      return;
+    }
+  }
+
+  const parsed = parseQR(text);
+  const shipId = parsed ? parsed.shipId : text.substring(0,30).toUpperCase();
+  const isDup = state.scans.some(s => s.code===shipId && s.status==='OK');
+
+  if (isDup) {
+    SFX.dup();
+    state.dups++;
+    const dupScan = { id:Date.now(), code:shipId, zone:null, zoneLabel:'DUP', type:currentMode, timestamp:Date.now(), status:'DUP' };
+    state.scans.unshift(dupScan);
+    saveState();
+    updateUI(dupScan, true);
+    triggerFlash('dup');
+    return;
+  }
+
+  // Determinar zona
+  const isFlexMode = currentMode==='FLEX'||currentMode==='TURBO';
+
+  if (isFlexMode) {
+    // Si el QR trajo zona automáticamente, usarla
+    if (parsed && parsed.autoZone && parsed.zone && FLEX_ZONES[parsed.zone]) {
+      commitScan(shipId, parsed.zone, currentMode);
+    } else if (fixedZone) {
+      // Zona fija seteada por el operador — directo, sin picker
+      commitScan(shipId, fixedZone, currentMode);
+    } else {
+      // Sin zona fija: pedir al operador que elija zona primero
+      const hint = document.getElementById('scan-hint');
+      hint.textContent = '⚠ Elegí la zona arriba antes de escanear';
+      hint.style.color = '#FF6B6B';
+      setTimeout(()=>{ hint.textContent='Seleccioná la zona arriba'; hint.style.color='#FFB800'; }, 2000);
+      SFX.dup();
+    }
+  } else {
+    // Colecta — zona del hub
+    const zone = (parsed && parsed.zone) || 'LM';
+    commitScan(shipId, zone, 'ML');
+  }
+}
+
+function commitScan(shipId, zone, type) {
+  pendingScan = null;
+  hideZonePicker();
+
+  const zInfo = type==='ML'
+    ? (ML_HUBS[zone] || {label:zone,short:zone,color:'#A78BFA',bg:'rgba(167,139,250,0.08)',border:'rgba(167,139,250,0.25)'})
+    : FLEX_ZONES[zone];
+
+  const scan = {
+    id: Date.now(), code: shipId, zone, type,
+    zoneLabel: zInfo ? zInfo.short : zone,
+    timestamp: Date.now(), status:'OK'
+  };
+
+  SFX.zone(zone);
+  state.scanTimes.push(Date.now());
+  if (state.zoneCounts.hasOwnProperty(zone)) {
+    state.zoneCounts[zone]++;
+  } else {
+    state.zoneCounts[zone] = 1;
+  }
+  state.scans.unshift(scan);
+  saveState();
+  updateUI(scan, false);
+  triggerFlash('ok');
+
+  // Mostrar resultado en panel cámara si está activo
+  if (currentTab === 'camera') {
+    const el = document.getElementById('cam-last-result');
+    const zInfo = type==='ML'
+      ? (ML_HUBS[zone]||{label:zone,color:'#A78BFA'})
+      : (FLEX_ZONES[zone]||{label:zone,color:'#888'});
+    el.style.display = 'block';
+    el.style.borderColor = zInfo.color;
+    el.style.color = zInfo.color;
+    const icon = type==='ML'?'📦':type==='TURBO'?'🚀':'⚡';
+    el.innerHTML = `<span style="color:#00FF9D">✓ REGISTRADO</span> &nbsp; ${icon} ${zInfo.label} &nbsp; <span style="color:#445;font-size:9px">${shipId.substring(0,14)}</span>`;
+    setTimeout(()=>{ el.style.display='none'; }, 800);
+  }
+
+  // Refocus input solo si está en escaneo
+  if (currentTab === 'scan') {
+    setTimeout(()=>document.getElementById('scan-input').focus(), 100);
+  }
+}
+
+/* ══════════════════════════════════════════
+   ZONE PICKER
+══════════════════════════════════════════ */
+function buildZoneButtons(gridId) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = Object.entries(FLEX_ZONES).map(([zk,zv])=>`
+    <button class="zone-pick-btn"
+      style="color:${zv.color};border-color:${zv.color};background:${zv.bg}"
+      onclick="commitScan('${pendingScan.shipId}','${zk}','${pendingScan.type}')">
+      ${zk}<br><span style="font-size:9px;font-weight:400;opacity:0.8">${zv.label}</span>
+    </button>`).join('');
+}
+
+function showZonePicker() {
+  // Mostrar en el panel activo
+  const inCamera = currentTab === 'camera';
+  if (inCamera) {
+    const p = document.getElementById('zone-picker-cam');
+    buildZoneButtons('zone-picker-grid-cam');
+    p.style.display = 'flex';
+  } else {
+    const p = document.getElementById('zone-picker');
+    buildZoneButtons('zone-picker-grid');
+    p.style.display = 'block';
+  }
+  if(navigator.vibrate) navigator.vibrate(60);
+}
+
+function hideZonePicker() {
+  document.getElementById('zone-picker').style.display = 'none';
+  document.getElementById('zone-picker-cam').style.display = 'none';
+}
+
+function showNoModeWarning() {
+  const hint = document.getElementById('scan-hint');
+  hint.textContent = '⚠ Seleccioná COLECTA, FLEX o TURBO antes de escanear';
+  hint.style.color = '#FF6B6B';
+  setTimeout(()=>{ hint.textContent='Seleccioná un modo arriba · Enter para confirmar'; hint.style.color=''; },3000);
+}
+
+/* ══════════════════════════════════════════
+   MODE
+══════════════════════════════════════════ */
+function setMode(mode) {
+  currentMode = mode;
+  pendingScan = null;
+  hideZonePicker();
+
+  document.getElementById('btn-colecta').className = 'mode-btn' + (mode==='COLECTA'?' m-colecta':'');
+  document.getElementById('btn-flex').className    = 'mode-btn' + (mode==='FLEX'?' m-flex':'');
+  document.getElementById('btn-turbo').className   = 'mode-btn' + (mode==='TURBO'?' m-turbo':'');
+
+  // Mostrar/ocultar zone bar
+  const isFlexMode = mode==='FLEX'||mode==='TURBO';
+  document.getElementById('zone-bar').style.display = isFlexMode ? 'flex' : 'none';
+  if (!isFlexMode) fixedZone = null;
+
+  const hint = document.getElementById('scan-hint');
+  if (isFlexMode) {
+    hint.textContent = fixedZone
+      ? (mode==='FLEX'?'⚡':'🚀')+' '+mode+' → '+fixedZone+' activo — escaneá'
+      : '⚠ Seleccioná la zona arriba antes de escanear';
+    hint.style.color = fixedZone ? '' : '#FFB800';
+  } else {
+    hint.textContent = '📦 Modo Colecta activo — escaneá';
+    hint.style.color = '';
+  }
+
+  document.getElementById('scan-input').focus();
+}
+
+function setFixedZone(zone) {
+  fixedZone = zone;
+  // Resaltar botón activo
+  document.querySelectorAll('.zone-fixed-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('zf-'+zone).classList.add('active');
+  // Actualizar hint
+  const hint = document.getElementById('scan-hint');
+  const icon = currentMode==='TURBO'?'🚀':'⚡';
+  hint.textContent = icon+' '+currentMode+' → '+zone+' activo — escaneá';
+  hint.style.color = '';
+  document.getElementById('scan-input').focus();
+}
+
+/* ══════════════════════════════════════════
+   UI UPDATE
+══════════════════════════════════════════ */
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function updateUI(lastScan, isDup) {
+  const ok = state.scans.filter(s=>s.status==='OK').length;
+  document.getElementById('st-total').textContent = ok;
+  document.getElementById('st-dups').textContent  = state.dups;
+  const now = Date.now();
+  const recent = state.scanTimes.filter(t=>now-t<60000);
+  state.scanTimes = recent;
+
+  const mins = Math.max(1,(now-state.sessionStart)/60000);
+  document.getElementById('st-avg').textContent  = Math.round(ok/mins);
+
+  const zInfo = lastScan.type==='ML'
+    ? (ML_HUBS[lastScan.zone]||{color:'#A78BFA'})
+    : (FLEX_ZONES[lastScan.zone]||{color:'#888'});
+  const zColor = isDup ? '#FF6B6B' : (zInfo.color||'#888');
+  const typeIcon = lastScan.type==='ML'?'📦':lastScan.type==='TURBO'?'🚀':'⚡';
+
+  document.getElementById('st-last').innerHTML =
+    `<span style="color:${zColor}">${typeIcon} ${lastScan.code.substring(0,16)}${lastScan.code.length>16?'…':''}</span>`+
+    `<span style="color:${isDup?'#FF6B6B':'#00FF9D'};font-size:10px;margin-left:8px">${isDup?'⚠ DUP':'✓ OK'}</span>`;
+
+  const banner = document.getElementById('result-banner');
+  banner.style.display = 'flex';
+  banner.style.borderColor = isDup?'#FF6B6B':'#00FF9D';
+  banner.style.backgroundColor = isDup?'rgba(255,107,107,0.06)':'rgba(0,255,157,0.06)';
+  banner.classList.add('slide-in');
+  setTimeout(()=>banner.classList.remove('slide-in'),300);
+
+  document.getElementById('result-icon').textContent    = isDup?'⚠':'✓';
+  document.getElementById('result-status').style.color  = isDup?'#FF6B6B':'#00FF9D';
+  document.getElementById('result-status').textContent  = isDup?'DUPLICADO':'REGISTRADO';
+  document.getElementById('result-code').textContent    = lastScan.code;
+  document.getElementById('result-zone').style.color    = zColor;
+  document.getElementById('result-zone').textContent    = isDup ? '' :
+    (lastScan.type==='ML' ? `📦 ML → ${zInfo.label||lastScan.zone}` :
+     `${lastScan.type==='TURBO'?'🚀':'⚡'} ${lastScan.type} → ${zInfo.label||lastScan.zone}`);
+  document.getElementById('result-time').textContent    = fmtTime(lastScan.timestamp);
+
+  renderZones();
+  renderHistory();
+}
+
+/* ══════════════════════════════════════════
+   RENDER ZONES
+══════════════════════════════════════════ */
+function renderZones() {
+  const total = state.scans.filter(s=>s.status==='OK').length;
+  let html = '';
+
+  // Sección FLEX/TURBO
+  html += `<div class="zones-section-title">⚡ FLEX / 🚀 TURBO — ZONAS GBA</div>`;
+  for (const [zk,zv] of Object.entries(FLEX_ZONES)) {
+    const c = state.zoneCounts[zk]||0;
+    const pct = total>0?Math.round(c/total*100):0;
+    html += zoneCard(zk, zv, c, pct);
+  }
+
+  // Sección ML Colecta
+  html += `<div class="zones-section-title" style="margin-top:4px">📦 ML — COLECTA PROVINCIAS</div>`;
+  const mlScans = state.scans.filter(s=>s.status==='OK'&&s.type==='ML');
+  if (!mlScans.length) {
+    html += `<div style="grid-column:1/-1;font-size:10px;color:#334;padding:6px 0">Sin escaneos ML aún</div>`;
+  } else {
+    const mlGroups = {};
+    mlScans.forEach(s=>{ mlGroups[s.zone]=(mlGroups[s.zone]||0)+1; });
+    for (const [zk,count] of Object.entries(mlGroups)) {
+      const zv = ML_HUBS[zk]||{label:zk,short:zk,color:'#A78BFA',bg:'rgba(167,139,250,0.08)',border:'rgba(167,139,250,0.25)'};
+      const pct = total>0?Math.round(count/total*100):0;
+      html += zoneCard(zk, zv, count, pct);
+    }
+  }
+
+  document.getElementById('zones-grid').innerHTML = html;
+}
+
+function zoneCard(zk, zv, count, pct) {
+  return `<div class="zone-card" style="border-color:${zv.border};background:rgba(255,255,255,0.02)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="zone-prefix" style="color:${zv.color};border-color:${zv.color}44">${zk}</div>
+        <div class="zone-label" style="color:${zv.color}">${zv.short}</div>
+      </div>
+      <div class="zone-count" style="color:${zv.color}">${count}</div>
+    </div>
+    <div class="zone-bar"><div class="zone-bar-fill" style="width:${pct}%;background:${zv.color}"></div></div>
+    <div class="zone-pct" style="color:${zv.color}88">${pct}% del total</div>
+  </div>`;
+}
+
+/* ══════════════════════════════════════════
+   RENDER HISTORY
+══════════════════════════════════════════ */
+function renderHistory() {
+  const list = document.getElementById('hist-list');
+  document.getElementById('hist-count').textContent = state.scans.length+' registros';
+  if (!state.scans.length) {
+    list.innerHTML='<div class="hist-empty"><div class="hist-empty-icon">◎</div><div class="hist-empty-text">Esperando escaneos...</div></div>';
+    return;
+  }
+  list.innerHTML = state.scans.slice(0,120).map((s,i)=>{
+    const isDup = s.status==='DUP';
+    const zInfo = s.type==='ML'
+      ? (ML_HUBS[s.zone]||{color:'#A78BFA',bg:'rgba(167,139,250,0.08)',short:s.zone||'ML'})
+      : (FLEX_ZONES[s.zone]||{color:'#666',bg:'transparent',short:s.zone||'?'});
+    const zColor = isDup?'#FF6B6B':zInfo.color;
+    const icon = s.type==='ML'?'📦':s.type==='TURBO'?'🚀':'⚡';
+    return `<div class="hist-row" style="background:${i===0?'rgba(255,255,255,0.03)':'transparent'};border-left-color:${zColor};opacity:${isDup?0.55:1}">
+      <div class="row-code">
+        <span style="font-size:11px">${icon}</span>
+        <span style="color:${zColor};margin-left:4px">${s.code.substring(0,16)}${s.code.length>16?'…':''}</span>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+        <span class="badge" style="color:${zColor};border-color:${zColor}44;background:${zInfo.bg}">${zInfo.short||s.zone||'?'}</span>
+        ${isDup?'<span class="dup-badge">DUP</span>':''}
+      </div>
+      <div class="row-time">${fmtTime(s.timestamp)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════
+   SESSIONS
+══════════════════════════════════════════ */
+function renderSessions() {
+  const el = document.getElementById('sessions-list');
+  try {
+    const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY)||'[]');
+    if (!sessions.length) {
+      el.innerHTML='<div class="sessions-empty">No hay sesiones guardadas aún.</div>'; return;
+    }
+    el.innerHTML = sessions.map(s=>`
+      <div class="session-row">
+        <div class="session-top">
+          <span class="session-date">${s.date} — ${s.time}</span>
+          <span class="session-total">${s.total} paquetes</span>
+        </div>
+        <div class="session-zones">
+          ${Object.entries(s.zoneCounts||{}).map(([p,c])=>{
+            const allZ = {...FLEX_ZONES,...ML_HUBS};
+            const z = allZ[p];
+            return z&&c>0?`<span style="font-size:9px;color:${z.color}">${z.short}:${c}</span>`:`<span style="font-size:9px;color:#666">${p}:${c}</span>`;
+          }).join('')}
+          ${s.dups?`<span style="font-size:9px;color:#FF6B6B">DUP:${s.dups}</span>`:''}
+        </div>
+      </div>`).join('');
+  } catch(e){ el.innerHTML='<div class="sessions-empty">Error al cargar.</div>'; }
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',['scan','camera','sessions'][i]===tab);
+  });
+  ['scan','camera','sessions'].forEach(t=>{
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+  });
+  if (tab==='sessions') renderSessions();
+  if (tab==='scan') setTimeout(()=>document.getElementById('scan-input').focus(),100);
+  if (tab!=='camera') stopCamera();
+}
+
+/* ══════════════════════════════════════════
+   ACTIONS
+══════════════════════════════════════════ */
+const DEMO = [
+  '{"ID":"46383481707","T":"LM"}',
+  '{"ID":"46383481708","T":"LM"}',
+  '{"ID":"46383481709","T":"LM"}',
+  '{"id":"44192939793","sender_id":257448167}',
+  '{"id":"44192939794","sender_id":257448167}',
+  '{"id":"44192939795","sender_id":257448167}',
+];
+
+function simulateScan() {
+  if (!currentMode) { setMode('COLECTA'); }
+  const code = DEMO[state.demoIdx % DEMO.length];
+  state.demoIdx++;
+  processScan(code);
+  document.getElementById('scan-input').value='';
+  document.getElementById('scan-input').focus();
+}
+
+function clearSession() {
+  if (!confirm('¿Guardar sesión y limpiar?')) return;
+  savePastSession();
+  state.scans=[]; state.zoneCounts={CABA:0,GBA1:0,GBA2:0,GBA3:0,LM:0};
+  state.dups=0; state.scanTimes=[]; state.sessionStart=Date.now(); state.demoIdx=0;
+  pendingScan=null; hideZonePicker();
+  saveState();
+  ['st-total','st-dups','st-rate','st-avg'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('st-last').innerHTML='<span style="color:#334">— esperando —</span>';
+  document.getElementById('result-banner').style.display='none';
+  renderZones(); renderHistory();
+}
+
+function exportCSV() {
+  if (!state.scans.length) { alert('No hay escaneos.'); return; }
+  const rows = ['CÓDIGO,TIPO,ZONA,ESTADO,HORARIO'];
+  state.scans.forEach(s=>{
+    const allZ = {...FLEX_ZONES,...ML_HUBS};
+    const z = allZ[s.zone];
+    rows.push(`${s.code},${s.type||''},${z?z.label:(s.zone||'S/Z')},${s.status},${fmtTime(s.timestamp)}`);
+  });
+  const blob = new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download=`escaneos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function triggerFlash(type) {
+  const ov  = document.getElementById('flash-overlay');
+  const box = document.getElementById('scan-box');
+  ov.className = type;
+  box.className = 'scan-box '+(type==='ok'?'flash-ok':'flash-dup');
+  setTimeout(()=>{ ov.className=''; box.className='scan-box'; },480);
+}
+
+/* ══════════════════════════════════════════
+   CAMERA — 4 intentos por frame
+══════════════════════════════════════════ */
+async function startCamera() {
+  try {
+    document.getElementById('cam-status').textContent='Solicitando cámara...';
+    document.getElementById('cam-status').style.color='#FFB800';
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} }
+    });
+    camStream=stream;
+    const video=document.getElementById('cam-video');
+    video.srcObject=stream;
+    await video.play();
+    document.getElementById('cam-status').textContent='✓ Activa — apuntá al código';
+    document.getElementById('cam-status').style.color='#00FF9D';
+    startQRLoop();
+  } catch(e) {
+    document.getElementById('cam-status').textContent='Error: '+(e.message||'Sin acceso');
+    document.getElementById('cam-status').style.color='#FF6B6B';
+  }
+}
+
+function startQRLoop() {
+  const video=document.getElementById('cam-video');
+  const canvas=document.getElementById('cam-canvas');
+  const ctx=canvas.getContext('2d');
+  const aux=document.createElement('canvas');
+  const axc=aux.getContext('2d');
+  let lastCode='',lastTime=0;
+  let zxing=null;
+  try{ if(typeof ZXing!=='undefined') zxing=new ZXing.MultiFormatReader(); }catch(e){}
+
+  function tryDecode(imgData){
+    if(typeof jsQR!=='undefined'){
+      const qr=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
+      if(qr&&qr.data) return qr.data;
+    }
+    if(zxing){
+      try{
+        const lum=new ZXing.RGBLuminanceSource(imgData.data,imgData.width,imgData.height);
+        const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+        return zxing.decode(bmp).getText();
+      }catch(e){}
+    }
+    return null;
+  }
+
+  function binarize(imgData){
+    const d=new Uint8ClampedArray(imgData.data);
+    for(let i=0;i<d.length;i+=4){
+      const g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+      d[i]=d[i+1]=d[i+2]=g>128?255:0;
+    }
+    return new ImageData(d,imgData.width,imgData.height);
+  }
+
+  camInterval=setInterval(()=>{
+    if(video.readyState!==video.HAVE_ENOUGH_DATA) return;
+    const W=video.videoWidth,H=video.videoHeight;
+    canvas.width=W;canvas.height=H;
+    ctx.drawImage(video,0,0);
+    let detected=null;
+
+    // 1. Completa normal
+    try{ detected=tryDecode(ctx.getImageData(0,0,W,H)); }catch(e){}
+    // 2. Centro 60%
+    if(!detected){try{
+      const cw=Math.floor(W*.6),ch=Math.floor(H*.6),cx=Math.floor((W-cw)/2),cy=Math.floor((H-ch)/2);
+      aux.width=cw;aux.height=ch;axc.drawImage(video,cx,cy,cw,ch,0,0,cw,ch);
+      detected=tryDecode(axc.getImageData(0,0,cw,ch));
+    }catch(e){}}
+    // 3. Completa binarizada
+    if(!detected){try{ detected=tryDecode(binarize(ctx.getImageData(0,0,W,H))); }catch(e){}}
+    // 4. Centro 45% binarizado
+    if(!detected){try{
+      const cw=Math.floor(W*.45),ch=Math.floor(H*.45),cx=Math.floor((W-cw)/2),cy=Math.floor((H-ch)/2);
+      aux.width=cw;aux.height=ch;axc.drawImage(video,cx,cy,cw,ch,0,0,cw,ch);
+      detected=tryDecode(binarize(axc.getImageData(0,0,cw,ch)));
+    }catch(e){}}
+
+    if(detected){
+      const now=Date.now();
+      if(detected!==lastCode||now-lastTime>1500){
+        lastCode=detected;lastTime=now;
+        document.getElementById('cam-result').textContent='✓ '+detected.substring(0,50);
+        processScan(detected);
+        // La cámara se queda abierta — no cambia de tab
+      }
+    }
+  },180);
+}
+
+function stopCamera(){
+  if(camInterval){clearInterval(camInterval);camInterval=null;}
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  document.getElementById('cam-video').srcObject=null;
+  document.getElementById('cam-status').textContent='Cámara detenida';
+  document.getElementById('cam-status').style.color='#445';
+  document.getElementById('cam-result').textContent='—';
+}
+
+/* ══════════════════════════════════════════
+   INPUT
+══════════════════════════════════════════ */
+document.getElementById('scan-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ processScan(e.target.value); e.target.value=''; }
+});
+document.addEventListener('click',e=>{
+  if(currentTab==='scan'&&!e.target.closest('.zone-pick-btn')&&!e.target.closest('.mode-btn')&&!e.target.closest('.btn'))
+    document.getElementById('scan-input').focus();
+});
+
+/* ══════════════════════════════════════════
+   CLOCK
+══════════════════════════════════════════ */
+setInterval(()=>{
+  const d=new Date(state.sessionStart);
+  document.getElementById('session-time').textContent=
+    'Sesión: '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  const now=Date.now();
+  state.scanTimes=state.scanTimes.filter(t=>now-t<60000);
+},1000);
+
+/* ══════════════════════════════════════════
+   PWA — Install prompt
+══════════════════════════════════════════ */
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferInstall=e;
+  const banner=document.getElementById('install-banner');
+  banner.style.display='flex';
+});
+document.getElementById('install-btn').addEventListener('click',async()=>{
+  if(!deferInstall) return;
+  deferInstall.prompt();
+  const {outcome}=await deferInstall.userChoice;
+  if(outcome==='accepted') document.getElementById('install-banner').style.display='none';
+  deferInstall=null;
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-banner').style.display='none';
+});
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+loadState();
+renderZones();
+renderHistory();
+document.getElementById('scan-input').focus();
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner Logístico Rápido</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: #111827;
+  color: white;
+  padding: 10px;
+}
+
+video, canvas {
+  width: 100%;
+  border-radius: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: white;
+  font-size: 18px;
+}
+
+#resultado {
+  margin-top: 15px;
+  background: #1f2937;
+  padding: 10px;
+  border-radius: 10px;
+}
+</style>
+</head>
+<body>
+
+<h2>📦 Scanner Logístico</h2>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none"></canvas>
+
+<button id="start">Iniciar cámara</button>
+<button id="scan">Escanear</button>
+
+<div id="resultado">
+Esperando escaneo...
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const resultado = document.getElementById('resultado');
+
+let stream;
+
+// =====================================
+// INICIAR CÁMARA
+// =====================================
+document.getElementById('start').onclick = async () => {
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'environment'
+    }
+  });
+
+  video.srcObject = stream;
+};
+
+// =====================================
+// ESCANEAR
+// =====================================
+document.getElementById('scan').onclick = async () => {
+
+  resultado.innerHTML = 'Procesando...';
+
+  // REDUCIR TAMAÑO
+  const MAX_WIDTH = 900;
+
+  let width = video.videoWidth;
+  let height = video.videoHeight;
+
+  if (width > MAX_WIDTH) {
+    height *= MAX_WIDTH / width;
+    width = MAX_WIDTH;
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, width, height);
+
+  // OCR LOCAL
+  const {
+    data: { text }
+  } = await Tesseract.recognize(canvas, 'spa');
+
+  console.log(text);
+
+  // =====================================
+  // EXTRAER CÓDIGO POSTAL
+  // =====================================
+
+  const cpMatch = text.match(/\b\d{4}\b/);
+
+  let cp = cpMatch ? parseInt(cpMatch[0]) : null;
+
+  let zona = 'DESCONOCIDA';
+
+  if (cp) {
+
+    if (cp >= 1000 && cp <= 1499) {
+      zona = 'CABA';
+    }
+    else if (cp >= 1600 && cp <= 1670) {
+      zona = 'GBA NORTE';
+    }
+    else if (cp >= 1671 && cp <= 1799) {
+      zona = 'GBA OESTE';
+    }
+    else if (cp >= 1820 && cp <= 1900) {
+      zona = 'GBA SUR';
+    }
+    else {
+      zona = 'INTERIOR';
+    }
+  }
+
+  resultado.innerHTML = `
+    <h3>Zona: ${zona}</h3>
+    <p><b>CP:</b> ${cp || 'No detectado'}</p>
+    <pre>${text}</pre>
+  `;
+};
+</script>
+
+</body>
+</html>

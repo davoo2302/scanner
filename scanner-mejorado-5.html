@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner ML</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0a0f;
+    --surface:  #13131a;
+    --border:   #1e1e2e;
+    --accent:   #f0c040;
+    --caba:     #60a5fa;
+    --c1:       #34d399;
+    --c2:       #a78bfa;
+    --interior: #fb923c;
+    --unknown:  #6b7280;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Barlow Condensed', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 10px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 20px; font-weight: 800; letter-spacing: 1px; color: var(--accent); }
+  header span { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; }
+
+  .cam-wrapper {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--border);
+    aspect-ratio: 4 / 3;
+  }
+  video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .cam-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: background 0.4s;
+  }
+  .cam-overlay.flash-ok   { background: rgba(52,211,153,0.55); transition: background 0.05s; }
+  .cam-overlay.flash-fade { background: transparent; transition: background 0.5s; }
+
+  /* estado del scan visible en cámara */
+  .cam-status {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background: rgba(0,0,0,0.55);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  canvas { display: none; }
+
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  button {
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  button:active { transform: scale(.97); opacity: .85; }
+
+  #btn-start {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  #btn-start.active { color: var(--accent); border-color: var(--accent); }
+  #btn-auto { background: var(--accent); color: #000; font-size: 18px; }
+  #btn-auto:disabled { opacity: .35; cursor: not-allowed; }
+  #btn-auto.running { background: #ef4444; color: #fff; }
+
+  .result-box {
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .result-zone {
+    padding: 16px;
+    text-align: center;
+    background: var(--surface);
+  }
+  .zone-label {
+    font-size: 44px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .zone-sub { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; }
+  .zone-cp  { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  .counter-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    padding: 8px 14px 5px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .counter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .counter-cell {
+    background: var(--bg);
+    padding: 9px 13px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .cdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .cname { font-size: 12px; font-weight: 600; letter-spacing: .3px; flex: 1; line-height: 1.2; }
+  .cnum  { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; }
+
+  .btn-reset {
+    width: 100%; margin-top: 8px; padding: 9px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; letter-spacing: 1px;
+    border-radius: 8px; cursor: pointer;
+  }
+  .btn-reset:hover { border-color: #f87171; color: #f87171; }
+
+  .z-CABA     { color: var(--caba); }
+  .z-C1       { color: var(--c1); }
+  .z-C2       { color: var(--c2); }
+  .z-INTERIOR { color: var(--interior); }
+  .z-UNKNOWN  { color: var(--unknown); }
+  .d-CABA     { background: var(--caba); }
+  .d-C1       { background: var(--c1); }
+  .d-C2       { background: var(--c2); }
+  .d-INTERIOR { background: var(--interior); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📦 SCANNER ML</h1>
+  <span>ZONAS FLEX · CORREO AR</span>
+</header>
+
+<div class="cam-wrapper">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="cam-overlay" id="cam-overlay"></div>
+  <div class="cam-status" id="cam-status">LISTO</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div class="btn-row">
+  <button id="btn-start">📷 CÁMARA</button>
+  <button id="btn-auto" disabled>▶ INICIAR SCAN</button>
+</div>
+
+<div class="result-box">
+  <div class="result-zone" id="result-zone">
+    <div class="zone-label z-UNKNOWN" id="zone-label">— — —</div>
+    <div class="zone-sub" id="zone-sub"></div>
+    <div class="zone-cp"  id="zone-cp">Iniciá la cámara y presioná INICIAR SCAN</div>
+  </div>
+  <div class="counter-title">CONTEO POR ZONA</div>
+  <div class="counter-grid" id="counter-grid"></div>
+</div>
+
+<button class="btn-reset" id="btn-reset">↺ REINICIAR CONTEO</button>
+
+<script>
+// ─── ZONAS ────────────────────────────────────────────────
+const CABA_SET = new Set([...Array.from({length:500},(_,i)=>1000+i)]);
+
+const C1_CPS = new Set([
+  // Norte: San Martín, Vicente López, San Isidro, San Fernando
+  1600,1601,1602,1603,1604,1605,1606,1607,1609,
+  1624,1636,1637,1638,1640,1641,1642,1643,1644,
+  1645,1646,1647,1648,1649,1650,1651,1653,1655,1672,1674,1675,
+  // Oeste: 3 de Febrero, Hurlingham, Ituzaingó, Morón, La Matanza Norte
+  1657,1676,1678,1682,1683,1684,1685,1686,1687,
+  1688,1692,1702,1704,1706,1708,1712,1713,1714,
+  1715,1750,1751,1752,1753,1754,1755,1756,1757,1758,1759,
+  1760,1761,1762,1763,1764,1765,1766,1767,1768,1769,1770,1773,1774,1778,
+  // Sur: Avellaneda, Lanús, Lomas de Zamora
+  1820,1821,1822,1823,1824,1825,1826,1827,1828,
+  1829,1831,1832,1833,1834,1836,1844,
+  1868,1869,1870,1871,1872,1873,1874,1875
+]);
+
+const C2_CPS = new Set([
+  1608,1610,1611,1612,1613,1614,1615,1616,1617,1618,1621,1659,1670,
+  1716,1718,1721,1722,1742,1743,1772,
+  1801,1802,1803,1804,1805,
+  1838,1839,1840,1841,1842,1846,
+  1852,1853,1854,1856,
+  1878,1879,1880,1882,1884,1887
+]);
+
+const ZONAS = [
+  { id:'CABA',     label:'CABA',     sub:'Ciudad Autónoma' },
+  { id:'C1',       label:'CORDÓN 1', sub:'San Martín · Lanús · Morón · Avellaneda' },
+  { id:'C2',       label:'CORDÓN 2', sub:'Quilmes · Moreno · Tigre · Ezeiza' },
+  { id:'INTERIOR', label:'INTERIOR', sub:'Resto del país' },
+];
+
+function detectarZona(cp) {
+  if (CABA_SET.has(cp)) return 'CABA';
+  if (C1_CPS.has(cp))   return 'C1';
+  if (C2_CPS.has(cp))   return 'C2';
+  if (cp >= 1000 && cp <= 9999) return 'INTERIOR';
+  return 'UNKNOWN';
+}
+
+// ─── ESTADO ───────────────────────────────────────────────
+let conteo = {};
+try { conteo = JSON.parse(localStorage.getItem('ml-scanner-v2') || '{}'); } catch(e){}
+ZONAS.forEach(z => { if (!conteo[z.id]) conteo[z.id] = 0; });
+function saveConteo() {
+  try { localStorage.setItem('ml-scanner-v2', JSON.stringify(conteo)); } catch(e){}
+}
+
+// lastCP: el CP que se acaba de contar.
+// Se resetea a null cuando el OCR NO ve ningún CP (etiqueta sacada de cámara).
+// Solo cuenta si lastCP es null — así nunca cuenta la misma etiqueta dos veces.
+let lastCP    = null;
+let loopActive = false;
+let processing = false;
+
+// ─── AUDIO ────────────────────────────────────────────────
+let audioCtx;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beepOK() {
+  const ctx  = getAudio();
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(1046, ctx.currentTime);       // DO6 — agudo limpio
+  gain.gain.setValueAtTime(0.5, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+  osc.start(); osc.stop(ctx.currentTime + 0.3);
+}
+
+// ─── FLASH ────────────────────────────────────────────────
+const camOverlay = document.getElementById('cam-overlay');
+function flashOK() {
+  camOverlay.classList.add('flash-ok');
+  setTimeout(() => {
+    camOverlay.classList.remove('flash-ok');
+    camOverlay.classList.add('flash-fade');
+    setTimeout(() => camOverlay.classList.remove('flash-fade'), 500);
+  }, 150);
+}
+
+// ─── PREPROCESAMIENTO DE IMAGEN ───────────────────────────
+// Convierte el frame a escala de grises + aumenta contraste + binariza.
+// El CP en etiquetas ML es negro sobre blanco: la binarización lo hace
+// perfecto para Tesseract y elimina ruido de fondo.
+function preprocesar(srcCanvas) {
+  const w = srcCanvas.width, h = srcCanvas.height;
+  const dst = document.createElement('canvas');
+  dst.width = w; dst.height = h;
+  const ctx = dst.getContext('2d');
+
+  // Dibujar original
+  ctx.drawImage(srcCanvas, 0, 0);
+
+  // Obtener pixels
+  const img = ctx.getImageData(0, 0, w, h);
+  const d   = img.data;
+
+  for (let i = 0; i < d.length; i += 4) {
+    // 1) Escala de grises (luminancia)
+    const gray = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+
+    // 2) Aumentar contraste (factor 1.8, pivot 128)
+    let c = (gray - 128) * 1.8 + 128;
+    c = Math.max(0, Math.min(255, c));
+
+    // 3) Binarizar — umbral 140: por encima = blanco, por debajo = negro
+    const bin = c > 140 ? 255 : 0;
+
+    d[i] = d[i+1] = d[i+2] = bin;
+    d[i+3] = 255;
+  }
+
+  ctx.putImageData(img, 0, 0);
+  return dst;
+}
+
+// ─── UI ───────────────────────────────────────────────────
+const video     = document.getElementById('video');
+const canvas    = document.getElementById('canvas');
+const btnStart  = document.getElementById('btn-start');
+const btnAuto   = document.getElementById('btn-auto');
+const btnReset  = document.getElementById('btn-reset');
+const zoneLabel = document.getElementById('zone-label');
+const zoneSub   = document.getElementById('zone-sub');
+const zoneCp    = document.getElementById('zone-cp');
+const camStatus = document.getElementById('cam-status');
+
+function renderConteo() {
+  document.getElementById('counter-grid').innerHTML = ZONAS.map(z => `
+    <div class="counter-cell">
+      <div class="cdot d-${z.id}"></div>
+      <div class="cname z-${z.id}">${z.label}</div>
+      <div class="cnum  z-${z.id}">${conteo[z.id]||0}</div>
+    </div>
+  `).join('');
+}
+renderConteo();
+
+// ─── CÁMARA ───────────────────────────────────────────────
+btnStart.onclick = async () => {
+  getAudio(); // desbloquear audio en iOS al primer toque
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'environment', width:{ideal:1920} }
+    });
+    video.srcObject = stream;
+    btnStart.textContent = '✓ ACTIVA';
+    btnStart.classList.add('active');
+    btnAuto.disabled = false;
+  } catch(e) { alert('No se pudo acceder a la cámara: ' + e.message); }
+};
+
+// ─── LOOP PRINCIPAL ───────────────────────────────────────
+async function scanFrame() {
+  if (!loopActive || processing) return;
+  processing = true;
+
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) { processing = false; setTimeout(scanFrame, 300); return; }
+
+  // Capturar frame completo
+  canvas.width = vw; canvas.height = vh;
+  canvas.getContext('2d').drawImage(video, 0, 0, vw, vh);
+
+  // Escalar a 1000px ancho (balance velocidad/calidad)
+  const TW  = 1000;
+  const sc  = TW / vw;
+  const raw = document.createElement('canvas');
+  raw.width  = TW;
+  raw.height = Math.round(vh * sc);
+  raw.getContext('2d').drawImage(canvas, 0, 0, TW, raw.height);
+
+  // Preprocesar: grises + contraste + binarizar
+  const proc = preprocesar(raw);
+
+  try {
+    camStatus.textContent = 'ESCANEANDO…';
+    const { data: { text } } = await Tesseract.recognize(proc, 'spa', {
+      tessedit_char_whitelist: 'CPcp:0123456789 \n',
+      tessedit_pageseg_mode:   '6'
+    });
+
+    console.log('[OCR]', JSON.stringify(text));
+
+    const m  = text.match(/[Cc][Pp][:\s]*(\d{4})/);
+    const cp = m ? parseInt(m[1]) : null;
+
+    if (cp) {
+      // ── CP detectado ──────────────────────────────────
+      if (lastCP === null) {
+        // Etiqueta nueva — contar
+        lastCP = cp;
+        const zona     = detectarZona(cp);
+        const zonaData = ZONAS.find(z => z.id === zona);
+
+        if (zona !== 'UNKNOWN') {
+          conteo[zona] = (conteo[zona]||0) + 1;
+          saveConteo();
+        }
+
+        flashOK();
+        beepOK();
+
+        zoneLabel.className   = `zone-label z-${zona}`;
+        zoneLabel.textContent = zonaData ? zonaData.label : '¿?';
+        zoneSub.textContent   = zonaData ? zonaData.sub   : '';
+        zoneCp.textContent    = `CP ${cp} · ${zona !== 'UNKNOWN' ? '✓ registrado' : 'zona no mapeada — avisá el CP'}`;
+        camStatus.textContent = `✓ CP ${cp}`;
+        renderConteo();
+      } else {
+        // Mismo paquete todavía en cámara — ignorar
+        camStatus.textContent = `ESPERANDO NUEVO…`;
+      }
+    } else {
+      // ── Sin CP — etiqueta fuera de cámara ─────────────
+      // Resetear lastCP: el próximo que aparezca se contará
+      if (lastCP !== null) {
+        lastCP = null;
+        camStatus.textContent = 'LISTO';
+      } else {
+        camStatus.textContent = 'BUSCANDO…';
+      }
+    }
+  } catch(e) {
+    console.error(e);
+    camStatus.textContent = 'ERROR';
+  }
+
+  processing = false;
+  if (loopActive) setTimeout(scanFrame, 200); // 200ms entre scans
+}
+
+btnAuto.onclick = () => {
+  getAudio();
+  if (!loopActive) {
+    loopActive = true;
+    lastCP     = null;
+    btnAuto.textContent = '⏹ DETENER';
+    btnAuto.classList.add('running');
+    scanFrame();
+  } else {
+    loopActive = false;
+    processing = false;
+    btnAuto.textContent = '▶ INICIAR SCAN';
+    btnAuto.classList.remove('running');
+    camStatus.textContent = 'DETENIDO';
+  }
+};
+
+// ─── RESET ────────────────────────────────────────────────
+btnReset.onclick = () => {
+  if (!confirm('¿Reiniciar conteo de todas las zonas?')) return;
+  ZONAS.forEach(z => conteo[z.id] = 0);
+  saveConteo();
+  lastCP = null;
+  zoneLabel.className   = 'zone-label z-UNKNOWN';
+  zoneLabel.textContent = '— — —';
+  zoneSub.textContent   = '';
+  zoneCp.textContent    = 'Conteo reiniciado';
+  camStatus.textContent = 'LISTO';
+  renderConteo();
+};
+</script>
+</body>
+</html>

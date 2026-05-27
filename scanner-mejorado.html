@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanner Logístico</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: #1e1e2e;
+    --accent: #f0c040;
+    --caba: #60a5fa;
+    --norte: #34d399;
+    --oeste: #a78bfa;
+    --sur: #f87171;
+    --interior: #fb923c;
+    --unknown: #6b7280;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow Condensed', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--accent);
+  }
+
+  header span {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* CÁMARA */
+  .cam-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--border);
+    aspect-ratio: 4/3;
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cam-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .cam-reticle {
+    width: 60%;
+    height: 30%;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+    position: relative;
+  }
+
+  .cam-reticle::before,
+  .cam-reticle::after {
+    content: 'CP:';
+    position: absolute;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    opacity: 0.7;
+    letter-spacing: 2px;
+  }
+
+  .cam-reticle::before { top: -18px; left: 0; }
+  .cam-reticle::after { bottom: -18px; right: 0; content: '####'; }
+
+  canvas { display: none; }
+
+  /* BOTONES */
+  .btn-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  button {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  button:active { transform: scale(0.97); opacity: 0.85; }
+
+  #btn-start {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  #btn-start.active {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  #btn-scan {
+    background: var(--accent);
+    color: #000;
+    font-size: 19px;
+  }
+
+  #btn-scan:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* RESULTADO */
+  .result-box {
+    margin-top: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .result-zone {
+    padding: 20px 16px;
+    text-align: center;
+    background: var(--surface);
+  }
+
+  .zone-label {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+
+  .zone-cp {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .zone-status {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* SPINNER */
+  .scanning-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    background: var(--surface);
+  }
+
+  .scanning-indicator.active { display: flex; }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.2; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  /* CONTEO */
+  .counter-title {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 10px 16px 6px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .counter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+
+  .counter-cell {
+    background: var(--bg);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .counter-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .counter-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    flex: 1;
+  }
+
+  .counter-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* RESET */
+  .btn-reset {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+    border-radius: 8px;
+  }
+
+  .btn-reset:hover { border-color: var(--sur); color: var(--sur); }
+
+  /* COLORES DE ZONA */
+  .zona-CABA     { color: var(--caba); }
+  .zona-GBA-NORTE { color: var(--norte); }
+  .zona-GBA-OESTE { color: var(--oeste); }
+  .zona-GBA-SUR  { color: var(--sur); }
+  .zona-INTERIOR { color: var(--interior); }
+  .zona-DESCONOCIDA { color: var(--unknown); }
+
+  .dot-CABA      { background: var(--caba); }
+  .dot-GBA-NORTE { background: var(--norte); }
+  .dot-GBA-OESTE { background: var(--oeste); }
+  .dot-GBA-SUR   { background: var(--sur); }
+  .dot-INTERIOR  { background: var(--interior); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📦 SCANNER LOGÍSTICO</h1>
+    <span>detección por zona · ML FLEX</span>
+  </div>
+</header>
+
+<div class="cam-wrapper">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="cam-overlay">
+    <div class="cam-reticle"></div>
+  </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div class="btn-row">
+  <button id="btn-start">📷 CÁMARA</button>
+  <button id="btn-scan" disabled>⚡ ESCANEAR ZONA</button>
+</div>
+
+<!-- RESULTADO -->
+<div class="result-box" id="result-box">
+  <div class="result-zone" id="result-zone">
+    <div class="zone-label zona-DESCONOCIDA" id="zone-label">— — —</div>
+    <div class="zone-cp" id="zone-cp">Apuntá la cámara al CP de la etiqueta</div>
+    <div class="zone-status" id="zone-status"></div>
+  </div>
+
+  <div class="scanning-indicator" id="scanning-indicator">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <span style="font-size:13px; color: var(--muted); letter-spacing:2px;">LEYENDO OCR...</span>
+  </div>
+
+  <!-- CONTEO -->
+  <div class="counter-title">CONTEO POR ZONA</div>
+  <div class="counter-grid" id="counter-grid"></div>
+</div>
+
+<button class="btn-reset" id="btn-reset">↺ REINICIAR CONTEO</button>
+
+<script>
+// ─── ESTADO ────────────────────────────────────────────────
+const ZONAS = [
+  { id: 'CABA',      label: 'CABA',      ranges: [[1000,1499]] },
+  { id: 'GBA-NORTE', label: 'GBA NORTE', ranges: [[1600,1670]] },
+  { id: 'GBA-OESTE', label: 'GBA OESTE', ranges: [[1671,1819]] },
+  { id: 'GBA-SUR',   label: 'GBA SUR',   ranges: [[1820,1900]] },
+  { id: 'INTERIOR',  label: 'INTERIOR',  ranges: [[1901,9999],[1500,1599]] },
+];
+
+let conteo = JSON.parse(localStorage.getItem('scanner-conteo') || 'null') || {
+  'CABA': 0, 'GBA-NORTE': 0, 'GBA-OESTE': 0, 'GBA-SUR': 0, 'INTERIOR': 0
+};
+
+// ─── ELEMENTOS ─────────────────────────────────────────────
+const video     = document.getElementById('video');
+const canvas    = document.getElementById('canvas');
+const btnStart  = document.getElementById('btn-start');
+const btnScan   = document.getElementById('btn-scan');
+const btnReset  = document.getElementById('btn-reset');
+const zoneLabel = document.getElementById('zone-label');
+const zoneCp    = document.getElementById('zone-cp');
+const zoneStatus= document.getElementById('zone-status');
+const scanning  = document.getElementById('scanning-indicator');
+const resultZone= document.getElementById('result-zone');
+
+// ─── RENDER CONTEO ─────────────────────────────────────────
+function renderConteo() {
+  const grid = document.getElementById('counter-grid');
+  grid.innerHTML = ZONAS.map(z => `
+    <div class="counter-cell">
+      <div class="counter-dot dot-${z.id}"></div>
+      <div class="counter-name">${z.label}</div>
+      <div class="counter-num zona-${z.id}">${conteo[z.id] || 0}</div>
+    </div>
+  `).join('');
+}
+
+function saveConteo() {
+  localStorage.setItem('scanner-conteo', JSON.stringify(conteo));
+}
+
+renderConteo();
+
+// ─── LÓGICA DE ZONA ────────────────────────────────────────
+function detectarZona(cp) {
+  for (const z of ZONAS) {
+    for (const [min, max] of z.ranges) {
+      if (cp >= min && cp <= max) return z.id;
+    }
+  }
+  return 'DESCONOCIDA';
+}
+
+// ─── CÁMARA ────────────────────────────────────────────────
+btnStart.onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 } }
+    });
+    video.srcObject = stream;
+    btnStart.textContent = '✓ ACTIVA';
+    btnStart.classList.add('active');
+    btnScan.disabled = false;
+  } catch(e) {
+    alert('No se pudo acceder a la cámara: ' + e.message);
+  }
+};
+
+// ─── ESCANEAR ──────────────────────────────────────────────
+btnScan.onclick = async () => {
+  // Mostrar spinner, ocultar resultado anterior
+  resultZone.style.display = 'none';
+  scanning.classList.add('active');
+  btnScan.disabled = true;
+
+  // Capturar frame
+  const MAX_W = 1000;
+  let w = video.videoWidth;
+  let h = video.videoHeight;
+  if (w > MAX_W) { h = h * MAX_W / w; w = MAX_W; }
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+
+  try {
+    // OCR — buscamos solo texto numérico + "CP"
+    const { data: { text } } = await Tesseract.recognize(canvas, 'spa', {
+      tessedit_char_whitelist: 'CP:0123456789 \n'
+    });
+
+    console.log('[OCR RAW]', text);
+
+    // REGEX: busca "CP:" seguido del número — mucho más preciso que buscar cualquier 4 dígitos
+    const cpMatch = text.match(/CP[:\s]*(\d{4})/i);
+    const cp = cpMatch ? parseInt(cpMatch[1]) : null;
+
+    const zona = cp ? detectarZona(cp) : 'DESCONOCIDA';
+
+    // Actualizar conteo solo si detectamos zona válida
+    if (zona !== 'DESCONOCIDA') {
+      conteo[zona] = (conteo[zona] || 0) + 1;
+      saveConteo();
+    }
+
+    // Mostrar resultado
+    scanning.classList.remove('active');
+    resultZone.style.display = '';
+
+    zoneLabel.className = `zone-label zona-${zona.replace(' ','-')}`;
+    zoneLabel.textContent = zona.replace('-', ' ');
+    zoneCp.textContent = cp ? `CP detectado: ${cp}` : 'CP no detectado — reintentá';
+    zoneStatus.textContent = zona !== 'DESCONOCIDA' ? '✓ registrado' : '';
+
+    renderConteo();
+
+  } catch(e) {
+    scanning.classList.remove('active');
+    resultZone.style.display = '';
+    zoneLabel.textContent = 'ERROR';
+    zoneCp.textContent = e.message;
+  }
+
+  btnScan.disabled = false;
+};
+
+// ─── RESET ─────────────────────────────────────────────────
+btnReset.onclick = () => {
+  if (!confirm('¿Reiniciar conteo de todas las zonas?')) return;
+  conteo = { 'CABA': 0, 'GBA-NORTE': 0, 'GBA-OESTE': 0, 'GBA-SUR': 0, 'INTERIOR': 0 };
+  saveConteo();
+  zoneLabel.textContent = '— — —';
+  zoneCp.textContent = 'Apuntá la cámara al CP de la etiqueta';
+  zoneStatus.textContent = '';
+  zoneLabel.className = 'zone-label zona-DESCONOCIDA';
+  renderConteo();
+};
+</script>
+
+</body>
+</html>

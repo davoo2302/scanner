@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scanner ML · Tesseract Rápido v4</title>
+<title>Scanner ML · Tesseract Rápido</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 body { font-family: Arial; background: #111827; color: white; padding: 10px; }
@@ -69,7 +69,7 @@ button {
 </head>
 <body>
 
-<h2>📦 Scanner ML · Tesseract ⚡ v4</h2>
+<h2>📦 Scanner ML · Tesseract ⚡</h2>
 
 <div id="camara-wrap">
   <video id="video" autoplay playsinline></video>
@@ -144,86 +144,86 @@ button {
 const CABA_SET = new Set([...Array.from({length:500},(_,i)=>1000+i)]);
 
 const C1_CPS = new Set([
-  // Vicente López: Florida, Munro, Carapachay, Villa Adelina, Villa Martelli, La Lucila, Olivos
+  // San Martín / Vicente López / San Isidro / San Fernando
   1600,1601,1602,1603,1604,1605,1606,1607,1609,
-  // San Isidro: Acasuso, Martinez, San Isidro, Beccar, Victoria
-  1624,1636,1637,1638,1640,1641,1642,1643,1644,1645,
-  // San Fernando
-  1646,1647,1649,
-  // San Martín: San Martín, Villa Lynch, Villa Bosch, Santos Lugares, Villa Raffo, Villa Ballester, Saenz Peña, San Andrés, Villa Maipu
-  1650,1651,1652,1653,1654,1655,1672,1673,1674,1675,
-  // Tres de Febrero: Caseros, El Palomar, Lomas del Palomar, Martín Coronado, Loma Hermosa,
-  //   José León Suárez, Billinghurst, Ciudad Evita, Ciudad Madero, Ciudadela,
-  //   Villa Sarmiento (Morón), Pablo Podesta, Villa Bonich, Villa Bosch
-  1656,1657,1658,1660,1661,1662,1663,1676,1678,
-  1682,1683,1684,1685,
-  // Hurlingham / El Palomar
-  1686,1687,1688,1692,
-  // Morón
-  1702,1703,1704,1706,1708,1709,1710,1712,1713,1714,1715,
-  // La Matanza Norte: Ramos Mejía, La Tablada, Villa Luzuriaga, Villa Insuperable,
-  //   San Justo, Ciudad Madero, Villa Madero, Tapiales, Villa Celina, Villa Fiorito, Villa Bonich
-  1750,1751,1752,1753,1754,1755,1756,1766,1768,1769,1770,1771,
+  1624,1636,1637,1638,1640,1641,1642,1643,1644,
+  1645,1646,1647,1649,1650,1651,1653,1655,1672,1674,1675,
+  // Morón / Ituzaingó / Hurlingham / 3 de Febrero
+  1657,1676,1678,1682,1683,1684,1685,1686,1687,
+  1688,1692,1702,1704,1706,1708,1712,1713,1714,1715,
+  // La Matanza Norte (1750-1756) + Villa Madero (1768-1771)
+  1750,1751,1752,1753,1754,1756,
+  1768,1769,1770,1771,
   // Avellaneda / Lanús / Lomas de Zamora
   1820,1821,1822,1823,1824,1825,1826,1827,1828,
   1829,1831,1832,1833,1834,1836,1844,
-  1868,1869,1870,1871,1872,1873,1874,1875,
+  1868,1869,1870,1871,1872,1873,1874,1875
 ]);
 
 const C2_CPS = new Set([
-  // La Matanza Sur: Gregorio de Laferrere, Isidro Casanova, González Catán,
-  //   Rafael Castillo, Virrey del Pino, Libertad, Pontevedra, Trujui
-  1757,1758,1759,
-  1760,1761,1762,1763,1764,1765,1767,1772,1773,1774,1778,
-  // Tigre: Tigre, Rincón de Milberg, El Talar, General Pacheco, Ricardo Rojas, Troncos del Talar, Benavidez
-  1617,1618,1621,1648,1659,1670,
-  // Malvinas Arg / San Miguel / José C. Paz
-  1608,1610,1611,1612,1613,1614,1615,1616,
-  1622,1623,1664,1665,1666,1667,1668,
-  // Moreno: Moreno, La Reja, Francisco Alvarez, Paso del Rey, Trujui
-  1740,1741,1742,1743,1744,1745,1746,1747,1748,1749,
-  // Merlo: Merlo, San Antonio de Padua, Paso del Rey, Libertad, Mariano Acosta, La Reja
-  1716,1717,1718,1719,1720,1721,1722,1723,1724,1725,1726,1728,
-  // Quilmes / Berazategui / Florencio Varela
-  1876,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,1889,
-  // Ezeiza / Esteban Echeverría
+  // La Matanza Sur
+  1755,1757,1758,1759,
+  1760,1761,1762,1763,1764,1765,1766,1767,1772,1773,1774,1778,
+  // Tigre / Benavídez / Don Torcuato / Troncos del Talar / Ricardo Rojas
+  1648,1659,1670,
+  1621, // Benavídez
+  1611,1617, // Don Torcuato / Troncos del Talar / Ricardo Rojas / Bancalari
+  // Malvinas Arg / San Miguel / José C. Paz / Bella Vista
+  1608,1610,1612,1613,1614,1615,1616,
+  1661, // Bella Vista
+  1663,1664,1665,1666,1667,1668,
+  // Moreno / Francisco Álvarez / La Reja / Cuartel V
+  1740,1741,1742,1743,1744,1745,1746,1747,1749,
+  // Merlo / San Antonio de Padua / Mariano Acosta / Pontevedra
+  1716,1718,1721,1722,1723,
+  // Quilmes / Berazategui / Florencio Varela / Bosques / El Pato
+  1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,1889,
+  1893, // El Pato / Centro Agrícola
+  // Ezeiza / Esteban Echeverría / Almirante Brown
+  // Canning, Monte Grande, El Jaguel, Tristán Suárez, San Francisco Solano
   1801,1802,1803,1804,1805,1806,1807,
-  // Almirante Brown: Adrogué, Burzaco, Claypole, José Marmol, Longchamps,
-  //   Luis Guillón, Rafael Calzada, Glew, Villa Brown, Villa La Florida
   1838,1839,1840,1841,1842,1846,
-  1847,1848,1849,1850,1851,1852,1853,1854,1855,1856,1857,1858,
-  // Cañuelas / San Vicente / Guernica / Alejandro Korn
+  1852,1853,1854,1855,1856,1857,1858,
+  // Cañuelas / Spegazzini / Gral. Rodríguez sur / Hudson / Glew
   1812,1813,1814,1815,1816,1817,1818,1819,
+  // 9 de Abril
+  1776,
+  // Longchamps / Rafael Calzada / Adrogué / José Marmol / Don Bosco / Bernal
+  1847,1848,1849,1850,
+  1876, // Bernal / Don Bosco
 ]);
 
 const C3_CPS = new Set([
-  // Escobar: Garín, Maquinista Savio, Ingeniero Maschwitz, Belen de Escobar, Matheu, Zelaya
-  1619,1620,
-  1625,1626,1627,1628,
-  // Pilar: Pilar, Presidente Derqui, Manzanares, Fátima, Los Cardales, Villa Rosa
+  // Pilar / Del Viso / Derqui / Manzanares / Los Cardales / Fatima / Ringuelet-Pilar
   1629,1630,1631,1632,1633,1634,1635,
-  1669, // Del Viso (Pilar)
-  // Gral Rodríguez / Luján zona
-  1727,
-  // Cañuelas zona ext / San Vicente ext
-  1810,1811,
-  // La Plata: City Bell, Gonnet, Ringuelet, Tolosa, Los Hornos, Lisandro Olmos,
-  //   Melchor Romero, Arturo Seguí, Joaquín Gorina, Abasto, Villa Elisa, Villa Elvira, Villa Nueva
-  1894,1897,
+  1669, // Del Viso
+  // Escobar / Garín / Belén de Escobar / Ingeniero Maschwitz / Maquinista Savio / Zelaya / Open Door / Matheu / Jauregui / Coortines
+  1625,1626,1627,1628,
+  1619,1620, // Garín
+  1622,1623, // Ing. Maschwitz / Dique Luján → C3
+  // Campana / Zárate
+  2804,2805,2806,
+  2820,2821,2822,
+  // Gral. Rodríguez / El Granadero / Gral. Rodríguez zona
+  1727,1728,1748, // 1748 = El Granadero (Gral. Rodríguez)
+  // Luján / Marcos Paz / Cañuelas zona C3 / Guernica / San Vicente / Santa Rosa
+  6700,6701, // Luján
+  1722, // Marcos Paz zona (algunos CP)
+  1731, // Marcos Paz
+  1840, // Guernica / Ezeiza zona sur → depende, algunos ya en C2
+  1861,1862,1863,1864,1865, // Alejandro Korn / San Vicente zona
+  // La Plata / Berisso / Ensenada / La Lonja / Tolosa / Gonnet / City Bell
+  // Arturo Seguí / Joaquín Gorina / Lisandro Olmos / Manuel B. Gonnet
+  // Los Hornos / Villa Elisa / Villa Elvira / Villa Nueva / Melchor Romero
+  1895, // Arturo Seguí
+  1896, // City Bell
   1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,
   1910,1911,1912,1913,1914,1915,1916,1917,1918,1919,
-  1920,1921,1922,1923,1924,1925,1926,1927,1928,1929,
+  1920,1921,1922,1923,1924,1925,1926,
   1930,1931,1932,1933,1934,
-  // Zárate
-  2800,2801,2802,
-  // Campana
-  2804,2805,2806,
-  // Los Cardales zona
-  2811,
-  // Zárate zona ext
-  2820,2821,2822,
-  // Luján / Open Door / Jáuregui
-  6700,
+  // Nordelta (Tigre delta)
+  // Abasto / Alejandro Korn
+  1903, // Abasto
 ]);
 
 const ZONAS = [

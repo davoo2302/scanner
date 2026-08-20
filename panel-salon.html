@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="es-AR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>El lunes del salon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Karla:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--fondo:#E7E0E1;--carta:#FBF8F7;--tinta:#2E1F2B;--suave:#7C6A72;--linea:#DED4D5;--carmin:#A8243E;
+--display:"Instrument Serif",Georgia,serif;--texto:"Karla",Arial,sans-serif;--dato:"Space Mono",monospace;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--fondo);color:var(--tinta);font-family:var(--texto);font-size:16px;line-height:1.45;padding-bottom:48px}
+.marco{max-width:460px;margin:0 auto;padding:0 18px}
+.aviso{background:var(--tinta);color:#E7E0E1;font-family:var(--dato);font-size:10.5px;letter-spacing:.09em;
+text-transform:uppercase;text-align:center;padding:9px 18px;line-height:1.5}
+header{padding:26px 0 8px}
+.fecha{font-family:var(--dato);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--suave)}
+.salon{font-family:var(--display);font-size:22px;line-height:1.1;margin-top:2px}
+.hero{padding:22px 0 26px;border-bottom:1px solid var(--linea)}
+.hero .rotulo{font-family:var(--dato);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--suave);margin-bottom:6px}
+.plata{font-family:var(--display);font-size:clamp(52px,15vw,72px);line-height:.92;letter-spacing:-.02em;display:block}
+.plata .signo{font-size:.52em;vertical-align:.28em;margin-right:.04em;color:var(--carmin)}
+.subrayado{height:3px;background:var(--carmin);width:62%;margin:12px 0 14px;border-radius:2px}
+.hero p{font-size:15.5px;max-width:34ch}
+.hero p em{font-style:italic;font-family:var(--display);font-size:1.12em}
+.hero .nota{font-size:12.5px;color:var(--suave);margin-top:10px;max-width:38ch}
+nav{display:flex;gap:6px;padding:18px 0 4px;position:sticky;top:0;background:var(--fondo);z-index:5}
+nav button{flex:1;font-family:var(--dato);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+padding:10px 3px;cursor:pointer;background:transparent;color:var(--suave);border:1px solid var(--linea);border-radius:2px;
+transition:background .18s,color .18s}
+nav button[aria-selected="true"]{background:var(--tinta);color:var(--carta);border-color:var(--tinta)}
+nav button:focus-visible{outline:2px solid var(--carmin);outline-offset:2px}
+.panel{padding-top:14px}.panel[hidden]{display:none}
+.banda{background:#F1EAE9;border:1px solid var(--linea);border-radius:3px;padding:12px 14px;margin-bottom:14px;
+font-size:13px;color:var(--suave)}
+.banda b{color:var(--tinta)}
+.clienta{background:var(--carta);border:1px solid var(--linea);border-radius:3px;margin-bottom:10px;overflow:hidden;
+transition:opacity .3s,transform .3s}
+.clienta.saliendo{opacity:0;transform:translateX(26px)}
+.cabecera{display:flex;gap:14px;align-items:center;padding:14px;width:100%;background:none;border:0;text-align:left;
+cursor:pointer;font-family:inherit;color:inherit}
+.cabecera:focus-visible{outline:2px solid var(--carmin);outline-offset:-2px}
+.esmalte{flex:none;width:34px;height:44px;border-radius:17px 17px 8px 8px;position:relative;
+box-shadow:inset 0 -4px 7px rgba(0,0,0,.20),0 2px 5px rgba(46,31,43,.18)}
+.esmalte::after{content:"";position:absolute;top:6px;left:7px;width:7px;height:19px;border-radius:6px;
+background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,0))}
+.esmalte.claro{border:1px solid rgba(46,31,43,.13)}
+.datos{flex:1;min-width:0}
+.nombre{font-size:17px;font-weight:700;line-height:1.2}
+.detalle{font-size:12.5px;color:var(--suave);margin-top:2px}
+.dias{font-family:var(--dato);font-size:11px;letter-spacing:.03em;display:inline-flex;align-items:center;gap:5px;
+margin-top:5px;color:var(--carmin)}
+.dias::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--carmin)}
+.dias.tibio{color:#9A7434}.dias.tibio::before{background:#9A7434}
+.cuerpo{border-top:1px solid var(--linea);padding:14px;display:none}
+.clienta.abierta .cuerpo{display:block}
+.rotulito{font-family:var(--dato);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--suave);margin-bottom:6px}
+.mensaje{background:#F1EAE9;border-left:2px solid var(--tinta);padding:11px 13px;font-size:14.5px;line-height:1.5;border-radius:0 3px 3px 0}
+.acciones{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;font-family:var(--texto);font-weight:700;font-size:14px;padding:12px 8px;border-radius:3px;cursor:pointer;border:1px solid var(--tinta)}
+.btn.principal{background:var(--tinta);color:var(--carta)}
+.btn.secundario{background:transparent;color:var(--tinta);flex:0 0 38%}
+.aclara{font-size:12px;color:var(--suave);margin-top:10px}
+.vacio{background:var(--carta);border:1px dashed var(--linea);border-radius:3px;padding:34px 20px;text-align:center}
+.vacio .grande{font-family:var(--display);font-size:30px;line-height:1.15;margin-bottom:8px}
+.vacio p{font-size:14px;color:var(--suave);max-width:28ch;margin:0 auto}
+.cifra{background:var(--carta);border:1px solid var(--linea);border-radius:3px;padding:16px;margin-bottom:10px}
+.cifra .rotulo{font-family:var(--dato);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--suave)}
+.cifra .valor{font-family:var(--display);font-size:36px;line-height:1.05;margin-top:4px}
+.cifra .valor.mal{color:var(--carmin)}
+.cifra .pie{font-size:13px;color:var(--suave);margin-top:6px}
+.barra{margin:11px 0}
+.barra .fila{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px}
+.barra .fila b{font-family:var(--dato);font-size:12.5px;font-weight:400}
+.barra .riel{height:9px;background:#E4DADB;border-radius:2px;overflow:hidden}
+.barra .relleno{height:100%;background:var(--tinta);border-radius:2px}
+.barra .relleno.destacado{background:var(--carmin)}
+.hallazgo{background:var(--tinta);color:#EDE5E6;border-radius:3px;padding:18px;margin-top:16px}
+.hallazgo .rotulo{font-family:var(--dato);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:#B79EA6}
+.hallazgo p{font-size:15px;margin-top:8px;line-height:1.5}
+.hallazgo strong{font-family:var(--display);font-size:1.15em;font-weight:400}
+.cierre{margin-top:22px;padding-top:16px;border-top:1px solid var(--linea);font-size:13px;color:var(--suave)}
+.cierre b{color:var(--tinta)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<div class="aviso">Datos reales del cuaderno &middot; 1 jun al 19 ago 2026</div>
+<div class="marco">
+<header><div class="fecha">Miercoles 19 de agosto</div><div class="salon">Tu semana</div></header>
+<section class="hero">
+<div class="rotulo">Se te esta yendo ahora</div>
+<span class="plata"><span class="signo">$</span><span id="plata">1.058.634</span></span>
+<div class="subrayado"></div>
+<p><em id="cuantas">31</em> clientas ya pasaron su ciclo y <strong>ninguna tiene turno</strong>.</p>
+<p class="nota">No son estimaciones. Salen de las 308 visitas que anoto entre junio y hoy.</p>
+</section>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-panel="escribir">Para escribir</button>
+<button role="tab" aria-selected="false" data-panel="perdidas">No volvieron</button>
+<button role="tab" aria-selected="false" data-panel="numeros">Los numeros</button>
+</nav>
+
+<div class="panel" id="escribir">
+<div class="banda">Los telefonos todavia no estan cargados. <b>Se hace una vez, desde tu WhatsApp</b>, y despues cada mensaje sale con un toque.</div>
+<div id="lista"></div>
+<div class="vacio" id="listaVacia" hidden><div class="grande">Listo.</div><p>Les escribiste a todas. El lunes que viene te aviso quienes tocan.</p></div>
+<div class="cierre">El mensaje sale <b>de tu WhatsApp</b>, con tu nombre. Aca solo se prepara.</div>
+</div>
+
+<div class="panel" id="perdidas" hidden>
+<div class="banda">Vinieron <b>una sola vez</b> y no volvieron. Por cada una ya pagaste: el posteo, la recomendacion, el descuento de primera vez.</div>
+<div id="lista2"></div>
+<div class="cierre">La segunda visita es la que convierte a una desconocida en clienta. <b>Es la que menos atencion recibe.</b></div>
+</div>
+
+<div class="panel" id="numeros" hidden>
+<div class="cifra"><div class="rotulo">Entro en agosto (19 dias)</div><div class="valor">$2.242.100</div>
+<div class="pie">78 turnos &middot; 4,3 por dia, el ritmo mas alto de los tres meses</div></div>
+<div class="cifra"><div class="rotulo">Los tres meses</div>
+<div class="barra"><div class="fila"><span>Junio &middot; 119 turnos</span><b>$3.424.000</b></div><div class="riel"><div class="relleno" style="width:98%"></div></div></div>
+<div class="barra"><div class="fila"><span>Julio &middot; 111 turnos</span><b>$3.507.900</b></div><div class="riel"><div class="relleno" style="width:100%"></div></div></div>
+<div class="barra"><div class="fila"><span>Agosto &middot; 78 turnos (parcial)</span><b>$2.242.100</b></div><div class="riel"><div class="relleno destacado" style="width:64%"></div></div></div>
+</div>
+<div class="cifra"><div class="rotulo">Efectivo que no entra en el "facturado"</div><div class="valor mal">$1.943.500</div>
+<div class="pie">21% de todo lo cobrado en el periodo</div></div>
+<div class="hallazgo"><div class="rotulo">Lo que el cuaderno no te dice</div>
+<p>En julio subiste kapping <strong>+12%</strong>, manos y pies <strong>+20%</strong> y pedicura <strong>+28%</strong>.</p>
+<p>Facturaste lo mismo con 8 turnos menos. <strong>El aumento se absorbio entero.</strong> Y agosto ya viene mas fuerte que junio.</p></div>
+<div class="cierre">Tu ciclo real es de <b>21 dias</b>. Sofia 26-23-21. Marikena 21-34-21. Carolina 22-18-18. El cuaderno lo confirma clienta por clienta.</div>
+</div>
+
+</div>
+<script>
+const clientas = [{"n": "Juana", "dni": "", "dias": 71, "ciclo": 21, "ticket": 0, "vis": 2, "serv": "Service", "est": "VENCIDA", "hex": "#6F7448", "msj": "Hola Juana! Tanto tiempo 😊 ¿Todo bien? Tengo lugar esta semana por si te queres hacer las uñas de nuevo. Avisame y te guardo el turno 💅", "claro": false}, {"n": "Sofi", "dni": "", "dias": 61, "ciclo": 21, "ticket": 30000, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Hola Sofi! Tanto tiempo 😊 ¿Todo bien? Tengo lugar esta semana por si te queres hacer las uñas de nuevo. Avisame y te guardo el turno 💅", "claro": true}, {"n": "Lu", "dni": "", "dias": 57, "ciclo": 21, "ticket": 36000, "vis": 3, "serv": "Arreglo uña", "est": "VENCIDA", "hex": "#B0A6A2", "msj": "Hola Lu! Tanto tiempo 😊 ¿Todo bien? Tengo lugar esta semana por si te queres hacer las uñas de nuevo. Avisame y te guardo el turno 💅", "claro": true}, {"n": "Micaela", "dni": "", "dias": 55, "ciclo": 21, "ticket": 20500, "vis": 3, "serv": "Retiro", "est": "VENCIDA", "hex": "#B0A6A2", "msj": "Hola Micaela! Tanto tiempo 😊 ¿Todo bien? Tengo lugar esta semana por si te queres hacer las uñas de nuevo. Avisame y te guardo el turno 💅", "claro": true}, {"n": "Marisol", "dni": "39184686", "dias": 47, "ciclo": 21, "ticket": 30000, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Hola Marisol! Tanto tiempo 😊 ¿Todo bien? Tengo lugar esta semana por si te queres hacer las uñas de nuevo. Avisame y te guardo el turno 💅", "claro": true}, {"n": "Ester", "dni": "", "dias": 44, "ciclo": 21, "ticket": 33000, "vis": 3, "serv": "Kapping", "est": "VENCIDA", "hex": "#6B1F35", "msj": "Ester! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Sofi Fitel", "dni": "39208535", "dias": 43, "ciclo": 21, "ticket": 30000, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Sofi! ¿Como andas? Ya estas en fecha para tu turno. Decime que dia te queda mejor y te lo guardo 💅", "claro": true}, {"n": "Micaela", "dni": "37719499", "dias": 39, "ciclo": 19, "ticket": 31667, "vis": 3, "serv": "Kapping", "est": "VENCIDA", "hex": "#6B1F35", "msj": "Micaela! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Andrea (amiga Angelica)", "dni": "96070375", "dias": 40, "ciclo": 21, "ticket": 57000, "vis": 2, "serv": "Manos+Pies", "est": "VENCIDA", "hex": "#7A4A55", "msj": "Andrea! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Sofia Nueva", "dni": "49702078", "dias": 40, "ciclo": 21, "ticket": 32500, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Sofia! ¿Como andas? Ya estas en fecha para tu turno. Decime que dia te queda mejor y te lo guardo 💅", "claro": true}, {"n": "Angelica", "dni": "95819041", "dias": 37, "ciclo": 21, "ticket": 32500, "vis": 2, "serv": "Kapping", "est": "VENCIDA", "hex": "#6B1F35", "msj": "Angelica! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Cata Albini", "dni": "49120380", "dias": 34, "ciclo": 21, "ticket": 21550, "vis": 2, "serv": "Retiro", "est": "VENCIDA", "hex": "#B0A6A2", "msj": "Cata! Ya te toca reposicion del retiro. ¿Que dia te viene bien esta semana? 💅", "claro": true}, {"n": "Fiore", "dni": "43447352", "dias": 32, "ciclo": 21, "ticket": 20750, "vis": 4, "serv": "Semi", "est": "VENCIDA", "hex": "#A8243E", "msj": "Fiore! Ya te toca reposicion del semi. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Merlina", "dni": "24694643", "dias": 32, "ciclo": 21, "ticket": 34667, "vis": 3, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Merlina! ¿Como andas? Ya estas en fecha para tu turno. Decime que dia te queda mejor y te lo guardo 💅", "claro": true}, {"n": "Maia Pacheco", "dni": "19138962", "dias": 32, "ciclo": 21, "ticket": 29500, "vis": 2, "serv": "Pies", "est": "VENCIDA", "hex": "#4E6B72", "msj": "Maia! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Valentina", "dni": "46583681", "dias": 33, "ciclo": 23, "ticket": 35667, "vis": 5, "serv": "Service", "est": "VENCIDA", "hex": "#6F7448", "msj": "Valentina! Ya te toca reposicion del service. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Flor Nueva", "dni": "", "dias": 30, "ciclo": 21, "ticket": 32500, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Flor! ¿Como andas? Ya estas en fecha para tu turno. Decime que dia te queda mejor y te lo guardo 💅", "claro": true}, {"n": "Josefina Mariano", "dni": "49926814", "dias": 30, "ciclo": 21, "ticket": 34500, "vis": 2, "serv": "", "est": "VENCIDA", "hex": "#DDD3D2", "msj": "Josefina! ¿Como andas? Ya estas en fecha para tu turno. Decime que dia te queda mejor y te lo guardo 💅", "claro": true}, {"n": "Grecia", "dni": "95045010", "dias": 28, "ciclo": 21, "ticket": 41333, "vis": 3, "serv": "Pies", "est": "Toca ahora", "hex": "#4E6B72", "msj": "Grecia! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Sol", "dni": "49702274", "dias": 27, "ciclo": 21, "ticket": 34500, "vis": 2, "serv": "Kapping", "est": "Toca ahora", "hex": "#6B1F35", "msj": "Sol! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Naty", "dni": "95894760", "dias": 26, "ciclo": 21, "ticket": 46000, "vis": 2, "serv": "Manos", "est": "Toca ahora", "hex": "#C0887A", "msj": "Naty! Ya te toca reposicion del manos. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Agostina", "dni": "42883730", "dias": 25, "ciclo": 21, "ticket": 36500, "vis": 2, "serv": "Kapping", "est": "Toca ahora", "hex": "#6B1F35", "msj": "Agostina! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Lourdes", "dni": "95737882", "dias": 25, "ciclo": 21, "ticket": 46000, "vis": 2, "serv": "Manos+Pies", "est": "Toca ahora", "hex": "#7A4A55", "msj": "Lourdes! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Sin nombre", "dni": "", "dias": 24, "ciclo": 21, "ticket": 0, "vis": 2, "serv": "Soft gel", "est": "Toca ahora", "hex": "#8A6A9E", "msj": "Sin! Ya te toca reposicion del soft gel. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Laura", "dni": "30137867", "dias": 23, "ciclo": 21, "ticket": 53000, "vis": 3, "serv": "Manos+Pies", "est": "Toca ahora", "hex": "#7A4A55", "msj": "Laura! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Fatima", "dni": "", "dias": 22, "ciclo": 21, "ticket": 35000, "vis": 2, "serv": "Kapping", "est": "Toca ahora", "hex": "#6B1F35", "msj": "Fatima! Ya te toca reposicion del kapping. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Mafe", "dni": "", "dias": 22, "ciclo": 21, "ticket": 67000, "vis": 2, "serv": "Manos+Pies", "est": "Toca ahora", "hex": "#7A4A55", "msj": "Mafe! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Sandra", "dni": "", "dias": 21, "ciclo": 21, "ticket": 35000, "vis": 2, "serv": "Manos", "est": "Toca ahora", "hex": "#C0887A", "msj": "Sandra! Ya te toca reposicion del manos. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Sofia", "dni": "49552029", "dias": 21, "ciclo": 21, "ticket": 39000, "vis": 2, "serv": "Soft gel", "est": "Toca ahora", "hex": "#8A6A9E", "msj": "Sofia! Ya te toca reposicion del soft gel. ¿Que dia te viene bien esta semana? 💅", "claro": false}, {"n": "Daniela", "dni": "96363566", "dias": 25, "ciclo": 27, "ticket": 39250, "vis": 4, "serv": "Pies", "est": "Toca ahora", "hex": "#4E6B72", "msj": "Daniela! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}, {"n": "Eliana", "dni": "29707474", "dias": 13, "ciclo": 16, "ticket": 43750, "vis": 5, "serv": "Pies", "est": "Toca ahora", "hex": "#4E6B72", "msj": "Eliana! Ya paso el mes de los pies 🙈 ¿Te agendo esta semana? Decime que dia te queda mejor.", "claro": false}];
+const perdidas = [{"n": "Delfina", "dni": "49008650", "dias": 36, "ciclo": 21, "ticket": 0, "vis": 1, "serv": "Soft gel", "est": "Nueva que no volvio", "hex": "#8A6A9E", "claro": false}, {"n": "Luli", "dni": "49435304", "dias": 36, "ciclo": 21, "ticket": 35100, "vis": 1, "serv": "Soft gel", "est": "Nueva que no volvio", "hex": "#8A6A9E", "claro": false}, {"n": "Yanina", "dni": "23416288", "dias": 38, "ciclo": 21, "ticket": 35000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Alberto", "dni": "25658458", "dias": 39, "ciclo": 21, "ticket": 27000, "vis": 1, "serv": "Pies", "est": "Nueva que no volvio", "hex": "#4E6B72", "claro": false}, {"n": "Sofi (hija de Maria)", "dni": "51552154", "dias": 40, "ciclo": 21, "ticket": 38000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Noeli", "dni": "35787261", "dias": 42, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "Semi", "est": "Nueva que no volvio", "hex": "#A8243E", "claro": false}, {"n": "Cinthia", "dni": "31089735", "dias": 45, "ciclo": 21, "ticket": 42000, "vis": 1, "serv": "Pies", "est": "Nueva que no volvio", "hex": "#4E6B72", "claro": false}, {"n": "Luciana", "dni": "34220542", "dias": 57, "ciclo": 21, "ticket": 22000, "vis": 1, "serv": "Pies", "est": "Nueva que no volvio", "hex": "#4E6B72", "claro": false}, {"n": "Sandra (Eli)", "dni": "29900462", "dias": 62, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Mariel", "dni": "16280751", "dias": 63, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Yone", "dni": "96188758", "dias": 64, "ciclo": 21, "ticket": 27000, "vis": 1, "serv": "Pies", "est": "Nueva que no volvio", "hex": "#4E6B72", "claro": false}, {"n": "Astrid Bonilla", "dni": "95466346", "dias": 66, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Mariana", "dni": "29839229", "dias": 67, "ciclo": 21, "ticket": 47000, "vis": 1, "serv": "Manos+Pies", "est": "Nueva que no volvio", "hex": "#7A4A55", "claro": false}, {"n": "Yamila", "dni": "40923441", "dias": 67, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Eli (Estetica)", "dni": "23149084", "dias": 68, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Emma", "dni": "47572747", "dias": 68, "ciclo": 21, "ticket": 33000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Cata", "dni": "50324353", "dias": 69, "ciclo": 21, "ticket": 34000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Cristina", "dni": "5420784", "dias": 70, "ciclo": 21, "ticket": 47000, "vis": 1, "serv": "Manos+Pies", "est": "Nueva que no volvio", "hex": "#7A4A55", "claro": false}, {"n": "Agostina", "dni": "45067330", "dias": 72, "ciclo": 21, "ticket": 36000, "vis": 1, "serv": "Manos", "est": "Nueva que no volvio", "hex": "#C0887A", "claro": false}, {"n": "Maia", "dni": "37091710", "dias": 72, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "Kapping", "est": "Nueva que no volvio", "hex": "#6B1F35", "claro": false}, {"n": "Violet", "dni": "28507770", "dias": 72, "ciclo": 21, "ticket": 30000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Barbara", "dni": "95917712", "dias": 75, "ciclo": 21, "ticket": 57000, "vis": 1, "serv": "Manos+Pies", "est": "Nueva que no volvio", "hex": "#7A4A55", "claro": false}, {"n": "Sofia Otero", "dni": "51221498", "dias": 75, "ciclo": 21, "ticket": 34000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}, {"n": "Eugenia", "dni": "27457223", "dias": 79, "ciclo": 21, "ticket": 33000, "vis": 1, "serv": "", "est": "Nueva que no volvio", "hex": "#DDD3D2", "claro": true}];
+
+function fallo(e){
+  var d=document.getElementById('lista');
+  if(!d) return;
+  d.innerHTML='';
+  var b=document.createElement('div'); b.className='vacio';
+  var t=document.createElement('div'); t.className='grande'; t.textContent='Algo se rompio';
+  var p=document.createElement('p');
+  p.textContent='Mandale esta linea a Argenis: '+(e && e.message ? e.message : String(e));
+  p.style.fontFamily='monospace'; p.style.fontSize='11px'; p.style.maxWidth='none';
+  b.appendChild(t); b.appendChild(p); d.appendChild(b);
+}
+window.onerror=function(m,f,l,c,e){ fallo(e||{message:m+' (linea '+l+')'}); return true; };
+
+var $l=document.getElementById('lista');
+var $l2=document.getElementById('lista2');
+var $v=document.getElementById('listaVacia');
+var $p=document.getElementById('plata');
+var $c=document.getElementById('cuantas');
+var quedan=clientas.slice();
+
+function pe(n){ try{ return Number(n||0).toLocaleString('es-AR'); }catch(x){ return String(n); } }
+function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
+
+function ficha(c,i,conMsj){
+  var art=el('article','clienta');
+  var cab=el('button','cabecera');
+  cab.setAttribute('aria-expanded','false');
+
+  var esm=el('div','esmalte'+(c.claro?' claro':''));
+  esm.style.background=c.hex||'#8C7A82';
+  cab.appendChild(esm);
+
+  var dat=el('div','datos');
+  dat.appendChild(el('div','nombre',c.n||'Sin nombre'));
+
+  var det=[];
+  if(c.serv) det.push(c.serv); else det.push('sin anotar');
+  if(c.ticket) det.push('$'+pe(c.ticket));
+  if(c.vis) det.push(c.vis+(c.vis===1?' visita':' visitas'));
+  dat.appendChild(el('div','detalle',det.join(' \u00b7 ')));
+
+  var txt=(c.dias!=null?c.dias:'?')+' dias sin venir';
+  if(c.ciclo) txt+=' \u00b7 ciclo '+c.ciclo;
+  dat.appendChild(el('div','dias'+(c.est==='Toca ahora'?' tibio':''),txt));
+
+  cab.appendChild(dat);
+  art.appendChild(cab);
+
+  if(conMsj){
+    var cue=el('div','cuerpo');
+    cue.appendChild(el('div','rotulito','Mensaje preparado'));
+    cue.appendChild(el('div','mensaje',c.msj||''));
+    var acc=el('div','acciones');
+    var b1=el('button','btn principal','Escribir por WhatsApp');
+    var b2=el('button','btn secundario','Despues');
+    b1.onclick=function(){ quitar(i,art); };
+    b2.onclick=function(){ quitar(i,art); };
+    acc.appendChild(b1); acc.appendChild(b2);
+    cue.appendChild(acc);
+    cue.appendChild(el('div','aclara','Se abre tu WhatsApp con el texto puesto. Editalo si queres.'));
+    art.appendChild(cue);
+  }
+  cab.onclick=function(){
+    var abierta=art.className.indexOf('abierta')>-1;
+    art.className=abierta?'clienta':'clienta abierta';
+    cab.setAttribute('aria-expanded',!abierta);
+  };
+  return art;
+}
+
+function pintar(){
+  try{
+    while($l.firstChild) $l.removeChild($l.firstChild);
+    for(var i=0;i<quedan.length;i++) $l.appendChild(ficha(quedan[i],i,true));
+    $v.hidden = quedan.length>0;
+    if(quedan.length>0 && $l.children.length===0) fallo({message:'La lista quedo vacia con '+quedan.length+' clientas'});
+  }catch(e){ fallo(e); }
+}
+
+function quitar(i,nodo){
+  var de=0,a=0,k;
+  for(k=0;k<quedan.length;k++) de+=quedan[k].ticket||0;
+  quedan.splice(i,1);
+  for(k=0;k<quedan.length;k++) a+=quedan[k].ticket||0;
+  nodo.className='clienta saliendo';
+  $c.textContent=quedan.length;
+  anim(de,a);
+  setTimeout(pintar,260);
+}
+
+function anim(de,a){
+  var lento=false;
+  try{ lento=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  if(lento){ $p.textContent=pe(a); return; }
+  var t0=Date.now();
+  (function paso(){
+    var q=Math.min((Date.now()-t0)/420,1), s=1-Math.pow(1-q,3);
+    $p.textContent=pe(Math.round(de+(a-de)*s));
+    if(q<1) setTimeout(paso,16);
+  })();
+}
+
+var tabs=document.querySelectorAll('nav button');
+for(var t=0;t<tabs.length;t++){
+  (function(b){
+    b.onclick=function(){
+      for(var j=0;j<tabs.length;j++) tabs[j].setAttribute('aria-selected', tabs[j]===b ? 'true':'false');
+      var ps=document.querySelectorAll('.panel');
+      for(var k=0;k<ps.length;k++) ps[k].hidden = (ps[k].id!==b.getAttribute('data-panel'));
+      window.scrollTo(0,0);
+    };
+  })(tabs[t]);
+}
+
+try{
+  pintar();
+  for(var m=0;m<perdidas.length;m++) $l2.appendChild(ficha(perdidas[m],m,false));
+}catch(e){ fallo(e); }
+</script></body></html>

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1C2226">
+<title>Ubicaciones del depósito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E6E7E3;--panel:#F7F7F5;--ink:#1C2226;--muted:#58626A;--line:#C5C9C2;--field:#FFFFFF;--yellow:#F2C200;--steel:#2F5D7C;--red:#B8321C;--green:#2E7D4F;
+--sans:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--cond:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#15191C;--panel:#1F252A;--ink:#ECEDEA;--muted:#9AA4AB;--line:#353D44;--field:#161A1D;--steel:#3F77A0;--red:#C94A34;--green:#3E9464}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:0;z-index:5;background:#1C2226;color:#ECEDEA;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+header h1{font-family:var(--cond);font-size:26px;font-weight:700;margin:0;letter-spacing:.01em}
+#mode{font-size:14px;opacity:.85;text-align:right}
+main{padding:16px 16px calc(100px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto}
+.view{display:none}.view.on{display:block}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.step h2{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.num{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--panel);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.step.done .num{background:var(--green);color:#fff}
+.plate{display:inline-block;background:var(--yellow);color:#16181A;font-family:var(--cond);font-weight:700;font-size:42px;line-height:1.05;letter-spacing:.02em;border:3px solid #16181A;border-radius:4px;padding:4px 14px}
+.plate.sm{font-size:28px;padding:2px 10px;border-width:2px}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;min-height:52px;padding:0 16px;font-weight:600}
+.btn{background:var(--steel);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.main{background:var(--ink);color:var(--bg);width:100%;font-size:19px}
+.btn.main.red{background:var(--red);color:#fff}
+.btn.main.adj{background:var(--steel);color:#fff}
+.btn.small{min-height:44px;padding:0 12px;font-size:15px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+input,textarea{font:inherit;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:8px;min-height:52px;padding:0 14px;width:100%}
+textarea{padding:10px 14px;min-height:110px;resize:vertical}
+input:focus,textarea:focus,button:focus-visible{outline:3px solid var(--yellow);outline-offset:1px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.row{display:flex;gap:8px;align-items:center}
+.grow{flex:1;min-width:0}
+.stack>*+*{margin-top:10px}
+.section{margin-top:26px}
+.section h2,.sheet h4{font-size:17px;margin:0 0 6px;font-weight:600}
+.list{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.item{display:block;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 12px;text-align:left;width:100%;color:var(--ink);min-height:52px;font-weight:400}
+.item b{font-weight:600;display:block}
+.item small{display:block}
+small,.muted{color:var(--muted);font-size:14px}
+p{margin:0}
+.chip{display:inline-block;font-family:var(--cond);font-weight:700;background:var(--yellow);color:#16181A;border-radius:3px;padding:1px 7px;margin:6px 6px 0 0;font-size:17px}
+.chip span{font-family:var(--sans);font-weight:600;margin-left:5px;font-size:15px}
+button.chip{min-height:46px;padding:4px 12px;border-radius:4px;font-size:21px;border:2px solid #16181A}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 2px 2px 10px;margin:6px 6px 0 0;font-size:15px}
+.tag button{min-height:32px;width:32px;padding:0;background:transparent;color:var(--muted);font-size:20px;font-weight:400}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.seg button{flex:1;border-radius:0;background:transparent;color:var(--ink);padding:0 6px}
+.seg button.on{background:var(--steel);color:#fff}
+.seg button.on.in{background:var(--green)}
+.seg button.on.out{background:var(--red)}
+.qty{display:flex;gap:8px;margin-bottom:10px}
+.qty button{width:64px;flex:none;font-size:28px;background:var(--field);border:1.5px solid var(--line);color:var(--ink)}
+.qty input{text-align:center;font-family:var(--cond);font-size:30px;font-weight:700}
+.prev{margin-top:8px;font-size:15px;min-height:1.45em}
+.prev .code{font-family:var(--cond);font-size:22px;background:var(--yellow);color:#16181A;padding:0 6px;border-radius:3px}
+.bad{color:var(--red);font-weight:500}
+.adjinfo{margin-bottom:12px;font-size:15px}
+.adjinfo b{font-family:var(--cond);font-size:20px}
+.bhead{display:flex;align-items:center;gap:10px;margin:14px 0 10px}
+.lados{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.lados button{min-height:130px;background:var(--yellow);color:#16181A;border:3px solid #16181A;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:17px}
+.lados button span{font-family:var(--cond);font-size:64px;line-height:1}
+.tramos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.tramos button{min-height:62px;padding:0;background:var(--yellow);color:#16181A;border:2px solid #16181A;border-radius:6px;font-family:var(--cond);font-size:30px;font-weight:700}
+.mov{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mov .q{font-family:var(--cond);font-size:26px;font-weight:700;text-align:right;line-height:1.1}
+.mov .q.in{color:var(--green)}.mov .q.out{color:var(--red)}.mov .q.adj{color:var(--steel)}
+.empty{color:var(--muted);padding:16px 2px}
+code{font-family:var(--cond);font-size:18px;font-weight:700}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;background:transparent;color:var(--muted);border-radius:0;min-height:60px;border-top:3px solid transparent;font-size:15px;padding:0 4px}
+nav button.on{color:var(--ink);border-top-color:var(--yellow)}
+#modal{position:fixed;inset:0;background:rgba(10,12,14,.6);display:none;z-index:20;align-items:flex-end;justify-content:center}
+#modal.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin:0 0 12px;font-size:21px;font-weight:600}
+#reader{width:100%;border-radius:8px;overflow:hidden;background:#000;min-height:240px;margin-bottom:10px}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:608px;margin:0 auto;background:#1C2226;color:#ECEDEA;padding:12px 14px;border-radius:8px;font-weight:500;opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
+#toast.on{opacity:1;transform:none}
+#toast.err{background:var(--red);color:#fff}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<header><h1>Ubicaciones</h1><div id="mode"></div></header>
+
+<main>
+  <section id="v-guardar" class="view on">
+    <div class="step" id="s1"></div>
+    <div class="step" id="s2"></div>
+    <div class="step" id="s3"></div>
+  </section>
+
+  <section id="v-buscar" class="view">
+    <div class="row">
+      <input class="grow" id="b-q" placeholder="Nombre, SKU, código o pasillo (P1)" autocomplete="off">
+      <button class="btn" data-act="b-scan">Escanear</button>
+    </div>
+    <div id="b-res"></div>
+  </section>
+
+  <section id="v-movs" class="view"><div id="m-list"></div></section>
+
+  <section id="v-ajustes" class="view">
+    <div class="stack">
+      <div><label for="a-user">Tu nombre (queda registrado en cada movimiento)</label><input id="a-user" autocomplete="off"></div>
+      <button class="btn small" data-act="user-save">Guardar nombre</button>
+    </div>
+
+    <div class="section stack">
+      <div><label for="a-tramos">Tramos por lado (el pasillo más largo)</label><input id="a-tramos" type="number" inputmode="numeric" min="1" max="60" autocomplete="off"></div>
+      <button class="btn small" data-act="tramos-save">Guardar tramos</button>
+    </div>
+
+    <div class="section stack">
+      <h2>Dónde se guardan los datos</h2>
+      <div class="seg"><button data-act="modo" data-m="local">Solo este celular</button><button data-act="modo" data-m="firebase">Firebase (compartido)</button></div>
+      <div id="a-fb" class="stack">
+        <div><label for="a-cfg">Configuración de Firebase (pegá el bloque firebaseConfig)</label><textarea id="a-cfg" placeholder='apiKey: "...", authDomain: "...", projectId: "...", appId: "..."'></textarea></div>
+        <div><label for="a-emp">Identificador de la empresa</label><input id="a-emp" placeholder="deposito-prueba" autocomplete="off"></div>
+      </div>
+      <button class="btn" data-act="modo-save">Guardar y reiniciar</button>
+    </div>
+
+    <div class="section stack">
+      <h2>Formato de ubicaciones</h2>
+      <p>Pasillo, lado y tramo: <code>P1-A-T5</code> es pasillo 1, lado A (izquierda), tramo 5. El tramo 1 es el de la entrada del pasillo, en los dos lados. Si hace falta, también se puede agregar nivel: <code>P1-A-T5-N2</code>.</p>
+      <p class="muted">También se puede escribir a mano, por ejemplo "pasillo 2 tramo 5 nivel 3" o "pasillo 1 lado a". La app lo traduce al código y no guarda nada que no entienda.</p>
+      <p class="muted">Los QR de cada pasillo se hacen por fuera de la app: contenido <code>P1</code>, texto impreso "PASILLO 1".</p>
+    </div>
+
+    <div class="section stack">
+      <h2>Importar productos</h2>
+      <p class="muted">Pegá columnas copiadas de Excel en este orden: nombre, SKU, código de barras. Los SKU y códigos que ya existen se saltean.</p>
+      <textarea id="i-txt" placeholder="Secador 2441 negro	secador 2441 negro	7791234567890"></textarea>
+      <button class="btn" data-act="i-go">Importar</button>
+    </div>
+
+    <div class="section stack">
+      <h2>Respaldo</h2>
+      <button class="btn ghost wide" data-act="x-json">Descargar datos (JSON)</button>
+      <button class="btn ghost wide" data-act="x-borrar">Borrar datos de este celular</button>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-act="tab" data-v="guardar" class="on">Guardar</button>
+  <button data-act="tab" data-v="buscar">Buscar</button>
+  <button data-act="tab" data-v="movs">Movimientos</button>
+  <button data-act="tab" data-v="ajustes">Ajustes</button>
+</nav>
+
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const stockKey = (pid, u) => pid + '__' + u;
+const fmt = f => new Date(f).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+const cmpU = (a, b) => a.localeCompare(b, 'es', { numeric: true });
+
+/* ---------- ubicaciones: texto -> código ---------- */
+// Acepta: P1, P1-A, p1a, P2-T3-N1, "PASILLO 1", "pasillo 2, tramo 5, nivel 3", "pasillo 1 lado a", "pasillo dos izquierda".
+// Devuelve el código (P1-A-T3-N2) o null si no lo entiende.
+const NUMS = { uno:1, una:1, primero:1, primer:1, dos:2, segundo:2, tres:3, tercero:3, tercer:3, cuatro:4, cuarto:4, cinco:5, quinto:5,
+               seis:6, sexto:6, siete:7, septimo:7, ocho:8, octavo:8, nueve:9, noveno:9, diez:10, decimo:10 };
+const KW = { p:'P', pas:'P', pasi:'P', pasillo:'P', t:'T', tr:'T', tra:'T', tramo:'T', n:'N', niv:'N', nivel:'N', l:'L', lado:'L' };
+const FILL = new Set(['de', 'del', 'el', 'la', 'y', 'en', 'nro', 'num', 'numero', 'ubicacion', 'ubic']);
+const SIDEW = { izq:'A', izquierda:'A', izquierdo:'A', der:'B', derecha:'B', derecho:'B' };
+function parseUbic(txt) {
+  let s = norm(txt).replace(/n\s*[°º]/g, ' ').replace(/[°º]/g, ' ');
+  s = s.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
+  const tk = s.split(/[^a-z0-9]+/).filter(Boolean);
+  if (!tk.length) return null;
+  const r = {};
+  let want = null, afterP = false;
+  for (let w of tk) {
+    if (FILL.has(w)) continue;
+    if (NUMS[w]) w = String(NUMS[w]);
+    if (/^\d+$/.test(w)) {
+      const v = parseInt(w, 10);
+      if (!want || want === 'L' || r[want] || !(v > 0) || v > 999) return null;
+      r[want] = v; afterP = want === 'P'; want = null;
+      continue;
+    }
+    if (KW[w]) { if (want) return null; want = KW[w]; afterP = false; continue; }
+    if ((w === 'a' || w === 'b') && (want === 'L' || afterP)) {
+      if (r.L) return null;
+      r.L = w.toUpperCase(); want = null; afterP = false;
+      continue;
+    }
+    if (SIDEW[w]) {
+      if (r.L || (want && want !== 'L')) return null;
+      r.L = SIDEW[w]; want = null; afterP = false;
+      continue;
+    }
+    return null;
+  }
+  if (want || !r.P) return null;
+  return 'P' + r.P + (r.L ? '-' + r.L : '') + (r.T ? '-T' + r.T : '') + (r.N ? '-N' + r.N : '');
+}
+const isUbic = u => typeof u === 'string' && !!u && parseUbic(u) === u;
+const soloPasillo = u => /^P\d+$/.test(u || '');
+const dentro = (x, base) => x === base || x.startsWith(base + '-');
+
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem('ubic_cfg') || '{}'); } catch (e) {}
+const saveCfg = () => localStorage.setItem('ubic_cfg', JSON.stringify(cfg));
+
+const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false };
+let B = null;
+
+function toast(msg, type) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'on ' + (type || '');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.className = ''; }, 3200);
+}
+
+const cargados = {};
+function loadScript(src) {
+  if (cargados[src]) return cargados[src];
+  cargados[src] = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => { delete cargados[src]; rej(new Error('No se pudo cargar ' + src)); };
+    document.head.appendChild(s);
+  });
+  return cargados[src];
+}
+
+let actx;
+function beep() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), gn = actx.createGain();
+    o.frequency.value = 1250; gn.gain.value = 0.12;
+    o.connect(gn); gn.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + 0.09);
+  } catch (e) {}
+  if (navigator.vibrate) navigator.vibrate(60);
+}
+
+/* ---------- almacenamiento: local ---------- */
+function movData(pid, u, delta, tipo, extra) {
+  return { id: uid('m'), tipo, productoId: pid, nombre: state.productos[pid]?.nombre || '', ubicacion: u,
+           cantidad: Math.abs(delta), delta, usuario: cfg.usuario || '', fecha: Date.now(), ...(extra || {}) };
+}
+
+const Local = {
+  key: 'ubic_db',
+  async init() {
+    let d = {};
+    try { d = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) {}
+    state.productos = d.productos || {}; state.stock = d.stock || {}; state.movs = d.movs || [];
+  },
+  persist() {
+    try {
+      localStorage.setItem(this.key, JSON.stringify({ productos: state.productos, stock: state.stock, movs: state.movs.slice(0, 3000) }));
+    } catch (e) { toast('No hay espacio para guardar en este celular', 'err'); }
+  },
+  guardarProducto(p) { state.productos[p.id] = p; this.persist(); refresh(); },
+  guardarProductos(list) { list.forEach(p => { state.productos[p.id] = p; }); this.persist(); refresh(); },
+  mover(pid, u, delta, tipo) {
+    const k = stockKey(pid, u);
+    const cur = state.stock[k] || { productoId: pid, ubicacion: u, cantidad: 0 };
+    cur.cantidad += delta; cur.actualizado = Date.now();
+    state.stock[k] = cur;
+    state.movs.unshift(movData(pid, u, delta, tipo));
+    this.persist(); refresh();
+  },
+  ajustar(pid, u, real, delta) {
+    const k = stockKey(pid, u);
+    state.stock[k] = { productoId: pid, ubicacion: u, cantidad: real, actualizado: Date.now() };
+    state.movs.unshift(movData(pid, u, delta, 'ajuste', { anterior: real - delta, contado: real }));
+    this.persist(); refresh();
+  },
+  borrar() { localStorage.removeItem(this.key); state.productos = {}; state.stock = {}; state.movs = []; refresh(); }
+};
+
+/* ---------- almacenamiento: Firebase ---------- */
+const FBV = '10.12.2';
+const Fb = {
+  async init() {
+    if (!cfg.fb || !cfg.fb.apiKey || !cfg.fb.projectId) throw new Error('falta la configuración');
+    if (!cfg.empresa) throw new Error('falta el identificador de empresa');
+    for (const m of ['app', 'auth', 'firestore']) await loadScript(`https://www.gstatic.com/firebasejs/${FBV}/firebase-${m}-compat.js`);
+    if (!firebase.apps.length) firebase.initializeApp(cfg.fb);
+    this.db = firebase.firestore();
+    try { await this.db.enablePersistence({ synchronizeTabs: true }); } catch (e) {}
+    const user = await new Promise(r => { const un = firebase.auth().onAuthStateChanged(u => { un(); r(u); }); });
+    if (!user) await firebase.auth().signInAnonymously();
+    const base = this.base = this.db.collection('empresas').doc(cfg.empresa);
+    const onErr = e => toast('Firebase: ' + e.message, 'err');
+    base.collection('productos').onSnapshot(s => {
+      const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
+      state.productos = o; refresh();
+    }, onErr);
+    base.collection('stock').onSnapshot(s => {
+      const o = {}; s.forEach(d => { o[d.id] = d.data(); });
+      state.stock = o; refresh();
+    }, onErr);
+    base.collection('movimientos').orderBy('fecha', 'desc').limit(150).onSnapshot({ includeMetadataChanges: true }, s => {
+      state.movs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      state.pend = s.metadata.hasPendingWrites; refresh();
+    }, onErr);
+  },
+  guardarProducto(p) {
+    state.productos[p.id] = p; refresh();
+    const { id, ...d } = p;
+    this.base.collection('productos').doc(id).set(d).catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+  },
+  guardarProductos(list) {
+    list.forEach(p => { state.productos[p.id] = p; }); refresh();
+    for (let i = 0; i < list.length; i += 400) {
+      const b = this.db.batch();
+      list.slice(i, i + 400).forEach(p => { const { id, ...d } = p; b.set(this.base.collection('productos').doc(id), d); });
+      b.commit().catch(e => toast('Error al importar: ' + e.message, 'err'));
+    }
+  },
+  mover(pid, u, delta, tipo) {
+    const b = this.db.batch();
+    b.set(this.base.collection('stock').doc(stockKey(pid, u)),
+      { productoId: pid, ubicacion: u, cantidad: firebase.firestore.FieldValue.increment(delta), actualizado: Date.now() }, { merge: true });
+    const { id, ...m } = movData(pid, u, delta, tipo);
+    b.set(this.base.collection('movimientos').doc(), m);
+    b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+  },
+  // El conteo fija la cantidad exacta (no suma ni resta), así no depende de lo que haya en el celular.
+  ajustar(pid, u, real, delta) {
+    const b = this.db.batch();
+    b.set(this.base.collection('stock').doc(stockKey(pid, u)),
+      { productoId: pid, ubicacion: u, cantidad: real, actualizado: Date.now() }, { merge: true });
+    const { id, ...m } = movData(pid, u, delta, 'ajuste', { anterior: real - delta, contado: real });
+    b.set(this.base.collection('movimientos').doc(), m);
+    b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+  },
+  borrar() { toast('En modo Firebase los datos se borran desde la consola de Firebase', 'err'); }
+};
+
+/* ---------- consultas ---------- */
+const prods = () => Object.values(state.productos);
+const byCode = c => prods().find(p => (p.codigos || []).includes(c));
+const bySku = s => { const n = norm(s); return n ? prods().find(p => (p.skus || []).some(x => norm(x) === n)) : null; };
+function buscar(q, lim = 40) {
+  const toks = norm(q).split(' ').filter(Boolean);
+  if (!toks.length) return [];
+  return prods().filter(p => {
+    const h = norm([p.nombre, ...(p.skus || []), ...(p.codigos || [])].join(' '));
+    return toks.every(t => h.includes(t));
+  }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')).slice(0, lim);
+}
+const stockDe = pid => Object.values(state.stock).filter(s => s.productoId === pid && s.cantidad > 0).sort((a, b) => cmpU(a.ubicacion, b.ubicacion));
+const stockEn = (pid, u) => (state.stock[stockKey(pid, u)] || {}).cantidad || 0;
+const total = pid => stockDe(pid).reduce((a, s) => a + s.cantidad, 0);
+const chips = pid => stockDe(pid).map(s => `<span class="chip">${esc(s.ubicacion)}<span>×${s.cantidad}</span></span>`).join('');
+const chipsBtn = pid => stockDe(pid).map(s => `<button class="chip" data-act="d-go" data-u="${esc(s.ubicacion)}">${esc(s.ubicacion)}<span>×${s.cantidad}</span></button>`).join('');
+function itemHTML(p, act) {
+  const skus = (p.skus || []).join(' / ') || 'Sin SKU';
+  return `<button class="item" data-act="${act}" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc(skus)}</small><small>Stock total: ${total(p.id)}</small></button>`;
+}
+
+/* ---------- vista previa del código ---------- */
+function ubicPrev(el, txt, btn, avisarLado) {
+  const t = String(txt || '').trim();
+  const u = t ? parseUbic(t) : null;
+  if (el) {
+    el.innerHTML = !t ? '' : u
+      ? `Código: <b class="code">${esc(u)}</b>${avisarLado && soloPasillo(u) ? ' <span class="muted">(después elegís lado y tramo)</span>' : avisarLado && /^P\d+-[AB]$/.test(u) ? ' <span class="muted">(después elegís el tramo)</span>' : ''}`
+      : '<span class="bad">No lo entiendo. Ejemplos: P1-A, "pasillo 2 tramo 5 nivel 3", "pasillo 1 lado a".</span>';
+  }
+  if (btn) { btn.disabled = !u; btn.textContent = u ? 'Usar ' + u : 'Usar'; }
+  return u;
+}
+
+/* ---------- pestaña Guardar ---------- */
+const g = { ubic: '', pid: '', tipo: 'ingreso', cant: 1, real: '' };
+
+function renderG() {
+  const s1 = $('#s1'), s2 = $('#s2'), s3 = $('#s3');
+  const prevU = $('#g-u-in')?.value || '';
+  const prevQ = $('#g-q')?.value || '';
+
+  s1.className = 'step' + (g.ubic ? ' done' : '');
+  s1.innerHTML = `<h2><span class="num">1</span>Ubicación</h2>` + (g.ubic
+    ? `<div class="row"><span class="plate">${esc(g.ubic)}</span><span class="grow"></span><button class="btn ghost small" data-act="u-x">Cambiar</button></div>
+       ${isUbic(g.ubic) ? '' : '<p class="bad" style="margin-top:8px">Ubicación con formato viejo o inválido: acá solo se puede retirar o ajustar (por ejemplo, a 0 para limpiarla).</p>'}`
+    : (g.pid && stockDe(g.pid).length
+        ? `<p class="muted" style="margin-bottom:4px">Este producto ya está en:</p>
+           <div style="margin-bottom:12px">${stockDe(g.pid).map(s => `<button class="chip" data-act="u-pick" data-u="${esc(s.ubicacion)}">${esc(s.ubicacion)}<span>×${s.cantidad}</span></button>`).join('')}</div>
+           <p class="muted" style="margin-bottom:8px">Tocá una o elegí otra ubicación:</p>`
+        : '') +
+      `<div class="stack"><button class="btn wide" data-act="u-scan">Escanear QR del pasillo</button>
+       <div class="row"><input class="grow" id="g-u-in" placeholder="O escribila: P1-A-T5 o pasillo 1 lado a tramo 5" autocomplete="off"><button class="btn ghost small" id="g-u-ok" data-act="u-ok" disabled>Usar</button></div></div>
+       <p class="prev" id="g-u-prev"></p>`);
+  if (!g.ubic && prevU) { $('#g-u-in').value = prevU; ubicPrev($('#g-u-prev'), prevU, $('#g-u-ok'), true); }
+
+  s2.className = 'step' + (g.pid ? ' done' : '');
+  if (g.pid) {
+    const p = state.productos[g.pid] || {};
+    s2.innerHTML = `<h2><span class="num">2</span>Producto</h2>
+      <div class="row"><div class="grow"><b id="g-p-name">${esc(p.nombre || '…')}</b>
+      <div class="muted">${esc((p.skus || []).join(' / ') || 'Sin SKU')}</div><div class="muted" id="g-p-info">${esc(pInfo())}</div></div>
+      <button class="btn ghost small" data-act="p-x">Cambiar</button></div>`;
+  } else {
+    s2.innerHTML = `<h2><span class="num">2</span>Producto</h2>
+      <div class="stack"><button class="btn wide" data-act="p-scan">Escanear código del producto</button>
+      <input id="g-q" placeholder="O buscá por nombre o SKU" autocomplete="off"></div><div class="list" id="g-res"></div>`;
+    if (prevQ) $('#g-q').value = prevQ;
+    gSearch();
+  }
+
+  const ready = g.ubic && g.pid;
+  const adj = g.tipo === 'ajuste', out = g.tipo === 'retiro';
+  s3.className = 'step';
+  s3.innerHTML = `<h2><span class="num">3</span>Cantidad</h2>
+    <div class="seg">
+      <button data-act="tipo" data-t="ingreso" class="${g.tipo === 'ingreso' ? 'on in' : ''}">Ingresar</button>
+      <button data-act="tipo" data-t="retiro" class="${out ? 'on out' : ''}">Retirar</button>
+      <button data-act="tipo" data-t="ajuste" class="${adj ? 'on' : ''}">Ajustar</button>
+    </div>
+    ${adj ? `<label for="g-cant">Cantidad real contada${g.ubic ? ' en ' + esc(g.ubic) : ''}</label>` : ''}
+    <div class="qty"><button data-act="q-m" aria-label="Restar uno">−</button><input id="g-cant" type="number" inputmode="numeric" min="${adj ? 0 : 1}" value="${adj ? esc(g.real) : g.cant}" ${adj ? 'placeholder="Contá y escribí el total"' : ''} aria-label="Cantidad"><button data-act="q-p" aria-label="Sumar uno">+</button></div>
+    ${adj ? '<p class="adjinfo" id="g-adj"></p>' : ''}
+    <button class="btn main ${out ? 'red' : adj ? 'adj' : ''}" id="g-save" data-act="save" ${ready ? '' : 'disabled'}>${out ? 'Guardar retiro' : adj ? 'Guardar ajuste' : 'Guardar ingreso'}</button>
+    ${ready ? '' : '<p class="muted" style="margin-top:8px">Elegí ubicación y producto para guardar.</p>'}
+    ${cfg.usuario ? '' : '<p class="muted" style="margin-top:8px">Poné tu nombre en Ajustes para que quede registrado quién guarda.</p>'}`;
+  adjInfo();
+}
+
+function pInfo() {
+  return g.ubic ? `En ${g.ubic}: ${stockEn(g.pid, g.ubic)}` : `Stock total: ${total(g.pid)}`;
+}
+
+function adjInfo() {
+  const el = $('#g-adj'); if (!el || g.tipo !== 'ajuste') return;
+  const btn = $('#g-save');
+  if (!(g.ubic && g.pid)) { el.innerHTML = '<span class="muted">Elegí ubicación y producto: la app muestra cuánto hay registrado.</span>'; return; }
+  const cur = stockEn(g.pid, g.ubic);
+  const raw = String(g.real).trim(), n = parseInt(raw, 10);
+  if (raw === '' || !(n >= 0)) {
+    el.innerHTML = `En el sistema: <b>${cur}</b>. Escribí lo que contaste (0 si no hay).`;
+    if (btn) btn.textContent = 'Guardar ajuste';
+    return;
+  }
+  const d = n - cur;
+  el.innerHTML = `En el sistema: <b>${cur}</b>. Contado: <b>${n}</b>. Diferencia: <b>${d > 0 ? '+' : ''}${d}</b>` + (d === 0 ? ' (coincide)' : '');
+  if (btn) btn.textContent = d === 0 ? 'Coincide, no hay que ajustar' : `Ajustar de ${cur} a ${n}`;
+}
+
+function gSearch() {
+  const el = $('#g-res'); if (!el) return;
+  const q = $('#g-q')?.value || '';
+  if (!q.trim()) {
+    el.innerHTML = prods().length ? '' : '<p class="empty">Todavía no hay productos. Escaneá un código o escribí un nombre para crearlo.</p>';
+    return;
+  }
+  const r = buscar(q, 20);
+  el.innerHTML = r.map(p => itemHTML(p, 'p-pick')).join('') +
+    `<button class="btn ghost small" data-act="p-new">Crear producto “${esc(q.trim())}”</button>`;
+}
+
+function setUbic(t) {
+  const raw = String(t || '').trim();
+  if (!raw) { toast('Escribí o escaneá una ubicación', 'err'); return; }
+  const u = parseUbic(raw);
+  if (!u) { toast(`No entiendo "${raw}" como ubicación. No se usó.`, 'err'); return; }
+  if (soloPasillo(u)) { openLado(u); return; }
+  if (/^P\d+-[AB]$/.test(u)) { openTramo(u); return; }
+  g.ubic = u; renderG();
+}
+
+const maxTramos = () => Math.min(60, Math.max(1, parseInt(cfg.tramos, 10) || 15));
+function openTramo(pl) {
+  detId = null;
+  const n = maxTramos();
+  openModal(`<h3>${esc(pl)}: ¿qué tramo?</h3>
+    <p class="muted" style="margin-bottom:10px">Mirá el número pegado en el estante.</p>
+    <div class="tramos">${Array.from({ length: n }, (_, i) => `<button data-act="tramo" data-u="${esc(pl)}-T${i + 1}">${i + 1}</button>`).join('')}</div>
+    <button class="btn ghost wide" data-act="tramo" data-u="${esc(pl)}">Sin tramo (guardar en ${esc(pl)})</button>
+    <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cancelar</button>`);
+}
+function openLado(p) {
+  detId = null;
+  openModal(`<h3>Pasillo ${esc(p.slice(1))}: ¿lado A o B?</h3>
+    <div class="lados">
+      <button data-act="lado" data-u="${esc(p)}-A"><span>A</span>Izquierda</button>
+      <button data-act="lado" data-u="${esc(p)}-B"><span>B</span>Derecha</button>
+    </div>
+    <button class="btn ghost wide" data-act="close">Cancelar</button>`);
+}
+
+function onCode(code, ctx) {
+  if (ctx === 'guardar' && parseUbic(code)) { toast('Eso es una ubicación. Escaneá el producto.', 'err'); return; }
+  const p = byCode(code) || bySku(code);
+  if (p) { after(p.id, ctx); return; }
+  openVincular(code, ctx);
+}
+
+function after(pid, ctx) {
+  if (ctx === 'guardar') { tab('guardar'); g.pid = pid; renderG(); }
+  else openDetalle(pid);
+}
+
+function doSave() {
+  if (!g.ubic || !g.pid) { toast('Elegí ubicación y producto', 'err'); return; }
+  const nombre = state.productos[g.pid]?.nombre || '';
+  const cur = stockEn(g.pid, g.ubic);
+  const raw = String($('#g-cant').value).trim();
+  const n = parseInt(raw, 10);
+
+  if (g.tipo === 'ajuste') {
+    if (raw === '' || !(n >= 0)) { toast('Escribí la cantidad que contaste (0 si no hay)', 'err'); return; }
+    const d = n - cur;
+    if (d === 0) { toast(`Coincide: hay ${cur} en ${g.ubic}. No se registró ajuste.`); g.pid = ''; g.real = ''; renderG(); return; }
+    B.ajustar(g.pid, g.ubic, n, d);
+    beep();
+    toast(`Ajustado: ${nombre} en ${g.ubic}, de ${cur} a ${n} (${d > 0 ? '+' : ''}${d})`);
+    g.pid = ''; g.real = ''; renderG();
+    return;
+  }
+
+  if (!(n > 0)) { toast('La cantidad tiene que ser mayor a 0', 'err'); return; }
+  if (g.tipo === 'ingreso' && !isUbic(g.ubic)) { toast('No se puede ingresar en una ubicación inválida. Cambiala.', 'err'); return; }
+  if (g.tipo === 'retiro' && n > cur) { toast(`Solo hay ${cur} en ${g.ubic}`, 'err'); return; }
+  B.mover(g.pid, g.ubic, g.tipo === 'retiro' ? -n : n, g.tipo);
+  beep();
+  toast(`${g.tipo === 'retiro' ? 'Retirado' : 'Guardado'}: ${n} × ${nombre} en ${g.ubic}`);
+  g.pid = ''; g.cant = 1; renderG();
+}
+
+/* ---------- pestaña Buscar ---------- */
+let bF = 'todos';
+function bFiltroDesde(q) {
+  const u = parseUbic(q);
+  const m = u && /^P\d+-([AB])$/.exec(u);
+  bF = m ? m[1] : 'todos';
+}
+const stockItem = s => `<button class="item" data-act="d-open" data-id="${esc(s.productoId)}"><span class="chip">${esc(s.ubicacion)}<span>×${s.cantidad}</span></span><b>${esc(state.productos[s.productoId]?.nombre || 'Producto')}</b></button>`;
+const ordenar = arr => arr.sort((a, b) => cmpU(a.ubicacion, b.ubicacion) || (state.productos[a.productoId]?.nombre || '').localeCompare(state.productos[b.productoId]?.nombre || ''));
+
+function bSearch() {
+  const el = $('#b-res'); const q = $('#b-q').value.trim();
+  if (!q) {
+    const n = prods().length;
+    el.innerHTML = `<p class="empty">${n ? n + ' productos cargados. ' : ''}Escribí un nombre, SKU, código o pasillo (P1, P1-A), o escaneá el QR del pasillo.</p>`;
+    return;
+  }
+  const u = parseUbic(q);
+  if (u) {
+    const conStock = Object.values(state.stock).filter(s => s.cantidad > 0);
+    const m = /^P(\d+)(?:-[AB])?$/.exec(u);
+    if (m) {
+      const base = 'P' + m[1];
+      const enP = conStock.filter(s => dentro(s.ubicacion, base));
+      const cA = enP.filter(s => dentro(s.ubicacion, base + '-A'));
+      const cB = enP.filter(s => dentro(s.ubicacion, base + '-B'));
+      const lista = ordenar(bF === 'A' ? cA : bF === 'B' ? cB : enP.slice());
+      const sinLado = enP.length - cA.length - cB.length;
+      el.innerHTML = `<div class="bhead"><span class="plate sm">PASILLO ${esc(m[1])}</span></div>
+        <div class="seg">
+          <button data-act="b-f" data-f="todos" class="${bF === 'todos' ? 'on' : ''}">Todos (${enP.length})</button>
+          <button data-act="b-f" data-f="A" class="${bF === 'A' ? 'on' : ''}">A (${cA.length})</button>
+          <button data-act="b-f" data-f="B" class="${bF === 'B' ? 'on' : ''}">B (${cB.length})</button>
+        </div>
+        ${bF === 'todos' && sinLado ? `<p class="muted">${sinLado} registrado${sinLado > 1 ? 's' : ''} sin lado (como ${esc(base)}).</p>` : ''}
+        <div class="list">${lista.length ? lista.map(stockItem).join('') : `<p class="empty">No hay nada registrado en ${esc(bF === 'todos' ? base : base + '-' + bF)}.</p>`}</div>`;
+      return;
+    }
+    const r = ordenar(conStock.filter(s => dentro(s.ubicacion, u)));
+    el.innerHTML = `<div class="bhead"><span class="plate sm">${esc(u)}</span></div>
+      <div class="list">${r.length ? r.map(stockItem).join('') : `<p class="empty">No hay nada registrado en ${esc(u)}.</p>`}</div>`;
+    return;
+  }
+  const r = buscar(q);
+  el.innerHTML = '<div class="list">' + (r.length
+    ? r.map(p => `<button class="item" data-act="d-open" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc((p.skus || []).join(' / ') || 'Sin SKU')}</small><div>${chips(p.id) || '<small>Sin stock ubicado</small>'}</div></button>`).join('')
+    : `<p class="empty">No hay coincidencias.</p><button class="btn ghost small" data-act="b-new">Crear producto “${esc(q)}”</button>`) + '</div>';
+}
+
+/* ---------- pestaña Movimientos ---------- */
+function renderMovs() {
+  const el = $('#m-list');
+  if (!state.movs.length) { el.innerHTML = '<p class="empty">Todavía no hay movimientos. Guardá algo desde la pestaña Guardar.</p>'; return; }
+  el.innerHTML = state.movs.slice(0, 150).map(m => {
+    const d = typeof m.delta === 'number' ? m.delta : (m.tipo === 'retiro' ? -m.cantidad : m.cantidad);
+    const adj = m.tipo === 'ajuste';
+    const cls = adj ? 'adj' : d < 0 ? 'out' : 'in';
+    return `<div class="mov"><div class="q ${cls}">${d < 0 ? '−' : '+'}${Math.abs(d)}</div>
+      <div><b>${esc(m.nombre || state.productos[m.productoId]?.nombre || 'Producto')}</b>
+      <div><span class="chip">${esc(m.ubicacion)}</span></div>
+      ${adj ? `<small>Ajuste por conteo: había ${esc(m.anterior)}, se contaron ${esc(m.contado)}</small>` : ''}
+      <small>${fmt(m.fecha)}${m.usuario ? ' por ' + esc(m.usuario) : ''}</small></div></div>`;
+  }).join('');
+}
+
+/* ---------- modales ---------- */
+let scanner = null, scanCb = null, scanUbic = false, detId = null, modalCtx = 'guardar', vincCode = '';
+
+function openModal(html) { $('#sheet').innerHTML = html || ''; $('#modal').classList.add('on'); }
+async function stopScan() {
+  if (!scanner) return;
+  const s = scanner; scanner = null;
+  try { await s.stop(); } catch (e) {}
+  try { s.clear(); } catch (e) {}
+}
+async function closeModal() {
+  detId = null; scanCb = null; scanUbic = false;
+  await stopScan();
+  $('#modal').classList.remove('on'); $('#sheet').innerHTML = '';
+}
+
+async function scan(title, cb, opts = {}) {
+  detId = null;
+  openModal(`<h3>${esc(title)}</h3><div id="reader"></div>
+    <p class="muted" id="sc-msg" style="margin-bottom:10px">Apuntá la cámara al código.</p>
+    <div class="row"><input class="grow" id="sc-in" placeholder="${opts.ubic ? 'O escribila: P1-A-T5 o pasillo 1 lado a tramo 5' : 'O escribilo a mano'}" autocomplete="off"><button class="btn small" id="sc-ok" data-act="sc-ok">Usar</button></div>
+    ${opts.ubic ? '<p class="prev" id="sc-prev"></p>' : ''}
+    <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cancelar</button>`);
+  scanCb = cb; scanUbic = !!opts.ubic;
+  if (scanUbic) $('#sc-ok').disabled = true;
+  try { await loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'); }
+  catch (e) { const m = $('#sc-msg'); if (m) m.textContent = 'No se pudo cargar el lector. Revisá la conexión o escribí el código.'; return; }
+  if (!$('#reader')) return;
+  const F = Html5QrcodeSupportedFormats;
+  const s = new Html5Qrcode('reader', { verbose: false,
+    formatsToSupport: [F.QR_CODE, F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128],
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
+  scanner = s;
+  let hecho = false;
+  const filtro = nuevoFiltroLectura();
+  try {
+    await s.start({ facingMode: 'environment' },
+      { fps: 12, qrbox: (w, h) => ({ width: Math.max(120, Math.floor(w * 0.8)), height: Math.max(80, Math.floor(Math.min(w, h) * 0.55)) }) },
+      txt => { if (hecho || !filtro(txt)) return; hecho = true; beep(); finishScan(txt); }, () => {});
+    if (scanner !== s) { try { await s.stop(); } catch (e) {} }
+  } catch (e) {
+    if (scanner === s) scanner = null;
+    const m = $('#sc-msg');
+    if (m) m.textContent = 'No se pudo abrir la cámara (' + (e.message || e) + '). Revisá los permisos o escribí el código.';
+  }
+}
+// Filtro contra lecturas falsas de códigos de barras.
+// Los QR y códigos con letras se aceptan al primer intento (traen corrección de errores).
+// Los numéricos (EAN/UPC) se aceptan solo si el dígito verificador da bien (13 y 12 dígitos)
+// y si el mismo número se lee 2 veces seguidas.
+function digitoOk(c) {
+  if (!/^\d+$/.test(c) || (c.length !== 12 && c.length !== 13)) return true;
+  const d = c.split('').map(Number), chk = d.pop();
+  let sum = 0;
+  d.reverse().forEach((n, i) => { sum += n * (i % 2 === 0 ? 3 : 1); });
+  return (10 - (sum % 10)) % 10 === chk;
+}
+function nuevoFiltroLectura() {
+  let ultimo = '', veces = 0;
+  return raw => {
+    const t = String(raw || '').trim();
+    if (!t) return false;
+    if (!/^\d+$/.test(t)) return true;
+    if (!digitoOk(t)) { ultimo = ''; veces = 0; return false; }
+    if (t === ultimo) veces++; else { ultimo = t; veces = 1; }
+    return veces >= 2;
+  };
+}
+async function finishScan(txt) {
+  const cb = scanCb;
+  await closeModal();
+  const t = String(txt || '').trim();
+  if (cb && t) cb(t);
+}
+
+function openVincular(code, ctx) {
+  modalCtx = ctx; vincCode = code; detId = null;
+  openModal(`<h3>Código nuevo</h3>
+    <p style="margin-bottom:12px">El código <b>${esc(code)}</b> no está asociado a ningún producto.</p>
+    <button class="btn main" data-act="v-new">Crear producto con este código</button>
+    <div class="section stack"><label for="v-q">O vinculalo a un producto que ya existe</label>
+    <input id="v-q" placeholder="Buscá por nombre o SKU" autocomplete="off"><div class="list" id="v-res"></div></div>
+    <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cancelar</button>`);
+}
+function vSearch() {
+  const q = $('#v-q').value;
+  $('#v-res').innerHTML = buscar(q, 15).map(p => itemHTML(p, 'v-link')).join('') || (q.trim() ? '<p class="muted">Sin coincidencias.</p>' : '');
+}
+function linkCode(pid) {
+  const p = state.productos[pid]; if (!p) return;
+  const otro = byCode(vincCode);
+  if (otro && otro.id !== pid) { toast('Ese código ya es de: ' + otro.nombre, 'err'); return; }
+  B.guardarProducto({ ...p, codigos: [...new Set([...(p.codigos || []), vincCode])] });
+  const ctx = modalCtx;
+  closeModal().then(() => { toast('Código vinculado a ' + p.nombre); after(pid, ctx); });
+}
+
+function openCrear(pref, ctx) {
+  modalCtx = ctx; detId = null;
+  openModal(`<h3>Crear producto</h3><div class="stack">
+    <div><label for="c-n">Nombre</label><input id="c-n" value="${esc(pref.nombre || '')}" placeholder="Secador 2441 negro" autocomplete="off"></div>
+    <div><label for="c-s">SKU de venta (opcional)</label><input id="c-s" placeholder="Como figura en la etiqueta de ML" autocomplete="off"></div>
+    <div><label for="c-c">Código de barras (opcional)</label><input id="c-c" value="${esc(pref.codigo || '')}" inputmode="numeric" autocomplete="off"></div>
+    <button class="btn main" data-act="c-ok">Crear producto</button>
+    <button class="btn ghost wide" data-act="close">Cancelar</button></div>`);
+}
+function crear() {
+  const n = $('#c-n').value.trim(), s = $('#c-s').value.trim(), c = $('#c-c').value.replace(/\s/g, '');
+  if (!n) { toast('Poné un nombre', 'err'); return; }
+  const ps = s && bySku(s); if (ps) { toast('Ese SKU ya es de: ' + ps.nombre, 'err'); return; }
+  const pc = c && byCode(c); if (pc) { toast('Ese código ya es de: ' + pc.nombre, 'err'); return; }
+  const p = { id: uid('p'), nombre: n, skus: s ? [s] : [], codigos: c ? [c] : [], creado: Date.now() };
+  B.guardarProducto(p);
+  const ctx = modalCtx;
+  closeModal().then(() => { toast('Producto creado: ' + n); after(p.id, ctx); });
+}
+
+function openDetalle(pid) {
+  modalCtx = 'buscar'; detId = pid;
+  $('#modal').classList.add('on');
+  renderDetalle();
+}
+const tagHTML = (v, act) => `<span class="tag">${esc(v)}<button data-act="${act}" data-v="${esc(v)}" aria-label="Quitar ${esc(v)}">×</button></span>`;
+function renderDetalle() {
+  const p = state.productos[detId]; if (!p) return;
+  const hay = stockDe(p.id).length;
+  $('#sheet').innerHTML = `<h3>${esc(p.nombre)}</h3>
+    <p><b>Stock total: ${total(p.id)}</b></p>
+    <div>${chipsBtn(p.id) || '<span class="muted">Sin stock ubicado.</span>'}</div>
+    ${hay ? '<p class="muted" style="margin-top:8px">Tocá una ubicación para ingresar, retirar o ajustar ahí.</p>' : ''}
+    <button class="btn ghost wide" data-act="d-g" style="margin-top:10px">Guardar en otra ubicación</button>
+    <div class="section stack"><h4>SKU de venta</h4>
+      <div>${(p.skus || []).map(s => tagHTML(s, 'd-rs')).join('') || '<span class="muted">Sin SKU.</span>'}</div>
+      <p class="muted">Si el mismo producto está en otra publicación con otro SKU, agregalo acá y comparten el stock.</p>
+      <div class="row"><input class="grow" id="d-s" placeholder="Otro SKU" autocomplete="off"><button class="btn small" data-act="d-as">Agregar</button></div></div>
+    <div class="section stack"><h4>Códigos de barras</h4>
+      <div>${(p.codigos || []).map(c => tagHTML(c, 'd-rc')).join('') || '<span class="muted">Sin códigos.</span>'}</div>
+      <div class="row"><input class="grow" id="d-c" placeholder="Código" inputmode="numeric" autocomplete="off"><button class="btn small" data-act="d-ac">Agregar</button><button class="btn small ghost" data-act="d-sc">Escanear</button></div></div>
+    <div class="section stack"><h4>Nombre</h4>
+      <div class="row"><input class="grow" id="d-n" value="${esc(p.nombre)}" autocomplete="off"><button class="btn small" data-act="d-name">Cambiar</button></div></div>
+    <button class="btn ghost wide" data-act="close" style="margin-top:18px">Cerrar</button>`;
+}
+function updP(fn) {
+  const p = state.productos[detId]; if (!p) return;
+  B.guardarProducto(fn({ ...p, skus: [...(p.skus || [])], codigos: [...(p.codigos || [])] }));
+}
+function addCode(pid, raw) {
+  const c = String(raw || '').replace(/\s/g, ''); if (!c) return;
+  const o = byCode(c);
+  if (o) { toast(o.id === pid ? 'Ya tiene ese código' : 'Ese código ya es de: ' + o.nombre, 'err'); return; }
+  const p = state.productos[pid]; if (!p) return;
+  B.guardarProducto({ ...p, codigos: [...(p.codigos || []), c] });
+  toast('Código agregado');
+}
+// Atajo: del detalle a Guardar con producto (y ubicación) ya cargados.
+function goGuardar(pid, u) {
+  closeModal().then(() => {
+    g.pid = pid; g.ubic = u || ''; g.cant = 1; g.real = '';
+    tab('guardar'); renderG();
+  });
+}
+
+/* ---------- ajustes ---------- */
+let selModo = 'local';
+function paintModo() {
+  document.querySelectorAll('[data-act="modo"]').forEach(b => b.classList.toggle('on', b.dataset.m === selModo));
+  $('#a-fb').style.display = selModo === 'firebase' ? '' : 'none';
+}
+function fillAjustes() {
+  $('#a-tramos').value = maxTramos();
+  $('#a-user').value = cfg.usuario || '';
+  selModo = cfg.modo || 'local';
+  $('#a-cfg').value = cfg.fb ? JSON.stringify(cfg.fb, null, 1) : '';
+  $('#a-emp').value = cfg.empresa || '';
+  paintModo();
+}
+function parseCfg(t) {
+  t = t.trim();
+  try { const j = JSON.parse(t); if (j && j.apiKey) return j; } catch (e) {}
+  const o = {};
+  t.replace(/([A-Za-z]+)\s*:\s*["'`]([^"'`]+)["'`]/g, (m, k, v) => { o[k] = v; });
+  return o;
+}
+function guardarModo() {
+  if (selModo === 'firebase') {
+    const fb = parseCfg($('#a-cfg').value);
+    const emp = norm($('#a-emp').value).replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    if (!fb.apiKey || !fb.projectId) { toast('La configuración no tiene apiKey y projectId', 'err'); return; }
+    if (!emp) { toast('Poné un identificador de empresa', 'err'); return; }
+    cfg.fb = fb; cfg.empresa = emp;
+  }
+  cfg.modo = selModo; saveCfg(); location.reload();
+}
+function setMode() {
+  let t = 'Solo este celular';
+  if (cfg.modo === 'firebase') t = state.fbFallo ? 'Firebase falló, usando este celular' : 'Empresa: ' + cfg.empresa + (state.pend ? ' (sincronizando)' : '');
+  if (!navigator.onLine) t += ', sin conexión';
+  $('#mode').textContent = t;
+}
+
+function importar() {
+  const lines = $('#i-txt').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) { toast('Pegá al menos una fila', 'err'); return; }
+  const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+  const inicio = /nombre/i.test(lines[0]) ? 1 : 0;
+  const nuevos = [], vistosSku = new Set(), vistosCod = new Set();
+  let salteados = 0;
+  for (const l of lines.slice(inicio)) {
+    const [nombre, sku, cod] = l.split(sep).map(x => (x || '').trim());
+    if (!nombre) { salteados++; continue; }
+    if (sku && (bySku(sku) || vistosSku.has(norm(sku)))) { salteados++; continue; }
+    const c = (cod || '').replace(/\s/g, '');
+    const codOk = c && !byCode(c) && !vistosCod.has(c);
+    if (sku) vistosSku.add(norm(sku));
+    if (codOk) vistosCod.add(c);
+    nuevos.push({ id: uid('p'), nombre, skus: sku ? [sku] : [], codigos: codOk ? [c] : [], creado: Date.now() });
+  }
+  if (nuevos.length) B.guardarProductos(nuevos);
+  toast(`Importados: ${nuevos.length}. Salteados: ${salteados}.`);
+  $('#i-txt').value = '';
+}
+
+function descargar() {
+  const blob = new Blob([JSON.stringify({ exportado: new Date().toISOString(), productos: state.productos, stock: state.stock, movimientos: state.movs }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'ubicaciones-respaldo.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- navegación y eventos ---------- */
+function tab(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  window.scrollTo(0, 0);
+}
+
+function refresh() {
+  if ($('#g-res')) gSearch();
+  const pn = $('#g-p-name'); if (pn && g.pid) pn.textContent = state.productos[g.pid]?.nombre || '…';
+  const inf = $('#g-p-info'); if (inf && g.pid) inf.textContent = pInfo();
+  adjInfo();
+  bSearch(); renderMovs(); setMode();
+  if (detId && !scanner && $('#modal').classList.contains('on')) renderDetalle();
+}
+
+function cantInput() { return $('#g-cant'); }
+const A = {
+  'tab': b => tab(b.dataset.v),
+  'u-scan': () => scan('Escaneá el QR del pasillo', setUbic, { ubic: true }),
+  'u-ok': () => setUbic($('#g-u-in')?.value),
+  'u-x': () => { g.ubic = ''; renderG(); },
+  'u-pick': b => { g.ubic = b.dataset.u; renderG(); },
+  'lado': b => { openTramo(b.dataset.u); },
+  'tramo': b => { const u = b.dataset.u; closeModal().then(() => { g.ubic = u; renderG(); }); },
+  'tramos-save': () => { const v = parseInt($('#a-tramos').value, 10); if (!(v >= 1 && v <= 60)) { toast('Poné un número entre 1 y 60', 'err'); return; } cfg.tramos = v; saveCfg(); toast('Tramos por lado: ' + v); },
+  'p-scan': () => scan('Escaneá el código del producto', c => onCode(c, 'guardar')),
+  'p-pick': b => { g.pid = b.dataset.id; renderG(); },
+  'p-x': () => { g.pid = ''; renderG(); },
+  'p-new': () => openCrear({ nombre: $('#g-q')?.value || '' }, 'guardar'),
+  'tipo': b => { g.tipo = b.dataset.t; if (g.tipo === 'ajuste') g.real = ''; renderG(); },
+  'q-m': () => {
+    const el = cantInput(), v = parseInt(el.value, 10);
+    if (g.tipo === 'ajuste') { g.real = String(Math.max(0, (isNaN(v) ? 1 : v) - 1)); el.value = g.real; adjInfo(); }
+    else { g.cant = Math.max(1, (v || 1) - 1); el.value = g.cant; }
+  },
+  'q-p': () => {
+    const el = cantInput(), v = parseInt(el.value, 10);
+    if (g.tipo === 'ajuste') { g.real = String((isNaN(v) ? 0 : v) + 1); el.value = g.real; adjInfo(); }
+    else { g.cant = (v || 0) + 1; el.value = g.cant; }
+  },
+  'save': doSave,
+  'b-scan': () => scan('Escaneá un producto o el QR de un pasillo', c => {
+    const u = parseUbic(c);
+    if (u) { tab('buscar'); $('#b-q').value = u; bFiltroDesde(u); bSearch(); } else onCode(c, 'buscar');
+  }),
+  'b-f': b => { bF = b.dataset.f; bSearch(); },
+  'b-new': () => openCrear({ nombre: $('#b-q').value }, 'buscar'),
+  'd-open': b => openDetalle(b.dataset.id),
+  'd-go': b => goGuardar(detId, b.dataset.u),
+  'd-g': () => goGuardar(detId, ''),
+  'v-new': () => openCrear({ codigo: vincCode }, modalCtx),
+  'v-link': b => linkCode(b.dataset.id),
+  'c-ok': crear,
+  'close': () => closeModal(),
+  'sc-ok': () => {
+    const v = $('#sc-in')?.value || '';
+    if (scanUbic && !parseUbic(v)) { toast('No entiendo esa ubicación', 'err'); return; }
+    finishScan(v);
+  },
+  'd-as': () => {
+    const v = $('#d-s').value.trim(); if (!v) return;
+    const o = bySku(v);
+    if (o) { toast(o.id === detId ? 'Ya tiene ese SKU' : 'Ese SKU ya es de: ' + o.nombre, 'err'); return; }
+    updP(p => { p.skus.push(v); return p; }); toast('SKU agregado');
+  },
+  'd-rs': b => updP(p => { p.skus = p.skus.filter(x => x !== b.dataset.v); return p; }),
+  'd-ac': () => addCode(detId, $('#d-c').value),
+  'd-rc': b => updP(p => { p.codigos = p.codigos.filter(x => x !== b.dataset.v); return p; }),
+  'd-sc': () => { const id = detId; scan('Escaneá el código de barras', c => { openDetalle(id); addCode(id, c); }); },
+  'd-name': () => { const v = $('#d-n').value.trim(); if (!v) return; updP(p => { p.nombre = v; return p; }); toast('Nombre actualizado'); },
+  'modo': b => { selModo = b.dataset.m; paintModo(); },
+  'modo-save': guardarModo,
+  'user-save': () => { cfg.usuario = $('#a-user').value.trim(); saveCfg(); toast('Nombre guardado'); renderG(); },
+  'i-go': importar,
+  'x-json': descargar,
+  'x-borrar': () => { if (confirm('¿Borrar todos los datos de este celular? No se puede deshacer.')) B.borrar(); }
+};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const f = A[b.dataset.act]; if (f) { e.preventDefault(); f(b); }
+});
+document.addEventListener('input', e => {
+  const id = e.target.id;
+  if (id === 'g-q') gSearch();
+  else if (id === 'b-q') { bFiltroDesde(e.target.value); bSearch(); }
+  else if (id === 'v-q') vSearch();
+  else if (id === 'g-u-in') ubicPrev($('#g-u-prev'), e.target.value, $('#g-u-ok'), true);
+  else if (id === 'sc-in' && scanUbic) ubicPrev($('#sc-prev'), e.target.value, $('#sc-ok'), true);
+  else if (id === 'g-cant') {
+    if (g.tipo === 'ajuste') { g.real = e.target.value; adjInfo(); }
+    else g.cant = parseInt(e.target.value, 10) || 0;
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const map = { 'g-u-in': 'u-ok', 'sc-in': 'sc-ok', 'd-s': 'd-as', 'd-c': 'd-ac', 'd-n': 'd-name' };
+  const act = map[e.target.id];
+  if (act) { e.preventDefault(); A[act](); }
+});
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+window.addEventListener('online', setMode);
+window.addEventListener('offline', setMode);
+
+async function init() {
+  fillAjustes();
+  B = cfg.modo === 'firebase' ? Fb : Local;
+  try { await B.init(); }
+  catch (e) {
+    toast('No se pudo conectar a Firebase: ' + e.message + '. Uso los datos de este celular.', 'err');
+    state.fbFallo = true; B = Local; await Local.init();
+  }
+  renderG(); refresh();
+}
+init();
+</script>
+</body>
+</html>

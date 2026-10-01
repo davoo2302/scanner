@@ -87,6 +87,13 @@ button.chip{min-height:46px;padding:4px 12px;border-radius:4px;font-size:21px;bo
 .pasillos button small{font-family:var(--cond);font-size:18px;letter-spacing:.08em;color:#16181A}
 .pasillos button span{font-family:var(--cond);font-size:64px;line-height:1}
 .step{scroll-margin-top:70px}
+.ipas{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:10px}
+.ipas button{min-height:76px;background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;font-weight:500}
+.ipas button b{font-family:var(--cond);font-size:26px;line-height:1.05}
+.ipas button small{font-size:13px}
+.ghead{margin:16px 0 4px}
+.gitem{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gitem .c{font-family:var(--cond);font-size:22px;font-weight:700;white-space:nowrap}
 .tchico{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;margin-top:12px}
 .tchico button{min-height:48px;padding:0;background:var(--field);color:var(--ink);border:2px solid var(--line);border-radius:6px;font-family:var(--cond);font-size:22px;font-weight:700}
 .tchico button.on{background:var(--yellow);color:#16181A;border-color:#16181A}
@@ -179,6 +186,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
       <button class="btn ghost wide" data-act="x-json">Descargar datos (JSON)</button>
       <button class="btn ghost wide" data-act="x-borrar">Borrar datos de este celular</button>
     </div>
+    <p class="muted section" id="a-ver" style="text-align:center"></p>
   </section>
 </main>
 
@@ -193,6 +201,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 
 <script>
 /* ---------- utilidades ---------- */
+const VERSION = '2026-10-01 · 4';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -668,6 +677,15 @@ function bFiltroDesde(q) {
   bF = m ? m[1] : 'todos';
 }
 const stockItem = s => `<button class="item" data-act="d-open" data-id="${esc(s.productoId)}"><span class="chip">${esc(s.ubicacion)}<span>${cantChip(s)}</span></span><b>${esc(state.productos[s.productoId]?.nombre || 'Producto')}</b></button>`;
+// Lista agrupada por ubicación (P1-A-T1, P1-A-T2…), en el orden en que se camina el pasillo.
+function agrupada(arr) {
+  let out = '', ult = null;
+  ordenar(arr).forEach(s => {
+    if (s.ubicacion !== ult) { if (ult !== null) out += '</div>'; ult = s.ubicacion; out += `<div class="ghead"><span class="chip" style="margin:0">${esc(s.ubicacion)}</span></div><div class="list" style="margin-top:6px">`; }
+    out += `<button class="item gitem" data-act="d-open" data-id="${esc(s.productoId)}"><b>${esc(state.productos[s.productoId]?.nombre || 'Producto')}</b><span class="c">${cantTxt(s)}</span></button>`;
+  });
+  return out + (ult !== null ? '</div>' : '');
+}
 const ordenar = arr => arr.sort((a, b) => cmpU(a.ubicacion, b.ubicacion) || (state.productos[a.productoId]?.nombre || '').localeCompare(state.productos[b.productoId]?.nombre || ''));
 
 function bSearch() {
@@ -693,12 +711,12 @@ function bSearch() {
           <button data-act="b-f" data-f="B" class="${bF === 'B' ? 'on' : ''}">B (${cB.length})</button>
         </div>
         ${bF === 'todos' && sinLado ? `<p class="muted">${sinLado} registrado${sinLado > 1 ? 's' : ''} sin lado (como ${esc(base)}).</p>` : ''}
-        <div class="list">${lista.length ? lista.map(stockItem).join('') : `<p class="empty">No hay nada registrado en ${esc(bF === 'todos' ? base : base + '-' + bF)}.</p>`}</div>`;
+        ${lista.length ? agrupada(lista) : `<p class="empty">No hay nada registrado en ${esc(bF === 'todos' ? base : base + '-' + bF)}.</p>`}`;
       return;
     }
     const r = ordenar(conStock.filter(s => dentro(s.ubicacion, u)));
     el.innerHTML = `<div class="bhead"><span class="plate sm">${esc(u)}</span></div>
-      <div class="list">${r.length ? r.map(stockItem).join('') : `<p class="empty">No hay nada registrado en ${esc(u)}.</p>`}</div>`;
+      ${r.length ? agrupada(r) : `<p class="empty">No hay nada registrado en ${esc(u)}.</p>`}`;
     return;
   }
   const r = buscar(q);
@@ -730,7 +748,13 @@ function renderInicio() {
   const rec = (cfg.recientes || []).filter(id => state.productos[id]);
   const desde = new Date(); desde.setHours(0, 0, 0, 0);
   const movsHoy = state.movs.filter(m => m.fecha >= desde.getTime());
+  const visibles = Object.values(state.stock).filter(visible);
+  const porPas = n => new Set(visibles.filter(s => dentro(s.ubicacion, 'P' + n)).map(s => s.productoId)).size;
   el.innerHTML = `
+    <div class="section" style="margin-top:18px"><h2>Ver pasillo</h2>
+      <div class="ipas">${Array.from({ length: maxPasillos() }, (_, i) => { const c = porPas(i + 1);
+        return `<button data-act="i-pas" data-v="P${i + 1}"><b>PASILLO ${i + 1}</b><small>${c} producto${c === 1 ? '' : 's'}</small></button>`; }).join('')}</div>
+    </div>
     <div class="section"><h2>Últimos buscados</h2>
       ${rec.length ? `<div class="list">${rec.map(id => { const p = state.productos[id];
         return `<button class="item" data-act="d-open" data-id="${esc(id)}"><b>${esc(p.nombre)}</b><div>${chips(id) || '<small>Sin ubicación todavía</small>'}</div></button>`; }).join('')}</div>`
@@ -992,6 +1016,7 @@ function paintModo() {
 function fillAjustes() {
   $('#a-tramos').value = maxTramos();
   $('#a-pasillos').value = maxPasillos();
+  $('#a-ver').textContent = 'Versión ' + VERSION;
   $('#a-user').value = cfg.usuario || '';
   selModo = cfg.modo || 'local';
   $('#a-cfg').value = cfg.fb ? JSON.stringify(cfg.fb, null, 1) : '';
@@ -1072,6 +1097,7 @@ const A = {
   'go-guardar': () => { tab('guardar'); renderG(); },
   'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
+  'i-pas': b => { $('#b-q').value = b.dataset.v; bF = 'todos'; bSearch(); window.scrollTo(0, 0); },
   'u-p': b => { g.P = b.dataset.v; g.L = ''; renderG(); },
   'u-l': b => { g.L = b.dataset.v; renderG(); },
   'u-t': b => { g.ubic = b.dataset.u; g.cant = ''; renderG(); trasUbic(); },

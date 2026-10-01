@@ -209,7 +209,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 5';
+const VERSION = '2026-10-01 · 6';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -385,11 +385,19 @@ const Fb = {
     const base = this.base = this.db.collection('empresas').doc(cfg.empresa);
     const email = String(user.email || '').toLowerCase();
     // Lista de autorizados: empresas/{empresa}/usuarios/{mail}  con  rol, nombre, activo = true
-    let d = null;
+    let d = null, errLect = null;
     try { d = await base.collection('usuarios').doc(email).get({ source: 'server' }); }
-    catch (e) { try { d = await base.collection('usuarios').doc(email).get(); } catch (e2) { d = null; } }
+    catch (e) { errLect = e; try { d = await base.collection('usuarios').doc(email).get(); } catch (e2) { d = null; } }
     const u = d && d.exists ? d.data() : null;
-    if (!u || u.activo !== true) { noAutorizado(email); const err = new Error('no autorizado'); err.bloqueo = true; throw err; }
+    if (!u || u.activo !== true) {
+      // Motivo exacto, para no adivinar.
+      const ruta = `empresas/${cfg.empresa}/usuarios/${email}`;
+      const motivo = u ? `Figura en la lista, pero "activo" no es true (es ${JSON.stringify(u.activo)}${typeof u.activo === 'string' ? ', está como texto: tiene que ser tipo boolean' : ''}).`
+        : errLect ? `No se pudo leer la lista: ${errLect.code || ''} ${errLect.message || errLect}`
+        : 'No existe ese documento en la lista.';
+      noAutorizado(email, motivo, ruta, !u && !!errLect);
+      const err = new Error('no autorizado'); err.bloqueo = true; throw err;
+    }
     state.me = { email, rol: ['admin', 'empleado', 'consulta'].includes(u.rol) ? u.rol : 'consulta', nombre: u.nombre || user.displayName || email };
     const onErr = e => toast('Firebase: ' + e.message, 'err');
     base.collection('productos').onSnapshot(s => {
@@ -488,13 +496,19 @@ function pedirLogin() {
     };
   });
 }
-function noAutorizado(email) {
-  $('#login-box').innerHTML = `<h2>Sin acceso</h2>
-    <p>La cuenta <b>${esc(email)}</b> no está autorizada en este depósito.</p>
-    <p class="muted">Pedile al administrador que la agregue. Si te equivocaste de cuenta, entrá con otra.</p>
-    <button class="btn main" id="g-otra">Entrar con otra cuenta</button>`;
+function noAutorizado(email, motivo, ruta, esError) {
+  $('#login-box').innerHTML = `<h2>${esError ? 'No se pudo verificar' : 'Sin acceso'}</h2>
+    <p>La cuenta <b>${esc(email)}</b> ${esError ? 'no se pudo verificar.' : 'no está autorizada en este depósito.'}</p>
+    <div style="text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:14px">
+      <b>Motivo:</b> ${esc(motivo || '')}<br><b>Se buscó en:</b> <span style="word-break:break-all">${esc(ruta || '')}</span>
+    </div>
+    <button class="btn main" id="g-reint" style="margin-bottom:10px">Reintentar</button>
+    <button class="btn ghost wide" id="g-otra" style="margin-bottom:10px">Entrar con otra cuenta</button>
+    <button class="btn ghost wide" id="g-cfg">Revisar configuración</button>`;
   $('#login').classList.add('on');
+  $('#g-reint').onclick = () => location.reload();
   $('#g-otra').onclick = cerrarSesion;
+  $('#g-cfg').onclick = () => { $('#login').classList.remove('on'); fillAjustes(); tab('ajustes'); };
 }
 async function cerrarSesion() {
   try { await firebase.auth().signOut(); } catch (e) {}

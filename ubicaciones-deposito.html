@@ -164,7 +164,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
       <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
     </div>
 
-    <div class="section stack">
+    <div class="section stack" id="a-modo">
       <h2>Dónde se guardan los datos</h2>
       <div class="seg"><button data-act="modo" data-m="local">Solo este celular</button><button data-act="modo" data-m="firebase">Firebase (compartido)</button></div>
       <div id="a-fb" class="stack">
@@ -188,10 +188,10 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
       <button class="btn" data-act="i-go">Importar</button>
     </div>
 
-    <div class="section stack">
+    <div class="section stack" id="a-resp">
       <h2>Respaldo</h2>
       <button class="btn ghost wide" data-act="x-json">Descargar datos (JSON)</button>
-      <button class="btn ghost wide" data-act="x-borrar">Borrar datos de este celular</button>
+      <button class="btn ghost wide" data-act="x-borrar" id="a-borrar">Borrar datos de este celular</button>
     </div>
     <p class="muted section" id="a-ver" style="text-align:center"></p>
   </section>
@@ -209,7 +209,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 6';
+const VERSION = '2026-10-01 · 7';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -265,6 +265,21 @@ const dentro = (x, base) => x === base || x.startsWith(base + '-');
 let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem('ubic_cfg') || '{}'); } catch (e) {}
 const saveCfg = () => localStorage.setItem('ubic_cfg', JSON.stringify(cfg));
+
+// Configuración fija del depósito: cualquier dispositivo que abra el link se conecta a Firebase y pide login.
+// No es secreta: solo identifica el proyecto. El acceso lo controlan las reglas y la lista de usuarios.
+const CONFIG_FIJA = {
+  empresa: 'deposito',
+  fb: {
+    apiKey: 'AIzaSyDjdHjpnsLFjpmP3Rhhls2NBec1108wiaM',
+    authDomain: 'ubicaciones-depositos.firebaseapp.com',
+    projectId: 'ubicaciones-depositos',
+    storageBucket: 'ubicaciones-depositos.firebasestorage.app',
+    messagingSenderId: '37276298499',
+    appId: '1:37276298499:web:7af97a9f6f32d2da460d36'
+  }
+};
+if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa = CONFIG_FIJA.empresa; }
 
 const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null };
 let B = null;
@@ -504,11 +519,19 @@ function noAutorizado(email, motivo, ruta, esError) {
     </div>
     <button class="btn main" id="g-reint" style="margin-bottom:10px">Reintentar</button>
     <button class="btn ghost wide" id="g-otra" style="margin-bottom:10px">Entrar con otra cuenta</button>
-    <button class="btn ghost wide" id="g-cfg">Revisar configuración</button>`;
+    ${CONFIG_FIJA ? '' : '<button class="btn ghost wide" id="g-cfg">Revisar configuración</button>'}`;
   $('#login').classList.add('on');
   $('#g-reint').onclick = () => location.reload();
   $('#g-otra').onclick = cerrarSesion;
-  $('#g-cfg').onclick = () => { $('#login').classList.remove('on'); fillAjustes(); tab('ajustes'); };
+  if ($('#g-cfg')) $('#g-cfg').onclick = () => { $('#login').classList.remove('on'); fillAjustes(); tab('ajustes'); };
+}
+function errorConexion(e) {
+  $('#login-box').innerHTML = `<h2>Sin conexión</h2>
+    <p>No se pudo conectar con la base del depósito. Revisá que haya internet y reintentá.</p>
+    <p class="muted" style="font-size:13px;word-break:break-all">${esc((e && (e.code || e.message)) || e || '')}</p>
+    <button class="btn main" id="g-reint">Reintentar</button>`;
+  $('#login').classList.add('on');
+  $('#g-reint').onclick = () => location.reload();
 }
 async function cerrarSesion() {
   try { await firebase.auth().signOut(); } catch (e) {}
@@ -1120,6 +1143,8 @@ function paintCuenta() {
   c.style.display = state.me ? '' : 'none';
   $('#a-userbox').style.display = state.me ? 'none' : '';
   $('#a-import').style.display = esAdmin() ? '' : 'none';
+  $('#a-resp').style.display = esAdmin() ? '' : 'none';
+  if (CONFIG_FIJA) { $('#a-modo').style.display = 'none'; $('#a-borrar').style.display = 'none'; }
   if (state.me) c.innerHTML = `<h2>Tu cuenta</h2><p><b>${esc(state.me.nombre)}</b><br><span class="muted">${esc(state.me.email)} · ${ROL_TXT[state.me.rol]}</span></p>
     <button class="btn ghost wide" data-act="logout">Cerrar sesión</button>`;
 }
@@ -1323,6 +1348,7 @@ async function init() {
   try { await B.init(); }
   catch (e) {
     if (e && e.bloqueo) return;
+    if (CONFIG_FIJA) { errorConexion(e); return; }
     toast('No se pudo conectar a Firebase: ' + e.message + '. Uso los datos de este celular.', 'err');
     state.fbFallo = true; B = Local; await Local.init();
   }

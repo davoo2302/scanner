@@ -58,7 +58,6 @@ button.chip{min-height:46px;padding:4px 12px;border-radius:4px;font-size:21px;bo
 .ubic{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:78px;background:var(--yellow);color:#16181A;border:3px solid #16181A;border-radius:6px;padding:6px 16px}
 .ubic .u{font-family:var(--cond);font-size:44px;font-weight:700;line-height:1;text-align:left}
 .ubic .n{font-family:var(--cond);font-size:26px;font-weight:700;white-space:nowrap}
-.searchbar{background:var(--field);color:var(--muted);border:1.5px solid var(--line);text-align:left;font-weight:400}
 .bar{height:14px;background:var(--line);border-radius:7px;overflow:hidden;margin:8px 0 6px}
 .bar span{display:block;height:100%;background:var(--green)}
 .mini{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -110,11 +109,15 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 <main>
   <section id="v-inicio" class="view on">
     <div class="row">
-      <button class="searchbar grow" data-act="go-buscar">Buscar producto, SKU o pasillo</button>
+      <input class="grow" id="b-q" placeholder="Buscar producto, SKU o pasillo" autocomplete="off" enterkeyhint="search">
+      <button class="btn ghost small" id="b-clear" data-act="b-clear" aria-label="Borrar búsqueda" style="display:none">✕</button>
       <button class="btn" data-act="b-scan">Escanear</button>
     </div>
-    <button class="btn main" id="i-guardar" data-act="go-guardar" style="margin-top:12px">Guardar / Contar</button>
-    <div id="i-body"></div>
+    <div id="b-res"></div>
+    <div id="i-home">
+      <button class="btn main" id="i-guardar" data-act="go-guardar" style="margin-top:12px">Guardar / Contar</button>
+      <div id="i-body"></div>
+    </div>
   </section>
 
   <section id="v-guardar" class="view">
@@ -122,14 +125,6 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
     <div class="step" id="s1"></div>
     <div class="step" id="s2"></div>
     <div class="step" id="s3"></div>
-  </section>
-
-  <section id="v-buscar" class="view">
-    <div class="row">
-      <input class="grow" id="b-q" placeholder="Nombre, SKU, código o pasillo (P1)" autocomplete="off">
-      <button class="btn" data-act="b-scan">Escanear</button>
-    </div>
-    <div id="b-res"></div>
   </section>
 
   <section id="v-movs" class="view"><div id="m-list"></div></section>
@@ -179,7 +174,6 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 
 <nav>
   <button data-act="tab" data-v="inicio" class="on">Inicio</button>
-  <button data-act="tab" data-v="buscar">Buscar</button>
   <button data-act="tab" data-v="movs">Movimientos</button>
   <button data-act="tab" data-v="ajustes">Ajustes</button>
 </nav>
@@ -597,11 +591,9 @@ const ordenar = arr => arr.sort((a, b) => cmpU(a.ubicacion, b.ubicacion) || (sta
 
 function bSearch() {
   const el = $('#b-res'); const q = $('#b-q').value.trim();
-  if (!q) {
-    const n = prods().length;
-    el.innerHTML = `<p class="empty">${n ? n + ' productos cargados. ' : ''}Escribí un nombre, SKU, código o pasillo (P1, P1-A), o escaneá el QR del pasillo.</p>`;
-    return;
-  }
+  $('#i-home').style.display = q ? 'none' : '';
+  $('#b-clear').style.display = q ? '' : 'none';
+  if (!q) { el.innerHTML = ''; return; }
   const u = parseUbic(q);
   if (u) {
     const conStock = Object.values(state.stock).filter(s => s.cantidad > 0);
@@ -657,7 +649,7 @@ function renderInicio() {
     <div class="section"><h2>Últimos buscados</h2>
       ${rec.length ? `<div class="list">${rec.map(id => { const p = state.productos[id];
         return `<button class="item" data-act="d-open" data-id="${esc(id)}"><b>${esc(p.nombre)}</b><div>${chips(id) || '<small>Sin ubicación todavía</small>'}</div></button>`; }).join('')}</div>`
-        : '<p class="muted">Cuando abras un producto en Buscar, va a aparecer acá para encontrarlo de un toque.</p>'}
+        : '<p class="muted">Cuando busques y abras un producto, va a aparecer acá para encontrarlo de un toque.</p>'}
     </div>
     <div class="section"><h2>Avance del inventario</h2>
       ${ps.length ? `<div class="bar"><span style="width:${pct}%"></span></div>
@@ -675,7 +667,7 @@ function openSinUbic() {
   const r = prods().filter(p => total(p.id) === 0).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
   openModal(`<h3>Sin ubicación (${r.length})</h3>
     <div class="list">${r.slice(0, 300).map(p => itemHTML(p, 'd-open')).join('')}</div>
-    ${r.length > 300 ? '<p class="muted" style="margin-top:8px">Se muestran los primeros 300. Usá Buscar para los demás.</p>' : ''}
+    ${r.length > 300 ? '<p class="muted" style="margin-top:8px">Se muestran los primeros 300. Usá el buscador para los demás.</p>' : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
 }
 
@@ -992,7 +984,7 @@ function cantInput() { return $('#g-cant'); }
 const A = {
   'tab': b => { const v = b.dataset.v; if ($('#modal').classList.contains('on')) closeModal().then(() => tab(v)); else tab(v); },
   'go-guardar': () => { tab('guardar'); renderG(); },
-  'go-buscar': () => { tab('buscar'); const q = $('#b-q'); if (q) q.focus(); },
+  'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
   'u-scan': () => scan('Escaneá el QR del pasillo', setUbic, { ubic: true }),
   'u-ok': () => setUbic($('#g-u-in')?.value),
@@ -1019,7 +1011,7 @@ const A = {
   'save': doSave,
   'b-scan': () => scan('Escaneá un producto o el QR de un pasillo', c => {
     const u = parseUbic(c);
-    if (u) { tab('buscar'); $('#b-q').value = u; bFiltroDesde(u); bSearch(); } else onCode(c, 'buscar');
+    if (u) { tab('inicio'); $('#b-q').value = u; bFiltroDesde(u); bSearch(); } else onCode(c, 'buscar');
   }),
   'b-f': b => { bF = b.dataset.f; bSearch(); },
   'b-new': () => openCrear({ nombre: $('#b-q').value }, 'buscar'),

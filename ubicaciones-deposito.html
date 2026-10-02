@@ -62,7 +62,7 @@ button.chip{min-height:46px;padding:4px 12px;border-radius:4px;font-size:21px;bo
 .bar span{display:block;height:100%;background:var(--green)}
 .mini{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
 .mini .q{font-family:var(--cond);font-size:22px;font-weight:700;text-align:right}
-.mini .q.in{color:var(--green)}.mini .q.out{color:var(--red)}.mini .q.adj{color:var(--steel)}
+.mini .q.in{color:var(--green)}.mini .q.out{color:var(--red)}.mini .q.adj{color:var(--steel)}.mini .q.mv{color:var(--muted)}
 .tag{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px 2px 2px 10px;margin:6px 6px 0 0;font-size:15px}
 .tag button{min-height:32px;width:32px;padding:0;background:transparent;color:var(--muted);font-size:20px;font-weight:400}
 .seg{display:flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:10px}
@@ -104,10 +104,14 @@ button.chip{min-height:46px;padding:4px 12px;border-radius:4px;font-size:21px;bo
 .tchico button{min-height:48px;padding:0;background:var(--field);color:var(--ink);border:2px solid var(--line);border-radius:6px;font-family:var(--cond);font-size:22px;font-weight:700}
 .tchico button.on{background:var(--yellow);color:#16181A;border-color:#16181A}
 .tramos{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
-.tramos button{min-height:62px;padding:0;background:var(--yellow);color:#16181A;border:2px solid #16181A;border-radius:6px;font-family:var(--cond);font-size:30px;font-weight:700}
+.tramos button{min-height:var(--th,62px);padding:0;background:var(--yellow);color:#16181A;border:2px solid #16181A;border-radius:6px;font-family:var(--cond);font-size:var(--tf,30px);font-weight:700}
+.deptab{display:grid;grid-template-columns:auto 1fr 1fr;gap:8px 10px;align-items:center}
+.deptab b{font-family:var(--cond);font-size:20px}
+.deptab label{display:flex;align-items:center;gap:6px;margin:0}
+.deptab input{min-height:46px;text-align:center;font-family:var(--cond);font-size:22px;font-weight:700;padding:0 6px}
 .mov{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .mov .q{font-family:var(--cond);font-size:26px;font-weight:700;text-align:right;line-height:1.1}
-.mov .q.in{color:var(--green)}.mov .q.out{color:var(--red)}.mov .q.adj{color:var(--steel)}
+.mov .q.in{color:var(--green)}.mov .q.out{color:var(--red)}.mov .q.adj{color:var(--steel)}.mov .q.mv{color:var(--muted)}
 .empty{color:var(--muted);padding:16px 2px}
 code{font-family:var(--cond);font-size:18px;font-weight:700}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--panel);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
@@ -201,11 +205,15 @@ button.kpi:hover{border-color:var(--muted)}
       <button class="btn small" data-act="user-save">Guardar nombre</button>
     </div>
 
-    <div class="section stack">
+    <div class="section stack" id="a-dep">
       <h2>Depósito</h2>
-      <div><label for="a-pasillos">Cantidad de pasillos</label><input id="a-pasillos" type="number" inputmode="numeric" min="1" max="30" autocomplete="off"></div>
-      <div><label for="a-tramos">Tramos por lado (el pasillo más largo)</label><input id="a-tramos" type="number" inputmode="numeric" min="1" max="60" autocomplete="off"></div>
-      <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
+      <p class="muted" id="a-dep-info">Cuántos tramos tiene cada lado de cada pasillo. Vale para todos los usuarios.</p>
+      <div id="a-dep-edit" class="stack">
+        <div><label for="a-pasillos">Cantidad de pasillos</label><input id="a-pasillos" type="number" inputmode="numeric" min="1" max="30" autocomplete="off"></div>
+        <div class="deptab" id="a-deptab"></div>
+        <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
+      </div>
+      <p id="a-dep-ro"></p>
     </div>
 
     <div class="section stack" id="a-modo">
@@ -253,7 +261,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 8';
+const VERSION = '2026-10-01 · 10';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -325,7 +333,7 @@ const CONFIG_FIJA = {
 };
 if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa = CONFIG_FIJA.empresa; }
 
-const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null };
+const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null, dep: null };
 let B = null;
 
 function toast(msg, type) {
@@ -375,11 +383,11 @@ function movData(pid, u, delta, tipo, extra) {
 const logProd = (pid, tipo, extra) => B.log(movData(pid, '', 0, tipo, extra));
 
 // Movimiento de "fijar cantidad": carga (primera vez en ese tramo) o ajuste (ya estaba).
-function movFijar(pid, u, real, ml) {
+function movFijar(pid, u, real, ml, extra) {
   const prev = state.stock[stockKey(pid, u)];
   const antes = prev && visible(prev) ? prev.cantidad : null;
   return movData(pid, u, real - (antes || 0), antes == null ? 'carga' : 'ajuste',
-    { anterior: antes || 0, contado: real, ...(ml != null ? { ml } : {}) });
+    { anterior: antes || 0, contado: real, ...(ml != null ? { ml } : {}), ...(extra || {}) });
 }
 
 const Local = {
@@ -388,7 +396,9 @@ const Local = {
     let d = {};
     try { d = JSON.parse(localStorage.getItem(this.key) || '{}'); } catch (e) {}
     state.productos = d.productos || {}; state.stock = d.stock || {}; state.movs = d.movs || [];
+    state.dep = cfg.dep || null;
   },
+  guardarDep(dep) { cfg.dep = dep; saveCfg(); state.dep = dep; depCambio(); toast('Depósito guardado'); },
   persist() {
     try {
       localStorage.setItem(this.key, JSON.stringify({ productos: state.productos, stock: state.stock, movs: state.movs.slice(0, 3000) }));
@@ -404,9 +414,9 @@ const Local = {
     state.movs.unshift(movData(pid, u, delta, tipo));
     this.persist(); refresh();
   },
-  fijar(pid, u, real, ml) {
+  fijar(pid, u, real, ml, extra) {
     const k = stockKey(pid, u);
-    const m = movFijar(pid, u, real, ml);
+    const m = movFijar(pid, u, real, ml, extra);
     state.stock[k] = { productoId: pid, ubicacion: u, cantidad: real, sinCant: real === 0, actualizado: Date.now() };
     state.movs.unshift(m);
     this.persist(); refresh();
@@ -459,6 +469,7 @@ const Fb = {
     }
     state.me = { email, rol: ['admin', 'empleado', 'consulta'].includes(u.rol) ? u.rol : 'consulta', nombre: u.nombre || user.displayName || email };
     const onErr = e => toast('Firebase: ' + e.message, 'err');
+    base.collection('config').doc('deposito').onSnapshot(d => { state.dep = d.exists ? d.data() : null; depCambio(); }, () => {});
     base.collection('productos').onSnapshot(s => {
       const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
       state.productos = o; refresh();
@@ -494,9 +505,9 @@ const Fb = {
     b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
   },
   // Fija la cantidad exacta del tramo (no suma ni resta). 0 = está acá, sin contar.
-  fijar(pid, u, real, ml) {
+  fijar(pid, u, real, ml, extra) {
     const b = this.db.batch();
-    const { id, ...m } = movFijar(pid, u, real, ml);
+    const { id, ...m } = movFijar(pid, u, real, ml, extra);
     b.set(this.base.collection('stock').doc(stockKey(pid, u)),
       { productoId: pid, ubicacion: u, cantidad: real, sinCant: real === 0, actualizado: Date.now() }, { merge: true });
     b.set(this.base.collection('movimientos').doc(), m);
@@ -519,6 +530,12 @@ const Fb = {
     Object.keys(state.stock).forEach(k => { if (state.stock[k].productoId === pid) b.delete(this.base.collection('stock').doc(k)); });
     delete state.productos[pid]; refresh();
     b.commit().catch(e => toast('No se pudo eliminar: ' + e.message, 'err'));
+  },
+  guardarDep(dep) {
+    state.dep = dep; depCambio();
+    this.base.collection('config').doc('deposito').set(dep)
+      .then(() => toast('Depósito guardado para todos'))
+      .catch(e => toast(e.code === 'permission-denied' ? 'No se pudo guardar: falta actualizar las reglas de Firebase (bloque config) o no sos admin.' : 'No se pudo guardar: ' + e.message, 'err'));
   },
   log(m) {
     const { id, ...d } = m;
@@ -623,8 +640,18 @@ function ubicPrev(el, txt, btn) {
 // Flujo rápido: pasillo → lado → tramo (botones) → nombre y SKU (escritos) → cantidad → Guardar.
 // La cantidad FIJA lo que hay en ese tramo (no suma). 0 = está acá, sin contar.
 const g = { P: '', L: '', ubic: '', pid: '', nombre: '', sku: '', cant: '', ml: '', mlOpen: false, cantOpen: false };
-const maxTramos = () => Math.min(60, Math.max(1, parseInt(cfg.tramos, 10) || 15));
-const maxPasillos = () => Math.min(30, Math.max(1, parseInt(cfg.pasillos, 10) || 4));
+// Configuración del depósito: compartida en Firebase (empresas/{empresa}/config/deposito), la edita solo el admin.
+// { pasillos: 4, tramos: { 'P1-A': 9, 'P1-B': 9, ... } }
+const lim = (v, a, b, d) => { const n = parseInt(v, 10); return n >= a && n <= b ? n : d; };
+const maxTramos = () => lim(cfg.tramos, 1, 60, 15);   // valor por defecto si un lado no está configurado
+const maxPasillos = () => lim(state.dep?.pasillos ?? cfg.pasillos, 1, 30, 4);
+const tramosDe = pl => lim(state.dep?.tramos?.[pl], 1, 60, maxTramos());
+const tramosMax = () => { let m = 1; for (let p = 1; p <= maxPasillos(); p++) m = Math.max(m, tramosDe(`P${p}-A`), tramosDe(`P${p}-B`)); return m; };
+// Botones de tramo: cuantos menos tramos, más grandes.
+function estiloTramos(n) {
+  const [c, h, f] = n <= 4 ? [n, 96, 44] : n <= 9 ? [3, 84, 40] : n <= 16 ? [4, 72, 34] : [5, 62, 30];
+  return `grid-template-columns:repeat(${c},1fr);--th:${h}px;--tf:${f}px`;
+}
 const recEn = (pid, u) => { const r = state.stock[stockKey(pid, u)]; return r && visible(r) ? r : null; };
 
 function renderG() {
@@ -640,7 +667,7 @@ function renderG() {
       // Cambio rápido de tramo sin volver atrás: tocás el número y listo.
       const pl = ml[1], act = ml[2] ? parseInt(ml[2], 10) : 0;
       h += `<p class="muted" style="margin-top:10px">Cambiar de tramo en ${esc(pl)}:</p>
-        <div class="tchico" style="margin-top:6px">${Array.from({ length: maxTramos() }, (_, i) => `<button data-act="u-tq" data-u="${esc(pl)}-T${i + 1}" class="${i + 1 === act ? 'on' : ''}" aria-label="Tramo ${i + 1}">${i + 1}</button>`).join('')}</div>`;
+        <div class="tchico" style="margin-top:6px">${Array.from({ length: tramosDe(pl) }, (_, i) => `<button data-act="u-tq" data-u="${esc(pl)}-T${i + 1}" class="${i + 1 === act ? 'on' : ''}" aria-label="Tramo ${i + 1}">${i + 1}</button>`).join('')}</div>`;
     }
   } else if (!g.P) {
     if (g.pid && stockDe(g.pid).length) {
@@ -656,7 +683,7 @@ function renderG() {
     const pl = g.P + '-' + g.L;
     h += `<div class="row" style="margin-bottom:10px"><span class="plate sm">${esc(pl)}</span><span class="grow"></span><button class="btn ghost small" data-act="u-back">← Lado</button></div>
       <p class="muted" style="margin-bottom:8px">Tramo:</p>
-      <div class="tramos">${Array.from({ length: maxTramos() }, (_, i) => `<button data-act="u-t" data-u="${esc(pl)}-T${i + 1}">${i + 1}</button>`).join('')}</div>
+      <div class="tramos" style="${estiloTramos(tramosDe(pl))}">${Array.from({ length: tramosDe(pl) }, (_, i) => `<button data-act="u-t" data-u="${esc(pl)}-T${i + 1}">${i + 1}</button>`).join('')}</div>
       <button class="btn ghost wide" data-act="u-t" data-u="${esc(pl)}">Sin tramo (guardar en ${esc(pl)})</button>`;
   }
   s1.innerHTML = h;
@@ -798,7 +825,8 @@ function terminarGuardado(r, n, ml, movido) {
   if (movido) {
     const otros = stockDe(pid).filter(x => x.ubicacion !== u);
     if (n === 0) n = otros.reduce((a, x) => a + (x.cantidad || 0), 0);
-    B.fijar(pid, u, n, ml);
+    // El destino guarda de dónde vino, así el historial muestra el traslado completo en un solo renglón.
+    B.fijar(pid, u, n, ml, { desde: otros.map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })) });
     otros.forEach(x => B.quitar(pid, x.ubicacion, { movidoA: u }));
     beep();
     toast(`Movido: ${nombre} ahora está solo en ${u} (${n > 0 ? n + ' u.' : 'sin contar'})`);
@@ -891,8 +919,30 @@ function bSearch() {
 function movDelta(m) { return typeof m.delta === 'number' ? m.delta : (m.tipo === 'retiro' ? -m.cantidad : m.cantidad); }
 const hora = f => new Date(f).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 const signo = d => d < 0 ? '−' + Math.abs(d) : d > 0 ? '+' + d : '0';
-const TIPO_TXT = { ajuste: ' · conteo', carga: ' · carga', quitado: ' · quitado' };
-const tipoTxt = m => m.tipo === 'quitado' && m.movidoA ? ' · traslado' : (TIPO_TXT[m.tipo] || '');
+const esTraslado = m => (m.tipo === 'quitado' && !!m.movidoA) || (Array.isArray(m.desde) && m.desde.length > 0);
+const uTxt = n => n > 0 ? n + ' u.' : 'sin contar';
+const habia = n => n > 0 ? `había ${n} u.` : 'estaba sin contar';
+// Cómo se muestra cada movimiento: símbolo, color y texto.
+//  + verde = entró / se cargó · − rojo = se quitó · ±/= azul = conteo · ⇄ gris = traslado (no es pérdida) · ✎ = cambio de producto
+function vistaMov(m) {
+  const d = movDelta(m);
+  if (m.tipo === 'quitado' && m.movidoA) return { q: '⇄' + (m.anterior > 0 ? m.anterior : ''), cls: 'mv', et: 'traslado',
+    det: `Trasladado a ${esc(m.movidoA)} (${habia(m.anterior)})` };
+  if (esTraslado(m)) return { q: '⇄' + (m.contado > 0 ? m.contado : ''), cls: 'mv', et: 'traslado',
+    det: `Trasladado desde ${m.desde.map(x => `${esc(x.u)} (${habia(x.n)})`).join(', ')} · quedó ${uTxt(m.contado)}${mlTxt(m)}` };
+  if (m.tipo === 'carga') return { q: m.contado > 0 ? '+' + m.contado : '+', cls: 'in', et: 'carga', det: `Carga en esta ubicación: ${uTxt(m.contado)}${mlTxt(m)}` };
+  if (m.tipo === 'ajuste') return { q: d === 0 ? '=' : signo(d), cls: 'adj', et: 'conteo',
+    det: `Conteo: había ${m.anterior > 0 ? esc(m.anterior) : '0 (sin contar)'}, quedó ${m.contado > 0 ? esc(m.contado) : '0 (sin contar)'}${mlTxt(m)}` };
+  if (m.tipo === 'quitado') return { q: m.anterior > 0 ? '−' + m.anterior : '−', cls: 'out', et: 'quitado', det: `Quitado de esta ubicación (${habia(m.anterior)})` };
+  return { q: signo(d), cls: d < 0 ? 'out' : 'in', et: m.tipo === 'retiro' ? 'retiro' : 'ingreso', det: '' };
+}
+const tipoTxt = m => ' · ' + vistaMov(m).et;
+// El renglón "quitado" de un traslado nuevo ya está incluido en el renglón del destino: no se repite.
+function sinDuplicados(movs) {
+  const cubiertos = new Set();
+  movs.forEach(m => { if (Array.isArray(m.desde)) m.desde.forEach(x => cubiertos.add(m.productoId + '|' + x.u + '|' + m.ubicacion)); });
+  return movs.filter(m => !(m.tipo === 'quitado' && m.movidoA && cubiertos.has(m.productoId + '|' + m.ubicacion + '|' + m.movidoA)));
+}
 const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado'
   : m.tipo === 'prod_nombre' ? `Nombre cambiado: "${esc(m.antes)}" → "${esc(m.despues)}"`
   : m.tipo === 'prod_sku' ? `SKU ${esc(m.accion)}: ${esc(m.valor)}`
@@ -901,16 +951,18 @@ const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado'
 const esProd = m => String(m.tipo || '').startsWith('prod_') || m.tipo === 'importacion';
 const mlTxt = m => m.ml != null ? `. Mercado Libre decía ${esc(m.ml)}${m.ml !== m.contado ? ` (diferencia ${m.ml - m.contado > 0 ? '+' : ''}${m.ml - m.contado})` : ' (coincide)'}` : '';
 function miniMov(m) {
-  if (esProd(m)) return `<div class="mini"><div class="q adj">✎</div><div><b>${esc(m.nombre || 'Productos')}</b><div class="muted">${PROD_TXT(m)} · ${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}</div></div></div>`;
-  const d = movDelta(m), cls = m.tipo === 'ajuste' ? 'adj' : d < 0 ? 'out' : 'in';
-  return `<div class="mini"><div class="q ${cls}">${signo(d)}</div>
+  if (esProd(m)) return `<div class="mini"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? '✕' : '✎'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div class="muted">${PROD_TXT(m)} · ${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}</div></div></div>`;
+  const v = vistaMov(m);
+  return `<div class="mini"><div class="q ${v.cls}">${v.q}</div>
     <div><b>${esc(m.nombre || state.productos[m.productoId]?.nombre || 'Producto')}</b> ${rutaHTML(m, 'font-size:15px')}
     <div class="muted">${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}${tipoTxt(m)}</div></div></div>`;
 }
 // Ubicación del movimiento; si fue un traslado, origen → destino.
 function rutaHTML(m, st) {
   const c = u => `<span class="chip"${st ? ` style="${st}"` : ''}>${esc(u)}</span>`;
-  return m.tipo === 'quitado' && m.movidoA ? `<span class="ruta">${c(m.ubicacion)}<span aria-label="a">→</span>${c(m.movidoA)}</span>` : c(m.ubicacion);
+  if (m.tipo === 'quitado' && m.movidoA) return `<span class="ruta">${c(m.ubicacion)}<span aria-label="a">→</span>${c(m.movidoA)}</span>`;
+  if (Array.isArray(m.desde) && m.desde.length) return `<span class="ruta">${m.desde.map(x => c(x.u)).join('')}<span aria-label="a">→</span>${c(m.ubicacion)}</span>`;
+  return c(m.ubicacion);
 }
 
 /* ---------- pestaña Inicio ---------- */
@@ -921,14 +973,14 @@ function renderInicio() {
   const pct = ps.length ? Math.round(conU * 100 / ps.length) : 0;
   const rec = (cfg.recientes || []).filter(id => state.productos[id]);
   const desde = new Date(); desde.setHours(0, 0, 0, 0);
-  const movsHoy = state.movs.filter(m => m.fecha >= desde.getTime());
+  const movsHoy = sinDuplicados(state.movs.filter(m => m.fecha >= desde.getTime()));
   const visibles = Object.values(state.stock).filter(visible);
   const porPas = n => new Set(visibles.filter(s => dentro(s.ubicacion, 'P' + n)).map(s => s.productoId)).size;
   // Productos distintos por tramo (P1-A-T3, incluye sus niveles) para el mapa.
   const porTramo = {};
   visibles.forEach(s => { const m = /^(P\d+-[AB]-T\d+)(?:-|$)/.exec(s.ubicacion || ''); if (m) (porTramo[m[1]] = porTramo[m[1]] || new Set()).add(s.productoId); });
-  const T = maxTramos(), pl = c => c === 1 ? '' : 's';
-  const lado = (p, l) => `<div class="lado"><span>${l}</span><div class="cells" style="grid-template-columns:repeat(${T},minmax(0,1fr))">${Array.from({ length: T }, (_, i) => {
+  const T = tramosMax(), pl = c => c === 1 ? '' : 's';
+  const lado = (p, l) => `<div class="lado"><span>${l}</span><div class="cells" style="grid-template-columns:repeat(${T},minmax(0,1fr))">${Array.from({ length: tramosDe(`P${p}-${l}`) }, (_, i) => {
     const u = `P${p}-${l}-T${i + 1}`, c = porTramo[u] ? porTramo[u].size : 0;
     return `<button data-act="i-u" data-v="${u}" class="${c >= 3 ? 'l3' : c === 2 ? 'l2' : c === 1 ? 'l1' : ''}" title="${u}: ${c} producto${pl(c)}" aria-label="${u}, ${c} producto${pl(c)}">${i + 1}</button>`; }).join('')}</div></div>`;
   el.innerHTML = `
@@ -962,18 +1014,14 @@ function openSinUbic() {
 function renderMovs() {
   const el = $('#m-list');
   if (!state.movs.length) { el.innerHTML = '<p class="empty">Todavía no hay movimientos. Guardá algo desde Inicio > Guardar en ubicación.</p>'; return; }
-  el.innerHTML = state.movs.slice(0, 150).map(m => {
-    if (esProd(m)) return `<div class="mov"><div class="q adj">✎</div><div><b>${esc(m.nombre || 'Productos')}</b><div><small>${PROD_TXT(m)}</small></div>
+  el.innerHTML = sinDuplicados(state.movs.slice(0, 150)).map(m => {
+    if (esProd(m)) return `<div class="mov"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? '✕' : '✎'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div><small>${PROD_TXT(m)}</small></div>
       <small>${fmt(m.fecha)}${m.usuario ? ' por ' + esc(m.usuario) : ''}</small></div></div>`;
-    const d = movDelta(m);
-    const adj = m.tipo === 'ajuste';
-    const cls = adj ? 'adj' : d < 0 ? 'out' : 'in';
-    return `<div class="mov"><div class="q ${cls}">${signo(d)}</div>
+    const v = vistaMov(m);
+    return `<div class="mov"><div class="q ${v.cls}">${v.q}</div>
       <div><b>${esc(m.nombre || state.productos[m.productoId]?.nombre || 'Producto')}</b>
       <div>${rutaHTML(m)}</div>
-      ${adj ? `<small>Ajuste: había ${esc(m.anterior)}, quedó ${m.contado > 0 ? esc(m.contado) : '0 (sin contar)'}${mlTxt(m)}</small>` : ''}
-      ${m.tipo === 'carga' ? `<small>Carga en esta ubicación: ${m.contado > 0 ? esc(m.contado) + ' u.' : 'sin contar'}${mlTxt(m)}</small>` : ''}
-      ${m.tipo === 'quitado' ? `<small>${m.movidoA ? `Movido a ${esc(m.movidoA)}` : 'Quitado de esta ubicación'} (había ${esc(m.anterior)})</small>` : ''}
+      ${v.det ? `<small>${v.det}</small>` : ''}
       <small>${fmt(m.fecha)}${m.usuario ? ' por ' + esc(m.usuario) : ''}</small></div></div>`;
   }).join('');
 }
@@ -1194,6 +1242,38 @@ function goGuardar(pid, u) {
 
 /* ---------- ajustes ---------- */
 let selModo = 'local';
+// Cuando cambia la configuración del depósito: redibuja sin borrar lo que se está escribiendo.
+function depCambio() {
+  refresh(); pintarDep();
+  const enG = $('#v-guardar')?.classList.contains('on');
+  const escribiendo = document.activeElement && /^(g-nombre|g-sku|g-cant|g-ml)$/.test(document.activeElement.id);
+  if (enG && !escribiendo) renderG();
+}
+function leerTabla() {
+  const t = {};
+  document.querySelectorAll('#a-deptab input[data-pl]').forEach(i => { t[i.dataset.pl] = i.value; });
+  return t;
+}
+function pintarTabla(nP, vals) {
+  const tab = $('#a-deptab'); if (!tab) return;
+  let h = '<span></span><small class="muted">Lado A (izq.)</small><small class="muted">Lado B (der.)</small>';
+  for (let p = 1; p <= nP; p++) {
+    const v = l => esc(vals[`P${p}-${l}`] ?? tramosDe(`P${p}-${l}`));
+    h += `<b>Pasillo ${p}</b><input data-pl="P${p}-A" type="number" inputmode="numeric" min="1" max="60" value="${v('A')}" aria-label="Pasillo ${p} lado A"><input data-pl="P${p}-B" type="number" inputmode="numeric" min="1" max="60" value="${v('B')}" aria-label="Pasillo ${p} lado B">`;
+  }
+  tab.innerHTML = h;
+}
+function pintarDep() {
+  if (!$('#a-dep')) return;
+  const adm = esAdmin();
+  $('#a-dep-edit').style.display = adm ? '' : 'none';
+  $('#a-dep-info').textContent = adm ? 'Cuántos tramos tiene cada lado de cada pasillo. Vale para todos los usuarios.' : 'Lo configura el administrador.';
+  const ro = [];
+  for (let p = 1; p <= maxPasillos(); p++) ro.push(`P${p}: A ${tramosDe(`P${p}-A`)} · B ${tramosDe(`P${p}-B`)}`);
+  $('#a-dep-ro').innerHTML = adm ? '' : ro.map(esc).join('<br>');
+  const editando = document.activeElement && (document.activeElement.id === 'a-pasillos' || document.activeElement.closest?.('#a-deptab'));
+  if (adm && !editando) { $('#a-pasillos').value = maxPasillos(); pintarTabla(maxPasillos(), {}); }
+}
 const ROL_TXT = { admin: 'Administrador', empleado: 'Empleado', consulta: 'Solo consulta' };
 function paintCuenta() {
   const c = $('#a-cuenta'); if (!c) return;
@@ -1210,8 +1290,7 @@ function paintModo() {
   $('#a-fb').style.display = selModo === 'firebase' ? '' : 'none';
 }
 function fillAjustes() {
-  $('#a-tramos').value = maxTramos();
-  $('#a-pasillos').value = maxPasillos();
+  pintarDep();
   $('#a-ver').textContent = 'Versión ' + VERSION;
   $('#a-user').value = cfg.usuario || '';
   selModo = cfg.modo || 'local';
@@ -1304,10 +1383,16 @@ const A = {
   'u-tq': b => { if (g.ubic === b.dataset.u) return; g.ubic = b.dataset.u; g.cant = ''; renderG(); if (!g.pid && !g.nombre.trim()) focusEl('#g-nombre'); },
   'u-pick': b => { g.ubic = b.dataset.u; g.cant = ''; renderG(); trasUbic(); },
   'tramos-save': () => {
-    const t = parseInt($('#a-tramos').value, 10), p = parseInt($('#a-pasillos').value, 10);
+    if (!esAdmin()) return;
+    const p = parseInt($('#a-pasillos').value, 10);
     if (!(p >= 1 && p <= 30)) { toast('Pasillos: poné un número entre 1 y 30', 'err'); return; }
-    if (!(t >= 1 && t <= 60)) { toast('Tramos: poné un número entre 1 y 60', 'err'); return; }
-    cfg.pasillos = p; cfg.tramos = t; saveCfg(); renderG(); toast(`Guardado: ${p} pasillos, ${t} tramos por lado`);
+    const vals = leerTabla(), tramos = {};
+    for (let i = 1; i <= p; i++) for (const l of ['A', 'B']) {
+      const k = `P${i}-${l}`, n = parseInt(vals[k], 10);
+      if (!(n >= 1 && n <= 60)) { toast(`Pasillo ${i} lado ${l}: poné un número entre 1 y 60`, 'err'); return; }
+      tramos[k] = n;
+    }
+    B.guardarDep({ pasillos: p, tramos, actualizado: Date.now(), por: usuarioActual() });
   },
   'p-pick': b => { const id = b.dataset.id; limpiarProducto(); g.pid = id; renderG(); if (g.ubic) { irA('#s3'); focusEl('#g-cant'); } else irA('#s1'); },
   'p-x': () => { limpiarProducto(); renderG(); focusEl('#g-nombre'); },
@@ -1384,6 +1469,7 @@ document.addEventListener('input', e => {
   else if (id === 'sc-in' && scanUbic) ubicPrev($('#sc-prev'), e.target.value, $('#sc-ok'));
   else if (id === 'g-ml') g.ml = e.target.value;
   else if (id === 'g-cant') g.cant = e.target.value;
+  else if (id === 'a-pasillos') { const n = parseInt(e.target.value, 10); if (n >= 1 && n <= 30) pintarTabla(n, leerTabla()); }
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;

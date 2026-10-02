@@ -246,9 +246,10 @@ button.kpi:hover{border-color:var(--muted)}
 
     <div class="section stack" id="a-import">
       <h2>Importar productos</h2>
-      <p class="muted">Pegá columnas copiadas de Excel en este orden: nombre, SKU, código de barras. Los SKU y códigos que ya existen se saltean.</p>
+      <p class="muted">Pegá columnas copiadas de Excel en este orden: nombre, SKU, código de barras. Si un producto tiene varios SKU, separalos con " | ". Los productos que ya existen (mismo nombre) no se duplican.</p>
       <textarea id="i-txt" placeholder="Secador 2441 negro	secador 2441 negro	7791234567890"></textarea>
       <button class="btn" data-act="i-go">Importar</button>
+      <p class="muted" id="i-res" style="font-size:14px"></p>
     </div>
 
     <div class="section stack" id="a-resp">
@@ -272,7 +273,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 13';
+const VERSION = '2026-10-01 · 14';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -1360,25 +1361,44 @@ function setMode() {
   $('#mode').textContent = t;
 }
 
+// Importar: columnas nombre, SKU, código. Varios SKU del mismo producto van separados por " | ".
+// Si el producto ya existe (mismo nombre), no se duplica: solo se le agregan los SKU que le falten.
 function importar() {
   const lines = $('#i-txt').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (!lines.length) { toast('Pegá al menos una fila', 'err'); return; }
   const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
   const inicio = /nombre/i.test(lines[0]) ? 1 : 0;
-  const nuevos = [], vistosSku = new Set(), vistosCod = new Set();
-  let salteados = 0;
+  const nuevos = [], actualizados = [], problemas = [], vistosNom = new Map(), vistosSku = new Map(), vistosCod = new Set();
+  let iguales = 0;
   for (const l of lines.slice(inicio)) {
-    const [nombre, sku, cod] = l.split(sep).map(x => (x || '').trim());
-    if (!nombre) { salteados++; continue; }
-    if (sku && (bySku(sku) || vistosSku.has(norm(sku)))) { salteados++; continue; }
+    const [nombre, skuTxt, cod] = l.split(sep).map(x => (x || '').trim());
+    if (!nombre) { problemas.push(`Fila sin nombre: "${l.slice(0, 40)}"`); continue; }
+    const skus = [...new Set(String(skuTxt || '').split('|').map(x => x.trim()).filter(Boolean))];
     const c = (cod || '').replace(/\s/g, '');
+    const existente = prods().find(p => norm(p.nombre) === norm(nombre)) || vistosNom.get(norm(nombre));
+    // SKU que ya son de OTRO producto: no se tocan.
+    const ajenos = skus.filter(k => { const o = bySku(k) || vistosSku.get(norm(k)); return o && (!existente || o.id !== existente.id); });
+    if (ajenos.length) { problemas.push(`"${nombre}": el SKU ${ajenos.join(', ')} ya es de otro producto`); continue; }
+    if (existente) {
+      const faltan = skus.filter(k => !(existente.skus || []).some(x => norm(x) === norm(k)));
+      if (faltan.length) {
+        existente.skus = [...(existente.skus || []), ...faltan];
+        if (!nuevos.includes(existente) && !actualizados.includes(existente)) actualizados.push(existente);
+        faltan.forEach(k => vistosSku.set(norm(k), existente));
+      } else iguales++;
+      continue;
+    }
     const codOk = c && !byCode(c) && !vistosCod.has(c);
-    if (sku) vistosSku.add(norm(sku));
     if (codOk) vistosCod.add(c);
-    nuevos.push({ id: uid('p'), nombre, skus: sku ? [sku] : [], codigos: codOk ? [c] : [], creado: Date.now() });
+    const p = { id: uid('p'), nombre, skus, codigos: codOk ? [c] : [], creado: Date.now() };
+    nuevos.push(p); vistosNom.set(norm(nombre), p); skus.forEach(k => vistosSku.set(norm(k), p));
   }
-  if (nuevos.length) { B.guardarProductos(nuevos); B.log(movData('', '', 0, 'importacion', { cantidadImportada: nuevos.length, nombre: 'Productos' })); }
-  toast(`Importados: ${nuevos.length}. Salteados: ${salteados}.`);
+  if (nuevos.length) B.guardarProductos(nuevos);
+  actualizados.forEach(p => B.guardarProducto({ ...p }));
+  if (nuevos.length || actualizados.length) B.log(movData('', '', 0, 'importacion', { cantidadImportada: nuevos.length, nombre: 'Productos' }));
+  const res = `Nuevos: ${nuevos.length}. Ya existían: ${iguales + actualizados.length}${actualizados.length ? ` (a ${actualizados.length} se les agregó SKU)` : ''}. Con problemas: ${problemas.length}.`;
+  toast(res, problemas.length ? 'err' : '');
+  $('#i-res').innerHTML = `<b>${esc(res)}</b>` + (problemas.length ? '<br>' + problemas.map(esc).join('<br>') : '');
   $('#i-txt').value = '';
 }
 

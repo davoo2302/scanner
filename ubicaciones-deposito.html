@@ -153,6 +153,17 @@ button.kpi:hover{border-color:var(--muted)}
 .cells button.l2{background:color-mix(in srgb,var(--green) 72%,var(--field));border-color:transparent;color:var(--ink)}
 .cells button.l3{background:var(--green);border-color:transparent;color:#fff}
 .cells button:hover{outline:2px solid var(--yellow);outline-offset:0}
+/* Mapa en celular: vista desde arriba. Cada pasillo es una columna (A izquierda, B derecha), tramo 1 arriba = entrada. */
+.plano{display:grid;gap:8px;overflow-x:auto;padding-bottom:2px}
+.pcol{min-width:64px}
+.pcol-h{display:flex;flex-direction:column;align-items:center;width:100%;min-height:48px;padding:2px;background:transparent;color:var(--ink);border-radius:6px}
+.pcol-h b{font-family:var(--cond);font-size:22px;font-weight:700;line-height:1}
+.pcol-h small{font-size:12px}
+.pcol-ab{display:grid;grid-template-columns:1fr 1fr;gap:4px;text-align:center;font-family:var(--cond);font-weight:700;font-size:15px;color:var(--muted);margin:2px 0 4px}
+.cells.pgrid{grid-template-columns:1fr 1fr;gap:4px}
+.cells.pgrid button{min-height:36px;font-size:16px}
+.cells.pgrid .nada{min-height:36px}
+.plano-nota{font-size:13px;margin:0 0 8px}
 .leyenda{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
 .leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
 .ruta{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -261,7 +272,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 12';
+const VERSION = '2026-10-01 · 13';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -966,6 +977,28 @@ function rutaHTML(m, st) {
 }
 
 /* ---------- pestaña Inicio ---------- */
+// En pantallas angostas el mapa se dibuja "desde arriba", con cuadros más grandes.
+const mqCel = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
+const esCelular = () => !!(mqCel && mqCel.matches);
+if (mqCel) { const f = () => renderInicio(); mqCel.addEventListener ? mqCel.addEventListener('change', f) : mqCel.addListener && mqCel.addListener(f); }
+function planoCelular(porTramo, porPas) {
+  const nP = maxPasillos();
+  let filas = 1;
+  for (let p = 1; p <= nP; p++) filas = Math.max(filas, tramosDe(`P${p}-A`), tramosDe(`P${p}-B`));
+  const celda = (p, l, i) => {
+    if (i > tramosDe(`P${p}-${l}`)) return '<span class="nada"></span>';
+    const u = `P${p}-${l}-T${i}`, c = porTramo[u] ? porTramo[u].size : 0;
+    return `<button data-act="i-u" data-v="${u}" class="${c >= 3 ? 'l3' : c === 2 ? 'l2' : c === 1 ? 'l1' : ''}" aria-label="${u}, ${c} producto${c === 1 ? '' : 's'}">${i}</button>`;
+  };
+  return `<p class="muted plano-nota">Visto desde arriba: el tramo 1 es la entrada de cada pasillo.</p>
+    <div class="plano" style="grid-template-columns:repeat(${nP},minmax(64px,1fr))">${Array.from({ length: nP }, (_, k) => {
+      const p = k + 1, c = porPas(p);
+      let g = '';
+      for (let i = 1; i <= filas; i++) g += celda(p, 'A', i) + celda(p, 'B', i);
+      return `<div class="pcol"><button class="pcol-h" data-act="i-pas" data-v="P${p}"><b>P${p}</b><small class="muted">${c ? c + ' prod.' : 'vacío'}</small></button>
+        <div class="pcol-ab"><span>A</span><span>B</span></div><div class="cells pgrid">${g}</div></div>`;
+    }).join('')}</div>`;
+}
 function renderInicio() {
   const el = $('#i-body'); if (!el) return;
   const btn = $('#i-guardar'); if (btn) btn.textContent = g.ubic ? `Seguir guardando en ${g.ubic}` : '+ Guardar en ubicación';
@@ -998,8 +1031,8 @@ function renderInicio() {
         : '<div class="kpi"><small>Sin ubicación</small><b class="ok">0</b></div>'}
     </div>` : '<p class="muted" style="margin-top:16px">Todavía no hay productos cargados.</p>'}
     <div class="card c-mapa"><h2>Mapa del depósito <small class="muted">Tocá un tramo para ver qué hay</small></h2>
-      <div class="mapa">${Array.from({ length: maxPasillos() }, (_, i) => { const c = porPas(i + 1);
-        return `<div><button class="pas-h" data-act="i-pas" data-v="P${i + 1}"><b>PASILLO ${i + 1}</b><small>${c ? c + ' producto' + pl(c) : 'Vacío'}</small></button>${lado(i + 1, 'A')}${lado(i + 1, 'B')}</div>`; }).join('')}</div>
+      ${esCelular() ? planoCelular(porTramo, porPas) : `<div class="mapa">${Array.from({ length: maxPasillos() }, (_, i) => { const c = porPas(i + 1);
+        return `<div><button class="pas-h" data-act="i-pas" data-v="P${i + 1}"><b>PASILLO ${i + 1}</b><small>${c ? c + ' producto' + pl(c) : 'Vacío'}</small></button>${lado(i + 1, 'A')}${lado(i + 1, 'B')}</div>`; }).join('')}</div>`}
       <div class="leyenda"><span><i></i>Vacío</span><span><i class="l1" style="background:color-mix(in srgb,var(--green) 45%,var(--field))"></i>1 producto</span><span><i style="background:color-mix(in srgb,var(--green) 72%,var(--field))"></i>2</span><span><i style="background:var(--green)"></i>3 o más</span></div>
     </div>
     ${rec.length ? `<div class="card c-recs"><h2>Últimos buscados</h2><div class="list" style="margin-top:0">${rec.map(id => { const p = state.productos[id];

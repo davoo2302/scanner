@@ -261,7 +261,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 11';
+const VERSION = '2026-10-01 · 12';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -428,7 +428,7 @@ const Local = {
     this.persist(); refresh();
   },
   borrarProducto(pid) {
-    state.movs.unshift(movData(pid, '', 0, 'prod_eliminado', { skus: state.productos[pid]?.skus || [] }));
+    state.movs.unshift(movData(pid, '', 0, 'prod_eliminado', { skus: state.productos[pid]?.skus || [], ubicaciones: stockDe(pid).map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })) }));
     delete state.productos[pid];
     Object.keys(state.stock).forEach(k => { if (state.stock[k].productoId === pid) delete state.stock[k]; });
     this.persist(); refresh();
@@ -524,7 +524,7 @@ const Fb = {
   },
   borrarProducto(pid) {
     const b = this.db.batch();
-    const { id: _i, ...lm } = movData(pid, '', 0, 'prod_eliminado', { skus: state.productos[pid]?.skus || [] });
+    const { id: _i, ...lm } = movData(pid, '', 0, 'prod_eliminado', { skus: state.productos[pid]?.skus || [], ubicaciones: stockDe(pid).map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })) });
     b.set(this.base.collection('movimientos').doc(), lm);
     b.delete(this.base.collection('productos').doc(pid));
     Object.keys(state.stock).forEach(k => { if (state.stock[k].productoId === pid) b.delete(this.base.collection('stock').doc(k)); });
@@ -943,7 +943,7 @@ function sinDuplicados(movs) {
   movs.forEach(m => { if (Array.isArray(m.desde)) m.desde.forEach(x => cubiertos.add(m.productoId + '|' + x.u + '|' + m.ubicacion)); });
   return movs.filter(m => !(m.tipo === 'quitado' && m.movidoA && cubiertos.has(m.productoId + '|' + m.ubicacion + '|' + m.movidoA)));
 }
-const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado'
+const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado' + (Array.isArray(m.ubicaciones) && m.ubicaciones.length ? ` (estaba en ${m.ubicaciones.map(x => `${esc(x.u)}${x.n > 0 ? ' ×' + x.n : ''}`).join(', ')})` : '')
   : m.tipo === 'prod_nombre' ? `Nombre cambiado: "${esc(m.antes)}" → "${esc(m.despues)}"`
   : m.tipo === 'prod_sku' ? `SKU ${esc(m.accion)}: ${esc(m.valor)}`
   : m.tipo === 'prod_codigo' ? `Código de barras ${esc(m.accion)}: ${esc(m.valor)}`
@@ -1219,9 +1219,8 @@ function renderDetalle() {
     <div class="section stack"><h4>Nombre</h4>
       <div class="row"><input class="grow" id="d-n" value="${esc(p.nombre)}" autocomplete="off"><button class="btn small" data-act="d-name">Cambiar</button></div></div>
     ${esAdmin() ? `<div class="section stack"><h4>Eliminar producto</h4>
-      ${total(p.id) > 0
-        ? `<p class="muted">Tiene ${total(p.id)} unidades ubicadas. Para eliminarlo, primero quitalo de cada ubicación (tocá la ubicación y usá "Ya no está acá").</p>`
-        : '<p class="muted">Se borra el producto con sus SKU y códigos. Queda registrado en el historial quién lo eliminó.</p><button class="btn wide" style="background:var(--red)" data-act="d-del">Eliminar producto</button>'}
+      <p class="muted">Se borra el producto con sus SKU y códigos${hay ? ' y sus ubicaciones (' + stockDe(p.id).map(x => esc(x.ubicacion)).join(', ') + ')' : ''}. En el historial queda registrado quién lo eliminó y dónde estaba.</p>
+      <button class="btn wide" style="background:var(--red)" data-act="d-del">Eliminar producto</button>
     </div>` : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:18px">Cerrar</button>`}`;
 }
@@ -1443,8 +1442,8 @@ const A = {
   'd-del': () => {
     const p = state.productos[detId]; if (!p) return;
     if (!esAdmin()) return;
-    if (total(p.id) > 0) { toast('Primero quitalo de sus ubicaciones', 'err'); return; }
-    if (!confirm(`¿Eliminar "${p.nombre}"? No se puede deshacer.`)) return;
+    const ubs = stockDe(p.id).map(x => `${x.ubicacion} (${x.cantidad > 0 ? x.cantidad + ' u.' : 'sin contar'})`);
+    if (!confirm(`¿Eliminar "${p.nombre}"?${ubs.length ? '\n\nTambién se borra de: ' + ubs.join(', ') : ''}\n\nNo se puede deshacer. Queda registrado en el historial.`)) return;
     const id = detId, nombre = p.nombre;
     closeModal().then(() => { B.borrarProducto(id); if (g.pid === id) { g.pid = ''; renderG(); } toast('Producto eliminado: ' + nombre); });
   },

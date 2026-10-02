@@ -252,6 +252,7 @@ button.kpi:hover{border-color:var(--muted)}
       <input type="file" id="i-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
       <button class="btn" data-act="i-go">Importar</button>
       <p class="muted" id="i-res" style="font-size:14px"></p>
+      <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
     </div>
 
     <div class="section stack" id="a-resp">
@@ -275,7 +276,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 15';
+const VERSION = '2026-10-01 · 16';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -420,6 +421,19 @@ const Local = {
   },
   guardarProducto(p) { state.productos[p.id] = p; this.persist(); refresh(); },
   guardarProductos(list) { list.forEach(p => { state.productos[p.id] = p; }); this.persist(); refresh(); },
+  importarProductos(list) {
+    list.forEach(p => { const o = state.productos[p.id];
+      state.productos[p.id] = o ? { ...o, skus: [...new Set([...(o.skus || []), ...p.skus])], codigos: [...new Set([...(o.codigos || []), ...p.codigos])] } : p; });
+    this.persist(); refresh();
+  },
+  async refrescarProductos() {},
+  unir(plan) {
+    state.productos[plan.keeper.id] = plan.keeper;
+    plan.stockSet.forEach(x => { state.stock[x.k] = x.d; });
+    plan.stockDel.forEach(k => { delete state.stock[k]; });
+    plan.prodDel.forEach(id => { delete state.productos[id]; });
+    state.movs.unshift(plan.log); this.persist(); refresh();
+  },
   mover(pid, u, delta, tipo) {
     const k = stockKey(pid, u);
     const cur = state.stock[k] || { productoId: pid, ubicacion: u, cantidad: 0 };
@@ -509,6 +523,46 @@ const Fb = {
       list.slice(i, i + 400).forEach(p => { const { id, ...d } = p; b.set(this.base.collection('productos').doc(id), d); });
       b.commit().catch(e => toast('Error al importar: ' + e.message, 'err'));
     }
+  },
+  // Importación: set con merge en el id fijo; los SKU se suman, no se pisan.
+  importarProductos(list) {
+    const FV = firebase.firestore.FieldValue;
+    list.forEach(p => { const o = state.productos[p.id];
+      state.productos[p.id] = o ? { ...o, skus: [...new Set([...(o.skus || []), ...p.skus])], codigos: [...new Set([...(o.codigos || []), ...p.codigos])] } : p; });
+    refresh();
+    for (let i = 0; i < list.length; i += 400) {
+      const b = this.db.batch();
+      list.slice(i, i + 400).forEach(p => {
+        const d = { nombre: p.nombre };
+        if (!state.productos[p.id]?.creado || state.productos[p.id] === p) d.creado = p.creado;
+        if (p.skus.length) d.skus = FV.arrayUnion(...p.skus);
+        if (p.codigos.length) d.codigos = FV.arrayUnion(...p.codigos);
+        b.set(this.base.collection('productos').doc(p.id), d, { merge: true });
+      });
+      b.commit().catch(e => toast('Error al importar: ' + e.message, 'err'));
+    }
+  },
+  // Trae la lista de productos directo del servidor, para no decidir con datos viejos.
+  async refrescarProductos() {
+    try {
+      const s = await this.base.collection('productos').get({ source: 'server' });
+      const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
+      state.productos = o;
+    } catch (e) { toast('Sin conexión con el servidor: se usa la lista que hay en este dispositivo.', 'err'); }
+  },
+  unir(plan) {
+    const b = this.db.batch(), P = this.base.collection('productos'), S = this.base.collection('stock');
+    const { id: kid, ...kd } = plan.keeper;
+    b.set(P.doc(kid), kd);
+    plan.stockSet.forEach(x => b.set(S.doc(x.k), x.d));
+    plan.stockDel.forEach(k => b.delete(S.doc(k)));
+    plan.prodDel.forEach(id => b.delete(P.doc(id)));
+    const { id: _m, ...lm } = plan.log;
+    b.set(this.base.collection('movimientos').doc(), lm);
+    state.productos[kid] = plan.keeper; plan.prodDel.forEach(id => { delete state.productos[id]; });
+    plan.stockSet.forEach(x => { state.stock[x.k] = x.d; }); plan.stockDel.forEach(k => { delete state.stock[k]; });
+    refresh();
+    return b.commit().catch(e => toast('No se pudo unir: ' + e.message, 'err'));
   },
   mover(pid, u, delta, tipo) {
     const b = this.db.batch();
@@ -613,6 +667,14 @@ async function cerrarSesion() {
   // Borra la copia de los datos que quedó guardada en este navegador.
   try { await firebase.firestore().terminate(); await firebase.firestore().clearPersistence(); } catch (e) {}
   location.reload();
+}
+
+// Identificador fijo calculado del nombre: importar dos veces (aunque sea desde dos celulares a la vez) cae en el mismo producto.
+function idDeNombre(nombre) {
+  const n = norm(nombre);
+  let h = 2166136261;
+  for (let i = 0; i < n.length; i++) { h ^= n.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return 'n_' + n.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) + '_' + (h >>> 0).toString(36);
 }
 
 /* ---------- consultas ---------- */
@@ -961,6 +1023,7 @@ const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado' + (Arra
   : m.tipo === 'prod_nombre' ? `Nombre cambiado: "${esc(m.antes)}" → "${esc(m.despues)}"`
   : m.tipo === 'prod_sku' ? `SKU ${esc(m.accion)}: ${esc(m.valor)}`
   : m.tipo === 'prod_codigo' ? `Código de barras ${esc(m.accion)}: ${esc(m.valor)}`
+  : m.tipo === 'prod_unido' ? `Unido con ${esc(m.unidos)} repetido${m.unidos > 1 ? 's' : ''}`
   : m.tipo === 'importacion' ? `Importación: ${esc(m.cantidadImportada)} productos nuevos` : '';
 const esProd = m => String(m.tipo || '').startsWith('prod_') || m.tipo === 'importacion';
 const mlTxt = m => m.ml != null ? `. Mercado Libre decía ${esc(m.ml)}${m.ml !== m.contado ? ` (diferencia ${m.ml - m.contado > 0 ? '+' : ''}${m.ml - m.contado})` : ' (coincide)'}` : '';
@@ -1365,9 +1428,11 @@ function setMode() {
 
 // Importar: columnas nombre, SKU, código. Varios SKU del mismo producto van separados por " | ".
 // Si el producto ya existe (mismo nombre), no se duplica: solo se le agregan los SKU que le falten.
-function importar() {
+async function importar() {
   const lines = $('#i-txt').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (!lines.length) { toast('Pegá al menos una fila', 'err'); return; }
+  $('#i-res').textContent = 'Revisando qué productos ya existen…';
+  await B.refrescarProductos();
   const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
   const inicio = /nombre/i.test(lines[0]) ? 1 : 0;
   const nuevos = [], actualizados = [], problemas = [], vistosNom = new Map(), vistosSku = new Map(), vistosCod = new Set();
@@ -1377,7 +1442,7 @@ function importar() {
     if (!nombre) { problemas.push(`Fila sin nombre: "${l.slice(0, 40)}"`); continue; }
     const skus = [...new Set(String(skuTxt || '').split('|').map(x => x.trim()).filter(Boolean))];
     const c = (cod || '').replace(/\s/g, '');
-    const existente = prods().find(p => norm(p.nombre) === norm(nombre)) || vistosNom.get(norm(nombre));
+    const existente = state.productos[idDeNombre(nombre)] || prods().find(p => norm(p.nombre) === norm(nombre)) || vistosNom.get(norm(nombre));
     // SKU que ya son de OTRO producto: no se tocan.
     const ajenos = skus.filter(k => { const o = bySku(k) || vistosSku.get(norm(k)); return o && (!existente || o.id !== existente.id); });
     if (ajenos.length) { problemas.push(`"${nombre}": el SKU ${ajenos.join(', ')} ya es de otro producto`); continue; }
@@ -1392,10 +1457,10 @@ function importar() {
     }
     const codOk = c && !byCode(c) && !vistosCod.has(c);
     if (codOk) vistosCod.add(c);
-    const p = { id: uid('p'), nombre, skus, codigos: codOk ? [c] : [], creado: Date.now() };
+    const p = { id: idDeNombre(nombre), nombre, skus, codigos: codOk ? [c] : [], creado: Date.now() };
     nuevos.push(p); vistosNom.set(norm(nombre), p); skus.forEach(k => vistosSku.set(norm(k), p));
   }
-  if (nuevos.length) B.guardarProductos(nuevos);
+  if (nuevos.length) B.importarProductos(nuevos);
   actualizados.forEach(p => B.guardarProducto({ ...p }));
   if (nuevos.length || actualizados.length) B.log(movData('', '', 0, 'importacion', { cantidadImportada: nuevos.length, nombre: 'Productos' }));
   const res = `Nuevos: ${nuevos.length}. Ya existían: ${iguales + actualizados.length}${actualizados.length ? ` (a ${actualizados.length} se les agregó SKU)` : ''}. Con problemas: ${problemas.length}.`;
@@ -1429,6 +1494,51 @@ async function leerArchivo(f) {
   } catch (e) {
     msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.';
   }
+}
+
+/* ---------- duplicados ---------- */
+function gruposDuplicados() {
+  const g = new Map();
+  prods().forEach(p => { const k = norm(p.nombre); if (!g.has(k)) g.set(k, []); g.get(k).push(p); });
+  return [...g.values()].filter(x => x.length > 1);
+}
+// Une un grupo de productos repetidos en uno solo: suma SKU y códigos, pasa las ubicaciones y borra los sobrantes.
+function planUnion(grupo) {
+  const ord = grupo.slice().sort((a, b) => stockDe(b.id).length - stockDe(a.id).length
+    || (String(b.id).startsWith('n_') - String(a.id).startsWith('n_')) || (a.creado || 0) - (b.creado || 0));
+  const k = ord[0], resto = ord.slice(1);
+  const keeper = { ...k, skus: [...new Set(grupo.flatMap(p => p.skus || []))], codigos: [...new Set(grupo.flatMap(p => p.codigos || []))] };
+  const stockSet = [], stockDel = [], destino = {};
+  stockDe(k.id).forEach(s => { destino[s.ubicacion] = { ...state.stock[stockKey(k.id, s.ubicacion)] }; });
+  resto.forEach(p => Object.keys(state.stock).filter(key => state.stock[key].productoId === p.id).forEach(key => {
+    const s = state.stock[key]; stockDel.push(key);
+    if (!visible(s)) return;
+    const t = destino[s.ubicacion];
+    // Si los dos estaban en el mismo tramo, es la misma mercadería: se queda con el número mayor (no se suma).
+    destino[s.ubicacion] = t ? { ...t, cantidad: Math.max(t.cantidad || 0, s.cantidad || 0), sinCant: Math.max(t.cantidad || 0, s.cantidad || 0) === 0 }
+      : { productoId: k.id, ubicacion: s.ubicacion, cantidad: s.cantidad || 0, sinCant: !(s.cantidad > 0), actualizado: Date.now() };
+  }));
+  Object.entries(destino).forEach(([u, d]) => stockSet.push({ k: stockKey(k.id, u), d: { ...d, productoId: k.id, ubicacion: u } }));
+  const log = movData(k.id, '', 0, 'prod_unido', { unidos: resto.length });
+  return { keeper, stockSet, stockDel, prodDel: resto.map(p => p.id), log };
+}
+function openDups() {
+  detId = null;
+  const gr = gruposDuplicados(), sobran = gr.reduce((a, x) => a + x.length - 1, 0);
+  openModal(`<h3>Productos repetidos</h3>
+    ${gr.length ? `<p style="margin-bottom:10px">Hay <b>${gr.length}</b> producto${gr.length > 1 ? 's' : ''} cargado${gr.length > 1 ? 's' : ''} más de una vez (${sobran} sobrante${sobran > 1 ? 's' : ''}).
+      Al unir, queda uno solo por nombre, con todos sus SKU y ubicaciones. Queda registrado en el historial.</p>
+      <button class="btn main" data-act="dups-ok" style="margin-bottom:12px">Unir los ${gr.length} repetidos</button>
+      <div class="list">${gr.map(x => `<div class="item"><b>${esc(x[0].nombre)}</b><small>${x.length} veces · ${[...new Set(x.flatMap(p => stockDe(p.id).map(s => s.ubicacion)))].map(esc).join(', ') || 'sin ubicación'}</small></div>`).join('')}</div>`
+      : '<p class="muted">No hay productos repetidos.</p>'}
+    <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
+}
+async function unirDuplicados() {
+  if (!esAdmin()) return;
+  await B.refrescarProductos();
+  const gr = gruposDuplicados(); let n = 0;
+  for (const x of gr) { await B.unir(planUnion(x)); n += x.length - 1; }
+  closeModal(); toast(gr.length ? `Listo: se unieron ${gr.length} productos (${n} sobrantes eliminados)` : 'No había repetidos');
 }
 
 function descargar() {
@@ -1538,6 +1648,8 @@ const A = {
   'modo-save': guardarModo,
   'user-save': () => { cfg.usuario = $('#a-user').value.trim(); saveCfg(); toast('Nombre guardado'); renderG(); },
   'i-go': () => { if (esAdmin()) importar(); },
+  'dups': () => { if (esAdmin()) openDups(); },
+  'dups-ok': () => { if (confirm('¿Unir los productos repetidos? No se puede deshacer, pero queda registrado en el historial.')) unirDuplicados(); },
   'logout': () => { if (confirm('¿Cerrar sesión en este dispositivo?')) cerrarSesion(); },
   'x-json': descargar,
   'x-borrar': () => { if (confirm('¿Borrar todos los datos de este celular? No se puede deshacer.')) B.borrar(); }

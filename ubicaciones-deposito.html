@@ -248,6 +248,8 @@ button.kpi:hover{border-color:var(--muted)}
       <h2>Importar productos</h2>
       <p class="muted">Pegá columnas copiadas de Excel en este orden: nombre, SKU, código de barras. Si un producto tiene varios SKU, separalos con " | ". Los productos que ya existen (mismo nombre) no se duplican.</p>
       <textarea id="i-txt" placeholder="Secador 2441 negro	secador 2441 negro	7791234567890"></textarea>
+      <label class="btn ghost wide" for="i-file" style="display:flex;align-items:center;justify-content:center;cursor:pointer">📂 Elegir archivo (Excel o CSV)</label>
+      <input type="file" id="i-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
       <button class="btn" data-act="i-go">Importar</button>
       <p class="muted" id="i-res" style="font-size:14px"></p>
     </div>
@@ -273,7 +275,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 14';
+const VERSION = '2026-10-01 · 15';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -1402,6 +1404,33 @@ function importar() {
   $('#i-txt').value = '';
 }
 
+// Lee un Excel o CSV elegido desde el celular o la PC y lo deja listo en el recuadro para importar.
+async function leerArchivo(f) {
+  const msg = $('#i-res');
+  try {
+    let filas;
+    if (/\.(xlsx|xls)$/i.test(f.name) || /sheet|excel/i.test(f.type)) {
+      msg.textContent = 'Leyendo el Excel…';
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      const nombreHoja = wb.SheetNames.find(n => /importar/i.test(n)) || wb.SheetNames[0];
+      filas = XLSX.utils.sheet_to_json(wb.Sheets[nombreHoja], { header: 1, defval: '' });
+    } else {
+      const t = await f.text();
+      const sep = t.includes('\t') ? '\t' : (t.includes(';') ? ';' : ',');
+      filas = t.split(/\r?\n/).map(l => l.split(sep));
+    }
+    const lineas = filas.filter(r => r.some(c => String(c ?? '').trim()))
+      .map(r => [r[0], r[1], r[2]].map(c => String(c ?? '').replace(/[\t\r\n]+/g, ' ').trim()).join('\t'));
+    if (!lineas.length) { msg.textContent = 'El archivo está vacío.'; return; }
+    $('#i-txt').value = lineas.join('\n');
+    const n = lineas.length - (/nombre/i.test(lineas[0]) ? 1 : 0);
+    msg.innerHTML = `<b>Se leyeron ${n} productos de "${esc(f.name)}".</b> Revisá el recuadro y tocá Importar.`;
+  } catch (e) {
+    msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.';
+  }
+}
+
 function descargar() {
   const blob = new Blob([JSON.stringify({ exportado: new Date().toISOString(), productos: state.productos, stock: state.stock, movimientos: state.movs }, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1541,6 +1570,9 @@ document.addEventListener('keydown', e => {
   if (act) { e.preventDefault(); A[act](); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('change', e => {
+  if (e.target.id === 'i-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; leerArchivo(f); }
+});
 window.addEventListener('online', setMode);
 window.addEventListener('offline', setMode);
 

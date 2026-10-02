@@ -261,7 +261,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 10';
+const VERSION = '2026-10-01 · 11';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -980,13 +980,19 @@ function renderInicio() {
   const porTramo = {};
   visibles.forEach(s => { const m = /^(P\d+-[AB]-T\d+)(?:-|$)/.exec(s.ubicacion || ''); if (m) (porTramo[m[1]] = porTramo[m[1]] || new Set()).add(s.productoId); });
   const T = tramosMax(), pl = c => c === 1 ? '' : 's';
+  let tTot = 0, tOcup = 0;
+  for (let p = 1; p <= maxPasillos(); p++) for (const l of ['A', 'B']) {
+    const n = tramosDe(`P${p}-${l}`); tTot += n;
+    for (let i = 1; i <= n; i++) if (porTramo[`P${p}-${l}-T${i}`]) tOcup++;
+  }
+  const tPct = tTot ? Math.round(tOcup * 100 / tTot) : 0;
   const lado = (p, l) => `<div class="lado"><span>${l}</span><div class="cells" style="grid-template-columns:repeat(${T},minmax(0,1fr))">${Array.from({ length: tramosDe(`P${p}-${l}`) }, (_, i) => {
     const u = `P${p}-${l}-T${i + 1}`, c = porTramo[u] ? porTramo[u].size : 0;
     return `<button data-act="i-u" data-v="${u}" class="${c >= 3 ? 'l3' : c === 2 ? 'l2' : c === 1 ? 'l1' : ''}" title="${u}: ${c} producto${pl(c)}" aria-label="${u}, ${c} producto${pl(c)}">${i + 1}</button>`; }).join('')}</div></div>`;
   el.innerHTML = `
     ${ps.length ? `<div class="kpis">
       <div class="kpi"><small>Productos</small><b>${ps.length}</b></div>
-      <div class="kpi"><small>Ubicados</small><b class="${pct === 100 ? 'ok' : ''}">${pct}%</b><div class="bar"><span style="width:${pct}%"></span></div></div>
+      <div class="kpi"><small>Tramos ocupados</small><b>${tOcup} <small class="muted" style="display:inline;font-family:var(--sans);font-size:15px;font-weight:500">de ${tTot}</small></b><div class="bar"><span style="width:${tPct}%"></span></div></div>
       <div class="kpi"><small>Movimientos hoy</small><b>${movsHoy.length}</b></div>
       ${sinU ? `<button class="kpi" data-act="sin-ubic"><small>Sin ubicación</small><b class="warn">${sinU}</b><small>Ver lista →</small></button>`
         : '<div class="kpi"><small>Sin ubicación</small><b class="ok">0</b></div>'}

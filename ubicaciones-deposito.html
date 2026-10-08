@@ -166,6 +166,14 @@ button.kpi:hover{border-color:var(--muted)}
 .plano-nota{font-size:13px;margin:0 0 8px}
 .leyenda{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
 .leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+/* Mercado Libre vs. depósito */
+.kpi.kml{grid-column:1/-1}
+.mlg{margin-top:18px}
+.mlg h4{margin:0 0 2px;font-size:17px;font-weight:600}
+.mlg>p{margin-bottom:8px}
+.mlrows{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center}
+.mlrows label{margin:0;font-size:15px;color:var(--ink);word-break:break-word}
+.mlrows input{min-height:46px;text-align:center;font-family:var(--cond);font-size:22px;font-weight:700;padding:0 6px}
 .ruta{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
 .ruta .chip{margin:0}
 @media (min-width:960px){
@@ -176,7 +184,8 @@ button.kpi:hover{border-color:var(--muted)}
   .btn.cta{flex:0 0 auto;order:0;font-size:17px;padding:0 22px}
   #b-res{max-width:820px}
   #i-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"kpis kpis" "mapa movs" "mapa recs";gap:16px;align-items:start;margin-top:16px}
-  #i-body .kpis{grid-area:kpis;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:0}
+  #i-body .kpis{grid-area:kpis;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:0}
+  .kpi.kml{grid-column:auto}
   #i-body .c-mapa{grid-area:mapa}#i-body .c-movs{grid-area:movs}#i-body .c-recs{grid-area:recs}
   #i-body .card{margin-top:0}
   nav{justify-content:center}nav button{flex:0 1 220px}
@@ -255,6 +264,16 @@ button.kpi:hover{border-color:var(--muted)}
       <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
     </div>
 
+    <div class="section stack" id="a-ml">
+      <h2>Stock de Mercado Libre</h2>
+      <p class="muted">Pegá dos columnas: SKU y el stock que figura en Mercado Libre. También podés elegir el Excel que bajás de tus publicaciones: la app busca sola las columnas "SKU" y "Stock". Para esos SKU reemplaza lo anotado antes.</p>
+      <textarea id="ml-txt" placeholder="secador 2441 negro	12"></textarea>
+      <label class="btn ghost wide" for="ml-file" style="display:flex;align-items:center;justify-content:center;cursor:pointer">📂 Elegir archivo (Excel o CSV)</label>
+      <input type="file" id="ml-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
+      <button class="btn" data-act="ml-go">Cargar stock de Mercado Libre</button>
+      <p class="muted" id="ml-res" style="font-size:14px"></p>
+    </div>
+
     <div class="section stack" id="a-resp">
       <h2>Respaldo</h2>
       <button class="btn ghost wide" data-act="x-json">Descargar datos (JSON)</button>
@@ -276,7 +295,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-01 · 16';
+const VERSION = '2026-10-07 · 17';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -427,6 +446,7 @@ const Local = {
     this.persist(); refresh();
   },
   async refrescarProductos() {},
+  guardarML(list) { mlLocal(list); this.persist(); refresh(); },
   unir(plan) {
     state.productos[plan.keeper.id] = plan.keeper;
     plan.stockSet.forEach(x => { state.stock[x.k] = x.d; });
@@ -549,6 +569,15 @@ const Fb = {
       const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
       state.productos = o;
     } catch (e) { toast('Sin conexión con el servidor: se usa la lista que hay en este dispositivo.', 'err'); }
+  },
+  // Stock de ML: set con merge, así solo cambian los SKU que vienen y no se pisa el resto del producto.
+  guardarML(list) {
+    const extra = mlLocal(list); refresh();
+    for (let i = 0; i < list.length; i += 400) {
+      const b = this.db.batch();
+      list.slice(i, i + 400).forEach(x => b.set(this.base.collection('productos').doc(x.id), { ml: x.ml, ...extra }, { merge: true }));
+      b.commit().catch(e => toast('No se guardó el stock de ML: ' + e.message, 'err'));
+    }
   },
   unir(plan) {
     const b = this.db.batch(), P = this.base.collection('productos'), S = this.base.collection('stock');
@@ -698,6 +727,131 @@ const stockEn = (pid, u) => (state.stock[stockKey(pid, u)] || {}).cantidad || 0;
 const total = pid => stockDe(pid).reduce((a, s) => a + s.cantidad, 0);
 const chips = pid => stockDe(pid).map(s => `<span class="chip">${esc(s.ubicacion)}<span>${cantChip(s)}</span></span>`).join('');
 const ubicsBig = pid => stockDe(pid).map(s => `<button class="ubic" data-act="d-go" data-u="${esc(s.ubicacion)}"><span class="u">${esc(s.ubicacion)}</span><span class="n">${cantTxt(s)}</span></button>`).join('');
+/* ---------- Mercado Libre vs. depósito ---------- */
+// En el producto: ml = { SKU: stock en ML } (una por publicación; '_' si no tiene SKU), mlFecha, mlPor.
+// Cada publicación se compara contra el TOTAL del depósito (todas sus ubicaciones), no contra un tramo.
+const ML_SIN = '_';
+function mlLocal(list) {
+  const extra = { mlFecha: Date.now(), mlPor: usuarioActual() };
+  list.forEach(x => { const p = state.productos[x.id]; if (p) state.productos[x.id] = { ...p, ml: { ...(p.ml || {}), ...x.ml }, ...extra }; });
+  return extra;
+}
+function mlDe(p) {
+  const ml = p.ml || {}, skus = p.skus || [];
+  const ks = skus.length ? skus.filter(s => typeof ml[s] === 'number') : (typeof ml[ML_SIN] === 'number' ? [ML_SIN] : []);
+  return ks.map(k => ({ k, sku: k === ML_SIN ? '' : k, n: ml[k] }));
+}
+// tipo: riesgo (ML dice más y todo está contado) · revisar (ML dice más pero hay ubicaciones sin contar)
+//       falta (hay más de lo publicado) · ok (coincide)
+function estadoML(p) {
+  const pubs = mlDe(p); if (!pubs.length) return null;
+  const st = stockDe(p.id), real = st.reduce((a, s) => a + (s.cantidad || 0), 0);
+  const sinContar = st.some(s => !(s.cantidad > 0));
+  const mas = pubs.some(x => x.n > real), menos = pubs.some(x => x.n < real);
+  const tipo = mas ? (sinContar ? 'revisar' : 'riesgo') : menos ? 'falta' : 'ok';
+  return { pubs, real, sinContar, tipo, ubic: st.length, dif: Math.max(...pubs.map(x => Math.abs(x.n - real))) };
+}
+const ML_TIT = {
+  riesgo: ['Mercado Libre dice más de lo que hay', 'Se puede vender algo que no está y terminar cancelando la venta.'],
+  revisar: ['Mercado Libre dice más, pero hay ubicaciones sin contar', 'Contá esas ubicaciones para saber si falta mercadería.'],
+  falta: ['Hay más de lo que dice Mercado Libre', 'Mercadería que se podría estar vendiendo. Si hay ventas sin despachar, es normal que sobren esas.'],
+  ok: ['Coincide con Mercado Libre', '']
+};
+function mlLinea(x, e) {
+  const d = e.real - x.n;
+  const fin = d < 0 ? (e.sinContar ? '' : ` · <span class="bad">faltan ${-d}</span>`) : d > 0 ? ` · sobran ${d} sin publicar` : ' · coincide';
+  return `${x.sku ? esc(x.sku) + ': ' : ''}ML ${x.n} · depósito ${e.real}${e.sinContar ? ' + sin contar' : ''}${!e.ubic ? ' (sin ubicación)' : ''}${fin}`;
+}
+function resumenML() {
+  const r = { con: 0, riesgo: 0, revisar: 0, falta: 0, ok: 0 };
+  prods().forEach(p => { const e = estadoML(p); if (e) { r.con++; r[e.tipo]++; } });
+  return r;
+}
+function kpiML() {
+  const r = resumenML(), n = r.riesgo + r.revisar + r.falta;
+  if (!r.con) return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b>—</b><small>Cargá el stock de ML para comparar →</small></button>`;
+  const det = [r.riesgo && `${r.riesgo} ${r.riesgo === 1 ? 'puede' : 'pueden'} terminar en venta cancelada`, r.revisar && `${r.revisar} para revisar`, r.falta && `${r.falta} con stock sin publicar`].filter(Boolean).join(' · ');
+  return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b class="${r.riesgo ? 'warn' : n ? '' : 'ok'}">${n}</b><small>${det || `Los ${r.con} productos coinciden`} →</small></button>`;
+}
+function openML() {
+  detId = null;
+  const todos = prods().map(p => [p, estadoML(p)]).filter(x => x[1]);
+  if (!todos.length) {
+    openModal(`<h3>Diferencias con Mercado Libre</h3>
+      <p style="margin-bottom:12px">Todavía no hay stock de Mercado Libre anotado. Cargalo desde Ajustes (pegando SKU y stock, o con el Excel de tus publicaciones) o desde cada producto.</p>
+      ${puede() ? '<button class="btn main" data-act="ml-cargar">Cargar stock de Mercado Libre</button>' : ''}
+      <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
+    return;
+  }
+  const grupo = t => {
+    const l = todos.filter(x => x[1].tipo === t).sort((a, b) => b[1].dif - a[1].dif || (a[0].nombre || '').localeCompare(b[0].nombre || ''));
+    if (!l.length || t === 'ok') return '';
+    return `<div class="mlg"><h4>${ML_TIT[t][0]} (${l.length})</h4><p class="muted">${ML_TIT[t][1]}</p><div class="list" style="margin-top:0">${l.slice(0, 200).map(([p, e]) =>
+      `<button class="item" data-act="d-open" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b>${e.pubs.map(x => `<small>${mlLinea(x, e)}</small>`).join('')}<div>${chips(p.id)}</div></button>`).join('')}</div>
+      ${l.length > 200 ? '<p class="muted" style="margin-top:6px">Se muestran los primeros 200.</p>' : ''}</div>`;
+  };
+  const ok = todos.filter(x => x[1].tipo === 'ok').length, sinDato = prods().length - todos.length;
+  openModal(`<h3>Diferencias con Mercado Libre</h3>
+    <p class="muted">Compara el stock de cada publicación con el total del depósito (todas sus ubicaciones).
+      Coinciden: ${ok}.${sinDato ? ` Sin dato de ML: ${sinDato}.` : ''}</p>
+    ${grupo('riesgo')}${grupo('revisar')}${grupo('falta')}
+    ${ok === todos.length ? '<p style="margin-top:14px"><b>Todo coincide.</b></p>' : ''}
+    ${puede() ? '<button class="btn ghost wide" data-act="ml-cargar" style="margin-top:16px">Cargar stock de Mercado Libre</button>' : ''}
+    <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cerrar</button>`);
+}
+// Bloque del detalle del producto: comparación y, si puede editar, un casillero por SKU.
+function mlDetalle(p) {
+  const e = estadoML(p), keys = (p.skus || []).length ? p.skus : [ML_SIN];
+  return `<div class="section stack"><h4>Stock en Mercado Libre</h4>
+    ${e ? `<p class="${e.tipo === 'riesgo' ? 'bad' : ''}">${ML_TIT[e.tipo][0]}</p>${e.pubs.map(x => `<small style="display:block">${mlLinea(x, e)}</small>`).join('')}` : '<p class="muted">Sin dato de Mercado Libre.</p>'}
+    ${puede() ? `<div class="mlrows">${keys.map((k, i) => `<label for="d-ml${i}">${k === ML_SIN ? 'Stock en la publicación' : esc(k)}</label><input id="d-ml${i}" data-mlsku="${esc(k)}" type="number" inputmode="numeric" min="0" value="${typeof p.ml?.[k] === 'number' ? p.ml[k] : ''}" placeholder="—" autocomplete="off">`).join('')}</div>
+      <button class="btn small" data-act="d-ml">Guardar stock de ML</button>` : ''}
+    ${p.mlFecha ? `<small style="display:block">Anotado ${fmt(p.mlFecha)}${p.mlPor ? ' por ' + esc(p.mlPor) : ''}</small>` : ''}
+  </div>`;
+}
+// Lee filas de una planilla buscando la fila de títulos con "SKU" y "Stock"/"Cantidad".
+// Si no la encuentra usa columna 1 = SKU y 2 = stock. Se saltean las filas sin número.
+function filasML(hojas) {
+  const out = [];
+  hojas.forEach(h => {
+    const f = h.filas.map(r => (r || []).map(c => String(c ?? '').trim()));
+    let ini = 0, cs = 0, cn = 1;
+    for (let i = 0; i < Math.min(f.length, 15); i++) {
+      const s = f[i].findIndex(c => /\bsku\b/i.test(c)), n = f[i].findIndex(c => /^(stock|cantidad|disponible)/.test(norm(c)));
+      if (s >= 0 && n >= 0) { ini = i + 1; cs = s; cn = n; break; }
+    }
+    f.slice(ini).forEach(r => { const sku = r[cs], n = r[cn]; if (sku && /^\d+(\.0+)?$/.test(n || '')) out.push([sku, parseInt(n, 10)]); });
+  });
+  return out;
+}
+async function cargarML(filas) {
+  const res = $('#ml-res');
+  if (!filas.length) { res.textContent = 'No encontré filas con SKU y un número de stock.'; return; }
+  res.textContent = 'Buscando los productos…';
+  await B.refrescarProductos();
+  // Si un SKU viene repetido (dos publicaciones con el mismo SKU) se toma el mayor.
+  const porSku = new Map();
+  filas.forEach(([sku, n]) => { const k = norm(sku), o = porSku.get(k); porSku.set(k, { sku, n: o ? Math.max(o.n, n) : n }); });
+  const porProd = new Map(), noEsta = [];
+  porSku.forEach(({ sku, n }, k) => {
+    const p = bySku(sku); if (!p) { noEsta.push(sku); return; }
+    const key = p.skus.find(x => norm(x) === k);
+    if (!porProd.has(p.id)) porProd.set(p.id, {});
+    porProd.get(p.id)[key] = n;
+  });
+  const list = [...porProd].map(([id, ml]) => ({ id, ml }));
+  if (list.length) {
+    B.guardarML(list);
+    B.log(movData('', '', 0, 'ml_carga', { cantidadImportada: list.length, nombre: 'Mercado Libre' }));
+  }
+  const txt = `Stock de ML cargado en ${list.length} producto${list.length === 1 ? '' : 's'}. SKU que no están en la app: ${noEsta.length}.`;
+  toast(txt, list.length ? '' : 'err');
+  res.innerHTML = `<b>${esc(txt)}</b>${noEsta.length ? '<br>' + noEsta.slice(0, 40).map(esc).join('<br>') + (noEsta.length > 40 ? `<br>… y ${noEsta.length - 40} más` : '') : ''}
+    ${list.length ? '<br><button class="btn small" data-act="ml-ver" style="margin-top:8px">Ver diferencias</button>' : ''}`;
+  $('#ml-txt').value = '';
+}
+const filasPegadas = t => { const sep = t.includes('\t') ? '\t' : (t.includes(';') ? ';' : ','); return [{ nombre: 'pegado', filas: t.split(/\r?\n/).map(l => l.split(sep)) }]; };
+
 function itemHTML(p, act) {
   const skus = (p.skus || []).join(' / ') || 'Sin SKU';
   return `<button class="item" data-act="${act}" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc(skus)}</small><small>Stock total: ${total(p.id)}</small></button>`;
@@ -793,7 +947,7 @@ function renderG() {
     ${abierta ? `<label for="g-cant">Cantidad (opcional)</label>
       <div class="qty"><button data-act="q-m" aria-label="Restar uno">−</button><input id="g-cant" type="number" inputmode="numeric" min="0" value="${esc(val)}" placeholder="0" aria-label="Cantidad" enterkeyhint="done"><button data-act="q-p" aria-label="Sumar uno">+</button></div>
       ${g.mlOpen
-        ? `<div style="margin-bottom:12px"><label for="g-ml">Stock que dice Mercado Libre (opcional)</label><input id="g-ml" type="number" inputmode="numeric" min="0" value="${esc(g.ml)}" placeholder="Ej: 30" autocomplete="off"></div>`
+        ? `<div style="margin-bottom:12px"><label for="g-ml">Stock que dice Mercado Libre, de la publicación (opcional)</label><input id="g-ml" type="number" inputmode="numeric" min="0" value="${esc(g.ml)}" placeholder="Ej: 30" autocomplete="off"></div>`
         : `<button class="btn ghost small" data-act="ml-open" style="margin-bottom:12px">+ Anotar stock de Mercado Libre</button>`}`
       : `<button class="btn ghost small" data-act="cant-open" style="margin-bottom:12px">+ Poner cantidad (opcional)</button>`}
     <button class="btn main" id="g-save" data-act="save">Guardar</button>
@@ -895,6 +1049,15 @@ function preguntarMovido(r, n, ml, otros) {
   const b = $('[data-act="mov-si"]'); if (b) { b.style.minHeight = '68px'; b.style.lineHeight = '1.25'; }
 }
 
+// El stock de ML anotado al guardar también queda en el producto, en la publicación de su SKU.
+// Con varios SKU se usa el que se escribió; si no se sabe cuál es, se avisa y queda solo en el historial.
+function mlAlGuardar(pid, ml) {
+  if (ml == null) return;
+  const skus = state.productos[pid]?.skus || [], t = norm(g.sku);
+  const k = !skus.length ? ML_SIN : skus.length === 1 ? skus[0] : skus.find(s => norm(s) === t);
+  if (!k) { toast('Tiene varios SKU: el stock de ML anotalo desde el producto, en cada publicación.', 'err'); return; }
+  B.guardarML([{ id: pid, ml: { [k]: ml } }]);
+}
 function terminarGuardado(r, n, ml, movido) {
   const u = g.ubic;
   const pid = r.pid, nombre = state.productos[pid]?.nombre || '';
@@ -902,10 +1065,11 @@ function terminarGuardado(r, n, ml, movido) {
     const otros = stockDe(pid).filter(x => x.ubicacion !== u);
     if (n === 0) n = otros.reduce((a, x) => a + (x.cantidad || 0), 0);
     // El destino guarda de dónde vino, así el historial muestra el traslado completo en un solo renglón.
-    B.fijar(pid, u, n, ml, { desde: otros.map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })) });
+    B.fijar(pid, u, n, ml, { desde: otros.map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })), ...(ml != null ? { mlTotal: n } : {}) });
     otros.forEach(x => B.quitar(pid, x.ubicacion, { movidoA: u }));
     beep();
     toast(`Movido: ${nombre} ahora está solo en ${u} (${n > 0 ? n + ' u.' : 'sin contar'})`);
+    mlAlGuardar(pid, ml);
     limpiarProducto(); renderG(); focusEl('#g-nombre');
     return;
   }
@@ -914,12 +1078,14 @@ function terminarGuardado(r, n, ml, movido) {
     toast(`Sin cambios: ${nombre} ya tenía ${n > 0 ? n : '0 (sin contar)'} en ${u}`);
     limpiarProducto(); renderG(); focusEl('#g-nombre'); return;
   }
-  B.fijar(pid, u, n, ml);
+  const resto = stockDe(pid).filter(x => x.ubicacion !== u).reduce((a, x) => a + (x.cantidad || 0), 0);
+  B.fijar(pid, u, n, ml, ml != null ? { mlTotal: resto + n } : null);
   beep();
   const cuanto = n > 0 ? n + ' u.' : 'sin contar';
   toast(rec
     ? `Actualizado: ${nombre} en ${u}, de ${rec.cantidad > 0 ? rec.cantidad : 'sin contar'} a ${cuanto}`
     : `${r.nuevo ? 'Creado y guardado' : 'Guardado'}: ${nombre} en ${u} (${cuanto})`);
+  mlAlGuardar(pid, ml);   // después del aviso de guardado, para que su advertencia no quede tapada
   limpiarProducto(); renderG(); focusEl('#g-nombre');
 }
 
@@ -1024,9 +1190,16 @@ const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado' + (Arra
   : m.tipo === 'prod_sku' ? `SKU ${esc(m.accion)}: ${esc(m.valor)}`
   : m.tipo === 'prod_codigo' ? `Código de barras ${esc(m.accion)}: ${esc(m.valor)}`
   : m.tipo === 'prod_unido' ? `Unido con ${esc(m.unidos)} repetido${m.unidos > 1 ? 's' : ''}`
+  : m.tipo === 'prod_ml' ? `Stock de Mercado Libre anotado: ${esc(m.valor)}`
+  : m.tipo === 'ml_carga' ? `Stock de Mercado Libre cargado en ${esc(m.cantidadImportada)} productos`
   : m.tipo === 'importacion' ? `Importación: ${esc(m.cantidadImportada)} productos nuevos` : '';
-const esProd = m => String(m.tipo || '').startsWith('prod_') || m.tipo === 'importacion';
-const mlTxt = m => m.ml != null ? `. Mercado Libre decía ${esc(m.ml)}${m.ml !== m.contado ? ` (diferencia ${m.ml - m.contado > 0 ? '+' : ''}${m.ml - m.contado})` : ' (coincide)'}` : '';
+const esProd = m => String(m.tipo || '').startsWith('prod_') || m.tipo === 'importacion' || m.tipo === 'ml_carga';
+// Los movimientos nuevos guardan mlTotal (total del depósito al guardar); los viejos solo tienen lo contado en el tramo.
+function mlTxt(m) {
+  if (m.ml == null) return '';
+  const r = m.mlTotal ?? m.contado, d = m.ml - r;
+  return ` · Mercado Libre decía ${esc(m.ml)}${m.mlTotal != null ? `, total en el depósito ${esc(r)}` : ''}${d ? ` (diferencia ${d > 0 ? '+' : ''}${d})` : ' (coincide)'}`;
+}
 function miniMov(m) {
   if (esProd(m)) return `<div class="mini"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? '✕' : '✎'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div class="muted">${PROD_TXT(m)} · ${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}</div></div></div>`;
   const v = vistaMov(m);
@@ -1090,6 +1263,7 @@ function renderInicio() {
     return `<button data-act="i-u" data-v="${u}" class="${c >= 3 ? 'l3' : c === 2 ? 'l2' : c === 1 ? 'l1' : ''}" title="${u}: ${c} producto${pl(c)}" aria-label="${u}, ${c} producto${pl(c)}">${i + 1}</button>`; }).join('')}</div></div>`;
   el.innerHTML = `
     ${ps.length ? `<div class="kpis">
+      ${kpiML()}
       <div class="kpi"><small>Productos</small><b>${ps.length}</b></div>
       <div class="kpi"><small>Tramos ocupados</small><b>${tOcup} <small class="muted" style="display:inline;font-family:var(--sans);font-size:15px;font-weight:500">de ${tTot}</small></b><div class="bar"><span style="width:${tPct}%"></span></div></div>
       <div class="kpi"><small>Movimientos hoy</small><b>${movsHoy.length}</b></div>
@@ -1306,6 +1480,7 @@ function renderDetalle() {
     <p style="margin-top:6px"><b>Stock total: ${total(p.id)}</b>${hay > 1 ? ` en ${hay} ubicaciones` : ''}</p>
     ${puede() ? '<p class="muted">Tocá una ubicación para cambiar la cantidad o quitarla.</p>' : ''}` : '<p class="muted">Sin ubicación todavía.</p>'}
     ${puede() ? '<button class="btn ghost wide" data-act="d-g" style="margin-top:10px">Guardar en otra ubicación</button>' : ''}
+    ${mlDetalle(p)}
     ${!puede() ? `<div class="section stack"><h4>SKU de venta</h4><div>${esc((p.skus || []).join(' / ') || 'Sin SKU')}</div></div>
     <button class="btn ghost wide" data-act="close" style="margin-top:18px">Cerrar</button>` : `
     <div class="section stack"><h4>SKU de venta</h4>
@@ -1385,6 +1560,7 @@ function paintCuenta() {
   $('#a-userbox').style.display = state.me ? 'none' : '';
   $('#a-import').style.display = esAdmin() ? '' : 'none';
   $('#a-resp').style.display = esAdmin() ? '' : 'none';
+  $('#a-ml').style.display = puede() ? '' : 'none';
   if (CONFIG_FIJA) { $('#a-modo').style.display = 'none'; $('#a-borrar').style.display = 'none'; }
   if (state.me) c.innerHTML = `<h2>Tu cuenta</h2><p><b>${esc(state.me.nombre)}</b><br><span class="muted">${esc(state.me.email)} · ${ROL_TXT[state.me.rol]}</span></p>
     <button class="btn ghost wide" data-act="logout">Cerrar sesión</button>`;
@@ -1469,22 +1645,22 @@ async function importar() {
   $('#i-txt').value = '';
 }
 
+// Devuelve las hojas de un Excel o CSV: [{ nombre, filas: [[celda, ...], ...] }].
+async function hojasArchivo(f, msg) {
+  if (/\.(xlsx|xls)$/i.test(f.name) || /sheet|excel/i.test(f.type)) {
+    msg.textContent = 'Leyendo el Excel…';
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    return wb.SheetNames.map(n => ({ nombre: n, filas: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '' }) }));
+  }
+  return filasPegadas(await f.text());
+}
 // Lee un Excel o CSV elegido desde el celular o la PC y lo deja listo en el recuadro para importar.
 async function leerArchivo(f) {
   const msg = $('#i-res');
   try {
-    let filas;
-    if (/\.(xlsx|xls)$/i.test(f.name) || /sheet|excel/i.test(f.type)) {
-      msg.textContent = 'Leyendo el Excel…';
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
-      const nombreHoja = wb.SheetNames.find(n => /importar/i.test(n)) || wb.SheetNames[0];
-      filas = XLSX.utils.sheet_to_json(wb.Sheets[nombreHoja], { header: 1, defval: '' });
-    } else {
-      const t = await f.text();
-      const sep = t.includes('\t') ? '\t' : (t.includes(';') ? ';' : ',');
-      filas = t.split(/\r?\n/).map(l => l.split(sep));
-    }
+    const hojas = await hojasArchivo(f, msg);
+    const filas = (hojas.find(h => /importar/i.test(h.nombre)) || hojas[0]).filas;
     const lineas = filas.filter(r => r.some(c => String(c ?? '').trim()))
       .map(r => [r[0], r[1], r[2]].map(c => String(c ?? '').replace(/[\t\r\n]+/g, ' ').trim()).join('\t'));
     if (!lineas.length) { msg.textContent = 'El archivo está vacío.'; return; }
@@ -1494,6 +1670,11 @@ async function leerArchivo(f) {
   } catch (e) {
     msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.';
   }
+}
+async function leerArchivoML(f) {
+  const msg = $('#ml-res');
+  try { await cargarML(filasML(await hojasArchivo(f, msg))); }
+  catch (e) { msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.'; }
 }
 
 /* ---------- duplicados ---------- */
@@ -1570,6 +1751,24 @@ const A = {
   'go-guardar': () => { if (!puede()) return; tab('guardar'); renderG(); },
   'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
+  'ml-ver': () => openML(),
+  'ml-cargar': () => closeModal().then(() => { tab('ajustes'); irA('#a-ml'); focusEl('#ml-txt'); }),
+  'ml-go': () => { if (puede()) cargarML(filasML(filasPegadas($('#ml-txt').value))); },
+  'd-ml': () => {
+    const p = state.productos[detId]; if (!p || !puede()) return;
+    const ml = {}, txt = []; let mal = false;
+    document.querySelectorAll('#sheet [data-mlsku]').forEach(i => {
+      const v = i.value.trim(); if (v === '') return;
+      if (!/^\d+$/.test(v)) { mal = true; return; }
+      ml[i.dataset.mlsku] = parseInt(v, 10);
+      txt.push((i.dataset.mlsku === ML_SIN ? '' : i.dataset.mlsku + ' ') + v);
+    });
+    if (mal) { toast('El stock de Mercado Libre tiene que ser un número entero (0 o más)', 'err'); return; }
+    if (JSON.stringify(ml) === JSON.stringify(p.ml || {})) { toast('Sin cambios'); return; }
+    logProd(detId, 'prod_ml', { valor: txt.join(', ') || 'borrado' });
+    updP(x => { x.ml = ml; x.mlFecha = Date.now(); x.mlPor = usuarioActual(); return x; });
+    toast('Stock de Mercado Libre guardado');
+  },
   'i-pas': b => { $('#b-q').value = b.dataset.v; bF = 'todos'; bSearch(); window.scrollTo(0, 0); },
   'i-u': b => { $('#b-q').value = b.dataset.v; bFiltroDesde(b.dataset.v); bSearch(); window.scrollTo(0, 0); },
   'u-p': b => { g.P = b.dataset.v; g.L = ''; renderG(); },
@@ -1684,6 +1883,7 @@ document.addEventListener('keydown', e => {
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 document.addEventListener('change', e => {
   if (e.target.id === 'i-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; leerArchivo(f); }
+  if (e.target.id === 'ml-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; if (puede()) leerArchivoML(f); }
 });
 window.addEventListener('online', setMode);
 window.addEventListener('offline', setMode);

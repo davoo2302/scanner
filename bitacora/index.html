@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b6fb8">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>Bitácora de trabajos</title>
+<style>
+:root{--azul:#0b6fb8;--azul2:#e6f2fb;--txt:#1b2733;--gris:#6b7885;--linea:#d9e1e8;--fondo:#f4f7fa;--ok:#1a8f4c;--mal:#c0392b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--fondo);color:var(--txt);padding-bottom:78px}
+header{background:var(--azul);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:19px}
+header small{opacity:.85}
+main{padding:14px 14px 20px;max-width:640px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--linea);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:12px 4px 10px;font-size:13px;color:var(--gris);font-weight:600}
+nav button b{display:block;font-size:20px;margin-bottom:2px}
+nav button.on{color:var(--azul)}
+.card{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:14px;margin-bottom:12px}
+label.t{display:block;font-size:13px;font-weight:700;color:var(--gris);margin:0 0 6px;text-transform:uppercase;letter-spacing:.03em}
+input[type=text],input[type=date],input[type=number],textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid var(--linea);border-radius:10px;background:#fff;color:var(--txt)}
+textarea{min-height:96px;resize:vertical}
+.f{margin-bottom:14px}.f:last-child{margin-bottom:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--linea);background:#fff;border-radius:999px;padding:10px 14px;font-size:15px;color:var(--txt);font-weight:500}
+.chip.on{background:var(--azul);border-color:var(--azul);color:#fff}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font-size:17px;font-weight:700;background:var(--azul);color:#fff}
+.btn.sec{background:var(--azul2);color:var(--azul)}
+.btn.ok{background:var(--ok)}
+.btn.mal{background:#fdecea;color:var(--mal)}
+.btn+.btn{margin-top:10px}
+.fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.fotos .ph{position:relative;width:78px;height:78px}
+.fotos img{width:78px;height:78px;object-fit:cover;border-radius:10px;border:1px solid var(--linea)}
+.fotos .x{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:var(--mal);color:#fff;font-size:14px;line-height:1}
+.addfoto{display:flex;align-items:center;justify-content:center;gap:6px;border:2px dashed var(--azul);color:var(--azul);border-radius:12px;padding:12px;font-weight:700;font-size:15px;width:100%;background:var(--azul2)}
+.fgrupo{margin-bottom:12px}
+.dia{font-size:13px;font-weight:800;color:var(--azul);text-transform:uppercase;margin:16px 4px 8px}
+.job{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.job .dir{font-weight:700}
+.job .sub{color:var(--gris);font-size:14px;margin-top:3px}
+.job .tag{display:inline-block;font-size:12px;font-weight:700;background:var(--azul2);color:var(--azul);padding:3px 9px;border-radius:999px;margin-right:6px}
+.vacio{text-align:center;color:var(--gris);padding:36px 10px}
+.aviso{background:#fff7e0;border:1px solid #f0d98c;color:#7a5b00;border-radius:12px;padding:12px;margin-bottom:12px;font-size:15px}
+.resumen{display:flex;gap:8px;margin-bottom:12px}
+.resumen div{flex:1;background:#fff;border:1px solid var(--linea);border-radius:12px;padding:10px;text-align:center}
+.resumen b{display:block;font-size:24px;color:var(--azul)}
+.resumen span{font-size:12px;color:var(--gris)}
+.semana{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.semana button{border:1px solid var(--linea);background:#fff;border-radius:10px;width:44px;height:44px;font-size:20px}
+.semana div{font-weight:700;text-align:center}
+.det h3{margin:0 0 4px}
+.det p{margin:4px 0}
+.det img{width:100%;border-radius:10px;margin-top:6px}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#1b2733;color:#fff;padding:12px 18px;border-radius:12px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90%}
+#toast.on{opacity:1}
+#reporte{display:none}
+@media print{
+  body{background:#fff;padding:0}header,nav,main,#toast{display:none!important}
+  #reporte{display:block;font-size:12pt;color:#000}
+  #reporte h1{font-size:18pt;margin:0 0 4px}
+  #reporte .it{border-top:1px solid #999;padding:8px 0;page-break-inside:avoid}
+  #reporte .ims img{width:30%;margin:4px 1% 0 0;border-radius:4px}
+}
+</style>
+</head>
+<body>
+<header><h1>❄ Bitácora de trabajos</h1><small id="sub">Registrá tus trabajos al terminar cada uno</small></header>
+<main id="vista"></main>
+<nav>
+  <button data-v="nuevo"><b>＋</b>Nuevo</button>
+  <button data-v="lista"><b>☰</b>Trabajos</button>
+  <button data-v="semana"><b>📄</b>Reporte</button>
+</nav>
+<div id="toast"></div>
+<div id="reporte"></div>
+<input type="file" id="fileIn" accept="image/*" multiple hidden>
+
+<script>
+'use strict';
+/* ---------- base de datos (IndexedDB, funciona sin internet) ---------- */
+let db;
+const abrirDB=()=>new Promise((ok,err)=>{
+  const r=indexedDB.open('bitacora',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('jobs',{keyPath:'id'});
+  r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>err(r.error);
+});
+const tx=(m)=>db.transaction('jobs',m).objectStore('jobs');
+const todos=()=>new Promise(ok=>{const q=tx('readonly').getAll();q.onsuccess=()=>ok(q.result.sort((a,b)=>b.fecha.localeCompare(a.fecha)||b.id-a.id))});
+const guardar=(j)=>new Promise((ok,err)=>{const q=tx('readwrite').put(j);q.onsuccess=ok;q.onerror=()=>err(q.error)});
+const borrar=(id)=>new Promise(ok=>{const q=tx('readwrite').delete(id);q.onsuccess=ok});
+
+/* ---------- utilidades ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const parse=f=>{const[a,b,c]=f.split('-').map(Number);return new Date(a,b-1,c)};
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const corta=f=>{const d=parse(f);return DIAS[d.getDay()]+' '+d.getDate()+' '+MESES[d.getMonth()]};
+const lunesDe=d=>{const x=new Date(d);const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);x.setHours(0,0,0,0);return x};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+const cfg={get(k,d=''){try{return localStorage.getItem('bt_'+k)??d}catch(e){return d}},set(k,v){try{localStorage.setItem('bt_'+k,v)}catch(e){}}};
+
+/* comprime la foto para que no llene el teléfono */
+function comprimir(file,max=1100,q=.72){return new Promise((ok,err)=>{
+  const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const r=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');
+    c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',q))};
+  im.onerror=()=>{URL.revokeObjectURL(url);err()};im.src=url})}
+
+/* ---------- opciones ---------- */
+const EQUIPOS=['Split','Ventana','Cassette','Piso-techo','Portátil','Nevera / refrigeración','Cuarto frío','Otro'];
+const BTU=['9.000','12.000','18.000','24.000','36.000','48.000','60.000'];
+const SERVICIOS=['Mantenimiento','Reparación','Instalación','Revisión'];
+const TAREAS=['Limpieza de filtros','Limpieza evaporadora','Limpieza condensadora','Limpieza de drenaje','Revisión / carga de gas','Detección de fuga','Revisión eléctrica','Cambio de capacitor','Cambio de motor / turbina','Cambio de tarjeta / control','Cambio de sensor','Ajuste de termostato','Soldadura / tubería','Otro (ver nota)'];
+const GRUPOS_FOTO=[['antes','📷 Foto ANTES'],['despues','📷 Foto DESPUÉS'],['placa','🏷 Placa del equipo']];
+
+/* ---------- estado ---------- */
+let vista='nuevo';
+let form=nuevoForm();
+let semanaBase=lunesDe(new Date());
+let fotoGrupo=null;
+
+function nuevoForm(){return{id:null,fecha:hoy(),cliente:'',direccion:'',equipo:'',btu:'',btuOtro:'',cantidad:'1',servicio:'',tareas:[],nota:'',repuestos:'',fotos:{antes:[],despues:[],placa:[]}}}
+
+/* ---------- vistas ---------- */
+const chips=(lista,sel,nombre,multi)=>'<div class="chips">'+lista.map(x=>`<button type="button" class="chip${(multi?sel.includes(x):sel===x)?' on':''}" data-ch="${nombre}" data-v="${esc(x)}">${esc(x)}</button>`).join('')+'</div>';
+
+function vNuevo(){
+  const f=form;
+  const fotosHtml=GRUPOS_FOTO.map(([k,t])=>`<div class="fgrupo"><button type="button" class="addfoto" data-foto="${k}">${t}</button>
+    <div class="fotos">${f.fotos[k].map((s,i)=>`<div class="ph"><img src="${s}"><button class="x" data-del="${k}:${i}">×</button></div>`).join('')}</div></div>`).join('');
+  $('#vista').innerHTML=`
+  ${f.id?'<div class="aviso">Estás editando un trabajo ya guardado.</div>':''}
+  <div class="card">
+    <div class="f"><label class="t">Fecha</label><input type="date" id="fecha" value="${f.fecha}"></div>
+    <div class="f"><label class="t">Cliente (opcional)</label><input type="text" id="cliente" placeholder="Nombre del cliente o local" value="${esc(f.cliente)}"></div>
+    <div class="f"><label class="t">Dirección</label><input type="text" id="direccion" placeholder="Calle, número, sector…" value="${esc(f.direccion)}"></div>
+  </div>
+  <div class="card">
+    <div class="f"><label class="t">Tipo de servicio</label>${chips(SERVICIOS,f.servicio,'servicio')}</div>
+    <div class="f"><label class="t">Equipo</label>${chips(EQUIPOS,f.equipo,'equipo')}</div>
+    <div class="f"><label class="t">Capacidad (BTU)</label>${chips(BTU,f.btu,'btu')}
+      <input type="text" id="btuOtro" style="margin-top:8px" placeholder="…u otra capacidad (ej. 2 toneladas)" value="${esc(f.btuOtro)}"></div>
+    <div class="f"><label class="t">Cantidad de equipos</label><input type="number" id="cantidad" min="1" value="${esc(f.cantidad)}" inputmode="numeric"></div>
+  </div>
+  <div class="card">
+    <div class="f"><label class="t">Trabajo realizado</label>${chips(TAREAS,f.tareas,'tarea',true)}</div>
+    <div class="f"><label class="t">Detalle / notas</label><textarea id="nota" placeholder="Qué se hizo, qué se encontró, qué falló…">${esc(f.nota)}</textarea></div>
+    <div class="f"><label class="t">Repuestos o materiales (opcional)</label><input type="text" id="repuestos" placeholder="Ej: capacitor 35uF, 1 kg gas R410A" value="${esc(f.repuestos)}"></div>
+  </div>
+  <div class="card"><label class="t">Fotos</label>${fotosHtml}</div>
+  <button class="btn ok" id="guardar">✔ Guardar trabajo</button>
+  ${f.id?'<button class="btn sec" id="cancelar">Cancelar edición</button>':''}`;
+}
+
+async function vLista(){
+  const js=await todos();
+  const sem=lunesDe(new Date()),ini=iso(sem),fin=iso(new Date(sem.getFullYear(),sem.getMonth(),sem.getDate()+6));
+  const deSem=js.filter(j=>j.fecha>=ini&&j.fecha<=fin).length;
+  const deHoy=js.filter(j=>j.fecha===hoy()).length;
+  let h=`<div class="resumen"><div><b>${deHoy}</b><span>hoy</span></div><div><b>${deSem}</b><span>esta semana</span></div><div><b>${js.length}</b><span>en total</span></div></div>`;
+  if(!deHoy&&new Date().getHours()>=16)h+='<div class="aviso">⏰ Hoy no cargaste ningún trabajo. Hacelo ahora mientras lo tenés fresco.</div>';
+  if(!js.length)h+='<div class="vacio">Todavía no hay trabajos.<br>Tocá <b>Nuevo</b> para cargar el primero.</div>';
+  let dia='';
+  for(const j of js){
+    if(j.fecha!==dia){dia=j.fecha;h+=`<div class="dia">${corta(dia)}</div>`}
+    h+=`<div class="job" data-ver="${j.id}"><div class="dir">${esc(j.direccion||'(sin dirección)')}</div>
+      <div class="sub"><span class="tag">${esc(j.servicio||'Servicio')}</span>${esc(resumenEquipo(j))}</div>
+      ${j.cliente?`<div class="sub">${esc(j.cliente)}</div>`:''}</div>`;
+  }
+  if(js.some(j=>j.demo))h+='<button class="btn mal" id="sinej" style="margin-top:16px">🧹 Borrar los trabajos de ejemplo</button>';
+  else if(!js.length)h+='<button class="btn sec" id="ej">Cargar semana de ejemplo</button>';
+  $('#vista').innerHTML=h;
+}
+
+function btuTxt(j){return j.btuOtro||(j.btu?j.btu+' BTU':'')}
+function resumenEquipo(j){return [(j.cantidad&&j.cantidad!=='1'?j.cantidad+' × ':'')+(j.equipo||'Equipo'),btuTxt(j)].filter(Boolean).join(' · ')}
+
+async function vDetalle(id){
+  const j=(await todos()).find(x=>x.id===id);if(!j)return vLista();
+  const ims=['antes','despues','placa'].map(k=>j.fotos[k].length?`<p><b>${{antes:'Antes',despues:'Después',placa:'Placa'}[k]}:</b></p>`+j.fotos[k].map(s=>`<img src="${s}">`).join(''):'').join('');
+  $('#vista').innerHTML=`<div class="card det"><h3>${esc(j.direccion||'(sin dirección)')}</h3>
+    <p><span class="tag" style="display:inline-block;font-size:12px;font-weight:700;background:var(--azul2);color:var(--azul);padding:3px 9px;border-radius:999px">${esc(j.servicio||'Servicio')}</span> ${corta(j.fecha)}</p>
+    ${j.cliente?`<p><b>Cliente:</b> ${esc(j.cliente)}</p>`:''}
+    <p><b>Equipo:</b> ${esc(resumenEquipo(j))}</p>
+    ${j.tareas.length?`<p><b>Trabajo:</b> ${esc(j.tareas.join(', '))}</p>`:''}
+    ${j.nota?`<p><b>Detalle:</b> ${esc(j.nota)}</p>`:''}
+    ${j.repuestos?`<p><b>Repuestos:</b> ${esc(j.repuestos)}</p>`:''}${ims}</div>
+    <button class="btn" data-edit="${j.id}">✏ Editar</button>
+    <button class="btn mal" data-borrar="${j.id}">🗑 Borrar</button>
+    <button class="btn sec" id="volver">← Volver</button>`;
+}
+
+function rangoSemana(){const a=semanaBase,b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+6);return[iso(a),iso(b),a,b]}
+function textoReporte(js,a,b){
+  const tec=cfg.get('tec');
+  let t=`*REPORTE SEMANAL DE TRABAJOS*\n${a.getDate()} ${MESES[a.getMonth()]} al ${b.getDate()} ${MESES[b.getMonth()]} ${b.getFullYear()}\n`;
+  if(tec)t+=`Técnico: ${tec}\n`;
+  t+=`Total de trabajos: ${js.length}\n`;
+  [...js].sort((x,y)=>x.fecha.localeCompare(y.fecha)||x.id-y.id).forEach((j,i)=>{
+    t+=`\n${i+1}) ${corta(j.fecha)}\n`;
+    t+=`Dirección: ${j.direccion||'-'}\n`;
+    if(j.cliente)t+=`Cliente: ${j.cliente}\n`;
+    t+=`${j.servicio||'Servicio'} — ${resumenEquipo(j)}\n`;
+    if(j.tareas.length)t+=`Trabajo: ${j.tareas.join(', ')}\n`;
+    if(j.nota)t+=`Detalle: ${j.nota}\n`;
+    if(j.repuestos)t+=`Repuestos: ${j.repuestos}\n`;
+  });
+  return t;
+}
+async function vSemana(){
+  const[ini,fin,a,b]=rangoSemana();
+  const js=(await todos()).filter(j=>j.fecha>=ini&&j.fecha<=fin);
+  vSemana.js=js;
+  let h=`<div class="semana"><button id="sprev">‹</button><div>${a.getDate()} ${MESES[a.getMonth()]} – ${b.getDate()} ${MESES[b.getMonth()]}<br><small style="font-weight:400;color:var(--gris)">${js.length} trabajo${js.length==1?'':'s'}</small></div><button id="ssig">›</button></div>
+   <div class="card"><label class="t">Tu nombre (sale en el reporte)</label><input type="text" id="tec" placeholder="Nombre del técnico" value="${esc(cfg.get('tec'))}"></div>`;
+  if(!js.length)h+='<div class="vacio">No hay trabajos esta semana.</div>';
+  else{
+    h+=`<div class="card" style="white-space:pre-wrap;font-size:14px">${esc(textoReporte(js,a,b).replace(/\*/g,''))}</div>
+    <button class="btn ok" id="wa">📲 Enviar por WhatsApp</button>
+    <button class="btn" id="pdf">📄 Guardar como PDF (con fotos)</button>
+    <button class="btn sec" id="copiar">Copiar texto</button>`;
+  }
+  $('#vista').innerHTML=h;
+}
+function armarImpresion(){
+  const[,,a,b]=rangoSemana(),js=[...vSemana.js].sort((x,y)=>x.fecha.localeCompare(y.fecha)||x.id-y.id);
+  $('#reporte').innerHTML=`<h1>Reporte semanal de trabajos</h1><div>${a.getDate()} ${MESES[a.getMonth()]} al ${b.getDate()} ${MESES[b.getMonth()]} ${b.getFullYear()}${cfg.get('tec')?' — Técnico: '+esc(cfg.get('tec')):''} — ${js.length} trabajos</div>`+
+   js.map((j,i)=>`<div class="it"><b>${i+1}) ${corta(j.fecha)} — ${esc(j.direccion||'-')}</b><br>
+    ${j.cliente?'Cliente: '+esc(j.cliente)+'<br>':''}${esc(j.servicio||'Servicio')} — ${esc(resumenEquipo(j))}<br>
+    ${j.tareas.length?'Trabajo: '+esc(j.tareas.join(', '))+'<br>':''}${j.nota?'Detalle: '+esc(j.nota)+'<br>':''}${j.repuestos?'Repuestos: '+esc(j.repuestos)+'<br>':''}
+    <div class="ims">${['antes','despues','placa'].flatMap(k=>j.fotos[k]).map(s=>`<img src="${s}">`).join('')}</div></div>`).join('');
+}
+
+/* ---------- navegación ---------- */
+async function ir(v,arg){
+  vista=v;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='detalle'&&b.dataset.v==='lista')));
+  if(v==='nuevo')vNuevo();else if(v==='lista')await vLista();else if(v==='semana')await vSemana();else if(v==='detalle')await vDetalle(arg);
+  window.scrollTo(0,0);
+}
+document.querySelector('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)ir(b.dataset.v)});
+
+/* ---------- eventos del contenido ---------- */
+function leerCampos(){
+  if(vista!=='nuevo')return;
+  for(const k of['fecha','cliente','direccion','btuOtro','cantidad','nota','repuestos']){const e=$('#'+k);if(e)form[k]=e.value}
+}
+$('#vista').addEventListener('click',async e=>{
+  const t=e.target.closest('button,.job');if(!t)return;
+  if(t.dataset.ch){
+    leerCampos();const n=t.dataset.ch,v=t.dataset.v;
+    if(n==='tarea'){const i=form.tareas.indexOf(v);i<0?form.tareas.push(v):form.tareas.splice(i,1)}
+    else form[n]=form[n]===v?'':v;
+    if(n==='btu'&&form.btu)form.btuOtro='';
+    vNuevo();return;
+  }
+  if(t.dataset.foto){leerCampos();fotoGrupo=t.dataset.foto;$('#fileIn').value='';$('#fileIn').click();return}
+  if(t.dataset.del){leerCampos();const[k,i]=t.dataset.del.split(':');form.fotos[k].splice(+i,1);vNuevo();return}
+  if(t.id==='guardar'){
+    leerCampos();
+    if(!form.direccion.trim()){toast('Falta la dirección');$('#direccion').focus();return}
+    if(!form.servicio){toast('Elegí el tipo de servicio');return}
+    if(form.btuOtro.trim())form.btu='';
+    const j={...form,id:form.id||Date.now()};
+    await guardar(j);form=nuevoForm();toast('✔ Trabajo guardado');await ir('lista');return;
+  }
+  if(t.id==='cancelar'){form=nuevoForm();ir('lista');return}
+  if(t.dataset.ver){ir('detalle',+t.dataset.ver);return}
+  if(t.id==='volver'){ir('lista');return}
+  if(t.id==='ej'){toast('Cargando ejemplo…');await cargarEjemplos();ir('lista');return}
+  if(t.id==='sinej'){if(confirm('¿Borrar solo los trabajos de ejemplo? Los tuyos no se tocan.')){await borrarEjemplos();ir('lista')}return}
+  if(t.dataset.edit){const j=(await todos()).find(x=>x.id===+t.dataset.edit);form=JSON.parse(JSON.stringify(j));ir('nuevo');return}
+  if(t.dataset.borrar){if(confirm('¿Borrar este trabajo? No se puede deshacer.')){await borrar(+t.dataset.borrar);toast('Borrado');ir('lista')}return}
+  if(t.id==='sprev'){semanaBase.setDate(semanaBase.getDate()-7);vSemana();return}
+  if(t.id==='ssig'){semanaBase.setDate(semanaBase.getDate()+7);vSemana();return}
+  const[ini,fin,a,b]=rangoSemana();
+  if(t.id==='wa'){const txt=textoReporte(vSemana.js,a,b);
+    if(navigator.share){try{await navigator.share({text:txt});return}catch(err){if(err&&err.name==='AbortError')return}}
+    window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');return}
+  if(t.id==='copiar'){try{await navigator.clipboard.writeText(textoReporte(vSemana.js,a,b).replace(/\*/g,''));toast('Texto copiado')}catch(err){toast('No se pudo copiar')}return}
+  if(t.id==='pdf'){armarImpresion();setTimeout(()=>window.print(),150);return}
+});
+$('#vista').addEventListener('input',e=>{if(e.target.id==='tec'){cfg.set('tec',e.target.value.trim())}});
+$('#fileIn').addEventListener('change',async e=>{
+  const fs=[...e.target.files];if(!fs.length||!fotoGrupo)return;
+  toast('Procesando foto…');
+  for(const f of fs){try{form.fotos[fotoGrupo].push(await comprimir(f))}catch(err){toast('Una foto no se pudo leer')}}
+  if(vista==='nuevo')vNuevo();
+});
+
+/* ---------- semana de ejemplo (fotos dibujadas, no son reales) ---------- */
+function fotoEjemplo(tipo,variante=0){
+  const c=document.createElement('canvas');c.width=800;c.height=600;const g=c.getContext('2d');
+  const paredes=['#e8e2d6','#dfe6ea','#ece4dc','#e1e8dd'];
+  g.fillStyle=paredes[variante%4];g.fillRect(0,0,800,600);
+  g.fillStyle='rgba(0,0,0,.06)';g.fillRect(0,520,800,80);
+  if(tipo==='placa'){
+    g.fillStyle='#b8bec4';g.fillRect(150,120,500,360);g.strokeStyle='#6b7278';g.lineWidth=6;g.strokeRect(150,120,500,360);
+    g.fillStyle='#222';g.font='bold 30px sans-serif';g.fillText('SPLIT INVERTER',190,180);
+    g.font='24px monospace';
+    ['MODELO: KSW-12CR-'+(100+variante*7),'CAPACIDAD: '+[12000,18000,9000,24000][variante%4]+' BTU/h','REFRIGERANTE: R-410A','VOLTAJE: 220V  60Hz','SERIE: 2204'+(3817+variante*113)].forEach((t,i)=>g.fillText(t,190,240+i*45));
+  }else{
+    const sucio=tipo==='antes';
+    g.fillStyle=sucio?'#d9d6c8':'#f7f9fb';g.fillRect(100,110,600,190);
+    g.strokeStyle='#9aa3aa';g.lineWidth=4;g.strokeRect(100,110,600,190);
+    g.fillStyle=sucio?'#a9a48f':'#dfe6ec';g.fillRect(130,250,540,32);
+    for(let i=0;i<9;i++){g.fillStyle=sucio?'#8c887a':'#c5cfd6';g.fillRect(130+i*60,255,48,6)}
+    g.fillStyle=sucio?'#c7c3b3':'#eef2f5';g.fillRect(130,135,540,95);
+    g.strokeStyle=sucio?'#9b9686':'#cdd6dc';g.lineWidth=1;
+    for(let x=130;x<670;x+=9){g.beginPath();g.moveTo(x,135);g.lineTo(x,230);g.stroke()}
+    if(sucio){for(let i=0;i<70;i++){g.fillStyle='rgba(70,60,40,'+(0.08+Math.random()*.18)+')';g.beginPath();g.arc(130+Math.random()*540,135+Math.random()*95,3+Math.random()*9,0,7);g.fill()}
+      g.strokeStyle='rgba(80,70,40,.5)';g.lineWidth=3;g.beginPath();g.moveTo(330,300);g.lineTo(335,380);g.stroke()}
+    else{g.fillStyle='#4caf50';g.beginPath();g.arc(655,128,6,0,7);g.fill()}
+    g.fillStyle='#333';g.font='bold 34px sans-serif';g.fillText(sucio?'ANTES':'DESPUÉS',280,470);
+  }
+  g.fillStyle='rgba(0,0,0,.45)';g.font='20px sans-serif';g.fillText('FOTO DE EJEMPLO',20,580);
+  return c.toDataURL('image/jpeg',.7);
+}
+async function cargarEjemplos(){
+  const lun=lunesDe(new Date());
+  const dia=n=>{const d=new Date(lun);d.setDate(d.getDate()+n);return iso(d)};
+  const F=(a,d,p,v)=>({antes:a?[fotoEjemplo('antes',v)]:[],despues:d?[fotoEjemplo('despues',v)]:[],placa:p?[fotoEjemplo('placa',v)]:[]});
+  const L=[
+   [0,'Av. Bolívar, Res. Los Pinos, Apto 4B','Sra. Carmen Rojas','Mantenimiento','Split','12.000','',1,['Limpieza de filtros','Limpieza evaporadora','Limpieza condensadora','Limpieza de drenaje'],'Mantenimiento preventivo completo. Se lavó con espuma y se verificó el drenaje. Equipo enfría bien.','',F(1,1,1,0)],
+   [0,'Calle 5 con Av. 3, Local 7 (Panadería La Espiga)','Sr. Jorge Medina','Reparación','Nevera / refrigeración','','Nevera vertical 2 puertas',1,['Revisión eléctrica','Cambio de capacitor'],'No arrancaba el compresor. Se encontró capacitor de arranque dañado, se cambió y quedó funcionando.','Capacitor 35uF',F(1,1,0,1)],
+   [1,'Urb. El Paraíso, casa 22','Sr. Luis Pérez','Instalación','Split','18.000','',1,['Soldadura / tubería','Revisión eléctrica'],'Instalación nueva en sala. 3 m de tubería, soporte de pared y prueba de funcionamiento. Se dejó el control con baterías.','Tubería de cobre 3 m, soporte, cinta',F(0,1,1,2)],
+   [2,'Clínica Dental Sonrisa, piso 2','Dra. Marisol Ruiz','Mantenimiento','Cassette','24.000','',3,['Limpieza de filtros','Limpieza evaporadora','Limpieza de drenaje'],'Mantenimiento de los 3 cassettes del consultorio. Uno tenía el drenaje tapado, se destapó.','',F(1,1,1,3)],
+   [2,'Av. Libertador 45, Of. 3B','Oficina Contable Vega','Reparación','Split','9.000','',1,['Detección de fuga','Soldadura / tubería','Revisión / carga de gas'],'No enfriaba. Fuga en unión de la unidad exterior; se soldó, se hizo vacío y se recargó gas.','Gas R410A 500 g',F(1,1,1,0)],
+   [3,'Restaurante El Fogón, cocina','Sr. Andrés Salas','Reparación','Cuarto frío','','Cuarto frío 3x3',1,['Cambio de sensor','Ajuste de termostato'],'Temperatura inestable. Sensor de temperatura dañado, se cambió y se calibró el termostato.','Sensor de temperatura',F(1,1,0,1)],
+   [4,'Calle Los Mangos 8','Sra. Ana Gómez','Mantenimiento','Ventana','12.000','',1,['Limpieza de filtros','Limpieza evaporadora','Limpieza condensadora'],'Aire de ventana con mal olor y poco frío. Se lavó completo y quedó como nuevo.','',F(1,1,1,2)],
+   [5,'Edif. Torre Azul, PH','Sr. Rafael Soto','Reparación','Split','36.000','',1,['Cambio de motor / turbina','Revisión eléctrica'],'Hacía ruido fuerte. Se cambió el motor de la turbina de la evaporadora y se ajustó el soporte.','Motor de turbina evaporadora',F(1,1,1,3)]
+  ].filter(x=>dia(x[0])<=hoy());
+  let i=0;
+  for(const[d,dir,cl,sv,eq,btu,otro,cant,tar,nota,rep,fotos]of L)
+    await guardar({id:Date.now()+(i++),demo:true,fecha:dia(d),cliente:cl,direccion:dir,equipo:eq,btu,btuOtro:otro,cantidad:String(cant),servicio:sv,tareas:tar,nota,repuestos:rep,fotos});
+}
+async function borrarEjemplos(){for(const j of await todos())if(j.demo)await borrar(j.id)}
+
+/* ---------- arranque ---------- */
+abrirDB().then(()=>ir('nuevo')).catch(()=>{$('#vista').innerHTML='<div class="aviso">Este navegador no permite guardar datos. Abrila con Chrome.</div>'});
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

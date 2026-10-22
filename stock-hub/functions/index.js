@@ -7,77 +7,105 @@ const ml = require('./ml');
 admin.initializeApp();
 const db = admin.firestore();
 
-// Claves de la app de ML: van en Secret Manager (firebase functions:secrets:set ML_CLIENT_ID), nunca en el código.
+// Misma empresa y mismo Firebase que ubicaciones-deposito.html (CONFIG_FIJA.empresa).
+const EMPRESA = 'deposito';
+const base = () => db.doc(`empresas/${EMPRESA}`);
+
+// Claves de la app de ML: Secret Manager (firebase functions:secrets:set ML_CLIENT_ID), nunca en el código.
 const ML_CLIENT_ID = defineSecret('ML_CLIENT_ID');
 const ML_CLIENT_SECRET = defineSecret('ML_CLIENT_SECRET');
 
-// Dirección a la que vuelve ML tras autorizar (la de la función mlCallback, ya desplegada).
-const redirectUri = () => `https://${process.env.GCLOUD_REGION || 'us-central1'}-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/mlCallback`;
+// A donde vuelve ML tras autorizar. Tiene que ser IDÉNTICA a la "URL de redirección" cargada en la app de ML.
+const proyecto = () => process.env.GCLOUD_PROJECT || JSON.parse(process.env.FIREBASE_CONFIG || '{}').projectId;
+const redirectUri = () => `https://us-central1-${proyecto()}.cloudfunctions.net/mlCallback`;
 
-// 1) El usuario logueado pide la URL para conectar su cuenta de ML.
-exports.mlConectar = onCall({ secrets: [ML_CLIENT_ID] }, async (req) => {
+// Los tokens van en colecciones de primer nivel que NO están en las reglas de la app: nadie las lee desde el navegador
+// (con reglas "todo cerrado por defecto"). Verificarlo en la consola de Firebase antes de conectar.
+const cuentas = () => db.collection('mlPrivado');
+const estados = () => db.collection('mlOauthStates');
+
+// Misma lista de autorizados que usa la pantalla: empresas/deposito/usuarios/{mail} con rol y activo === true.
+async function exigirRol(req, roles) {
   if (!req.auth) throw new HttpsError('unauthenticated', 'Iniciá sesión.');
+  const email = String(req.auth.token.email || '').toLowerCase();
+  if (!email || req.auth.token.email_verified === false) throw new HttpsError('permission-denied', 'Mail no verificado.');
+  const u = (await base().collection('usuarios').doc(email).get()).data();
+  if (!u || u.activo !== true || !roles.includes(u.rol)) throw new HttpsError('permission-denied', 'No tenés permiso para esto.');
+  return { email, nombre: u.nombre || email };
+}
+
+// 1) El administrador pide la URL para conectar una cuenta de ML.
+exports.mlConectar = onCall({ secrets: [ML_CLIENT_ID] }, async (req) => {
+  const yo = await exigirRol(req, ['admin']);
   const nonce = crypto.randomBytes(24).toString('hex');
-  await db.doc(`oauthStates/${nonce}`).set({ uid: req.auth.uid, vence: Date.now() + 10 * 60 * 1000 });
+  await estados().doc(nonce).set({ email: yo.email, vence: Date.now() + 10 * 60 * 1000 });
   return { url: ml.urlAutorizacion(ML_CLIENT_ID.value(), redirectUri(), nonce) };
 });
 
-// 2) ML vuelve acá con ?code=…&state=…. El state dice qué usuario era.
+// 2) ML vuelve acá con ?code=…&state=…. El state dice quién pidió la conexión (de un solo uso, vence en 10 min).
 exports.mlCallback = onRequest({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET] }, async (req, res) => {
   try {
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Faltan datos.');
-    const ref = db.doc(`oauthStates/${state}`);
+    const ref = estados().doc(String(state));
     const snap = await ref.get();
-    await ref.delete(); // de un solo uso
+    await ref.delete();
     if (!snap.exists || snap.data().vence < Date.now()) return res.status(400).send('El enlace venció. Probá de nuevo.');
 
     const t = await ml.canjearCodigo(ML_CLIENT_ID.value(), ML_CLIENT_SECRET.value(), String(code), redirectUri());
-    const cuentaId = `ml_${t.mlUserId}`;
-    const cuenta = db.doc(`cuentas/${cuentaId}`);
-    const previa = await cuenta.get();
-    if (previa.exists && previa.data().ownerUid !== snap.data().uid) {
-      return res.status(403).send('Esa cuenta ya está conectada a otro usuario.');
-    }
-    await cuenta.set({ ownerUid: snap.data().uid, canal: 'ml', mlUserId: t.mlUserId, creadoEn: Date.now() }, { merge: true });
-    await db.doc(`cuentas/${cuentaId}/privado/tokens`).set({ accessToken: t.accessToken, refreshToken: t.refreshToken, venceEn: t.venceEn });
-    res.status(200).send('Cuenta conectada. Ya podés volver a la app.');
+    await cuentas().doc(`${EMPRESA}__${t.mlUserId}`).set({
+      empresa: EMPRESA, mlUserId: t.mlUserId, conectadaPor: snap.data().email, conectadaEn: Date.now(),
+      accessToken: t.accessToken, refreshToken: t.refreshToken, venceEn: t.venceEn,
+    }, { merge: true });
+    res.status(200).send('Cuenta de Mercado Libre conectada. Ya podés volver a la app.');
   } catch (e) {
     console.error(e);
     res.status(500).send('No se pudo conectar. Probá de nuevo.');
   }
 });
 
-async function tokenValido(cuentaId) {
-  const ref = db.doc(`cuentas/${cuentaId}/privado/tokens`);
-  const t = (await ref.get()).data();
-  if (!t) throw new HttpsError('failed-precondition', 'La cuenta no tiene tokens.');
+async function tokenValido(doc) {
+  const t = doc.data();
   if (t.venceEn > Date.now()) return t.accessToken;
-  const n = await ml.renovar(ML_CLIENT_ID.value(), ML_CLIENT_SECRET.value(), t.refreshToken);
-  await ref.set({ accessToken: n.accessToken, refreshToken: n.refreshToken, venceEn: n.venceEn });
-  return n.accessToken;
+  try {
+    const n = await ml.renovar(ML_CLIENT_ID.value(), ML_CLIENT_SECRET.value(), t.refreshToken);
+    await doc.ref.update({ accessToken: n.accessToken, refreshToken: n.refreshToken, venceEn: n.venceEn });
+    return n.accessToken;
+  } catch (e) {
+    // Si otra sincronización renovó justo antes, el refresh token ya se gastó: se usa el que dejó guardado.
+    const otra = (await doc.ref.get()).data();
+    if (otra.venceEn > Date.now()) return otra.accessToken;
+    throw new HttpsError('failed-precondition', 'La conexión con Mercado Libre venció. Volvé a conectar la cuenta.');
+  }
 }
 
-// 3) Trae las publicaciones de ML y las guarda. Solo lectura sobre ML: no cambia nada allá.
+// 3) Trae las publicaciones de ML y completa el campo `ml` de cada producto del depósito (por SKU).
+// Solo LEE de ML: no cambia nada en tus publicaciones.
 exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
-  if (!req.auth) throw new HttpsError('unauthenticated', 'Iniciá sesión.');
-  const cuentaId = String(req.data && req.data.cuentaId || '');
-  const cuenta = await db.doc(`cuentas/${cuentaId}`).get();
-  if (!cuenta.exists || cuenta.data().ownerUid !== req.auth.uid) throw new HttpsError('permission-denied', 'Cuenta no encontrada.');
+  const yo = await exigirRol(req, ['admin', 'empleado']);
+  const conectadas = await cuentas().where('empresa', '==', EMPRESA).get();
+  if (conectadas.empty) throw new HttpsError('failed-precondition', 'Todavía no conectaste ninguna cuenta de Mercado Libre.');
 
-  const token = await tokenValido(cuentaId);
-  const ids = await ml.listarIds(cuenta.data().mlUserId, token);
-  const ahora = Date.now();
-  let guardadas = 0;
-  for (let i = 0; i < ids.length; i += 20) {
-    const items = await ml.detalle(ids.slice(i, i + 20), token);
-    const batch = db.batch();
-    for (const it of items) {
-      batch.set(db.doc(`cuentas/${cuentaId}/publicaciones/${it.id}`), { ...ml.normalizar(it), actualizadoEn: ahora });
-      guardadas++;
-    }
-    await batch.commit();
+  const items = [];
+  for (const c of conectadas.docs) {
+    const token = await tokenValido(c);
+    const ids = await ml.listarIds(c.data().mlUserId, token);
+    for (let i = 0; i < ids.length; i += 20) items.push(...(await ml.detalle(ids.slice(i, i + 20), token)).map(ml.normalizar));
   }
-  await db.doc(`cuentas/${cuentaId}`).update({ ultimoSync: ahora });
-  return { total: ids.length, guardadas };
+
+  const { mapa, omitidas, sinSku } = ml.stockPorSku(items);
+  const prods = (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
+  const { escrituras, sinProducto } = ml.armarEscrituras(prods, mapa);
+
+  const ahora = Date.now();
+  for (let i = 0; i < escrituras.length; i += 400) {
+    const b = db.batch();
+    escrituras.slice(i, i + 400).forEach((x) =>
+      b.set(base().collection('productos').doc(x.id), { ml: x.ml, mlFecha: ahora, mlPor: 'Mercado Libre (automático)' }, { merge: true }));
+    await b.commit();
+  }
+  return {
+    cuentas: conectadas.size, publicaciones: items.length, omitidas, sinSku,
+    actualizados: escrituras.length, sinProductoTotal: sinProducto.length, sinProducto: sinProducto.slice(0, 20), por: yo.nombre,
+  };
 });

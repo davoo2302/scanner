@@ -1,36 +1,40 @@
-# stock-hub — modelo de datos (fase 1: solo lectura)
+# stock-hub — modelo de datos (fase 1: solo lectura, conectado al depósito)
 
-Objetivo: ver el stock de Mercado Libre en una app propia, sin entrar a ML. Pensado para varias cuentas y
-varios usuarios desde el día uno (hoy hay una sola, la del dueño).
+Objetivo: auditor de solo lectura. Trae el stock de Mercado Libre y lo deja donde `ubicaciones-deposito.html`
+ya lo compara con el depósito. No cambia nada en ML.
 
-## Colecciones (Firestore)
+## Dónde escribe (mismo Firebase que la pantalla: `ubicaciones-depositos`, empresa `deposito`)
 
 ```
-cuentas/{cuentaId}                       ← una cuenta de Mercado Libre conectada
-  ownerUid      uid de Firebase del dueño (el único que la ve)
-  canal         "ml"  (más adelante "tn" para Tienda Nube)
-  mlUserId      id del vendedor en ML
-  nickname      nombre visible
-  ultimoSync    fecha del último traído de publicaciones
-  privado/tokens                         ← SOLO funciones (las reglas bloquean al cliente)
-    accessToken, refreshToken, venceEn
-  publicaciones/{itemId}                 ← copia de lo que hay en ML
-    titulo, sku, stock, precio, estado, miniatura, link, full, variaciones[], actualizadoEn
+empresas/deposito/productos/{id}      ← ya existe; la función solo completa estos campos:
+  ml        { "<SKU del producto>": stockEnML }    (merge: no pisa otros SKU)
+  mlFecha   momento de la sincronización
+  mlPor     "Mercado Libre (automático)"
 
-oauthStates/{nonce}                      ← puente para la conexión con ML (dura 10 min). Solo funciones.
+mlPrivado/deposito__{mlUserId}        ← una por cuenta de ML conectada (se pueden sumar más)
+  empresa, mlUserId, conectadaPor, conectadaEn, accessToken, refreshToken, venceEn
+mlOauthStates/{nonce}                 ← puente de la conexión (10 min, un solo uso)
 ```
+`mlPrivado` y `mlOauthStates` no están en las reglas de la app: el navegador no las lee. Solo las funciones
+(que usan permisos de administrador). Ver PASOS.md, paso 2.
 
-Los datos de `cuentas/**` los escriben únicamente las Cloud Functions. El navegador solo lee y solo lo suyo.
+## Permisos
+Quién puede: la misma lista de la pantalla, `empresas/deposito/usuarios/{mail}` con `activo === true`.
+- Conectar cuenta: `admin`.
+- Traer de ML: `admin` o `empleado`.
+
+## Reglas de cruce
+- Solo publicaciones activas y fuera de Full. Si tienen variaciones, cada variación con su SKU.
+- SKU normalizado igual que la pantalla (sin tildes, minúsculas). Si se repite, se toma el mayor.
+- Los productos sin SKU no se cruzan.
 
 ## Fases siguientes (no están hechas)
-- `productos/{sku}` + `movimientos/` (libro de movimientos con ID único por orden → no descuenta dos veces).
-- Avisos de ML (`orders_v2`, `items`) para actualizar en vivo.
-- Empujar stock a los canales (con modo simulación y botón de apagado).
-- Reconciliación nocturna.
+- Avisos de ML (`orders_v2`, `items`) para actualizar en vivo en vez de apretar el botón.
+- Libro de movimientos con ID único por orden (para no descontar dos veces) y empujar stock a los canales.
+- Tienda Nube, y reconciliación nocturna.
+- Varias empresas/usuarios: hoy `EMPRESA = 'deposito'` es fija en `functions/index.js`.
 
 ## Datos de la API de ML en los que se apoya (verificar con la cuenta real)
 - Conexión: `auth.mercadolibre.com.ar/authorization` + `POST api.mercadolibre.com/oauth/token`.
-- Listado: `GET /users/{id}/items/search` (con `search_type=scan` para pasar de 1000) y detalle con
-  `GET /items?ids=…` (de a 20).
-- El refresh token se renueva en cada uso: hay que guardar el nuevo siempre (el código ya lo hace).
-- Stock en **Full** (`inventory_id`): lo maneja ML, se muestra pero no se puede cambiar desde afuera.
+- Listado: `GET /users/{id}/items/search?search_type=scan` y detalle con `GET /items?ids=…` (de a 20).
+- El refresh token se renueva en cada uso: el código guarda siempre el nuevo.

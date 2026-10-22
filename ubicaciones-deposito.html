@@ -271,6 +271,8 @@ button.kpi:hover{border-color:var(--muted)}
       <label class="btn ghost wide" for="ml-file" style="display:flex;align-items:center;justify-content:center;cursor:pointer">📂 Elegir archivo (Excel o CSV)</label>
       <input type="file" id="ml-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
       <button class="btn" data-act="ml-go">Cargar stock de Mercado Libre</button>
+      <button class="btn ghost wide" data-act="ml-traer" style="margin-top:10px">🔄 Traer de Mercado Libre (automático)</button>
+      <button class="btn ghost wide" data-act="ml-conectar" style="margin-top:10px">🔗 Conectar cuenta de Mercado Libre (administrador)</button>
       <p class="muted" id="ml-res" style="font-size:14px"></p>
     </div>
 
@@ -823,6 +825,28 @@ function filasML(hojas) {
     f.slice(ini).forEach(r => { const sku = r[cs], n = r[cn]; if (sku && /^\d+(\.0+)?$/.test(n || '')) out.push([sku, parseInt(n, 10)]); });
   });
   return out;
+}
+// Conexión automática con Mercado Libre: las funciones están en el mismo proyecto de Firebase (carpeta stock-hub/).
+async function mlLlamar(nombre) {
+  if (cfg.modo !== 'firebase') throw new Error('Esto necesita el modo Firebase.');
+  await loadScript(`https://www.gstatic.com/firebasejs/${FBV}/firebase-functions-compat.js`);
+  return (await firebase.app().functions('us-central1').httpsCallable(nombre, { timeout: 300000 })()).data;
+}
+async function mlConectarCuenta() {
+  const res = $('#ml-res');
+  try { res.textContent = 'Preparando la conexión…'; const r = await mlLlamar('mlConectar'); location.href = r.url; }
+  catch (e) { res.textContent = 'No se pudo: ' + (e.message || e); }
+}
+async function mlTraer() {
+  const res = $('#ml-res');
+  res.textContent = 'Trayendo las publicaciones de Mercado Libre… puede tardar un minuto.';
+  try {
+    const r = await mlLlamar('mlSincronizar');
+    res.textContent = `Listo: ${r.publicaciones} publicaciones leídas, ${r.actualizados} productos actualizados.`
+      + (r.omitidas ? ` Sin contar (pausadas o en Full): ${r.omitidas}.` : '')
+      + (r.sinSku ? ` Sin SKU: ${r.sinSku}.` : '')
+      + (r.sinProductoTotal ? ` SKU de ML que no están en el depósito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? '…' : '') + ')' : ''}.` : '');
+  } catch (e) { res.textContent = 'No se pudo traer: ' + (e.message || e); }
 }
 async function cargarML(filas) {
   const res = $('#ml-res');
@@ -1754,6 +1778,8 @@ const A = {
   'ml-ver': () => openML(),
   'ml-cargar': () => closeModal().then(() => { tab('ajustes'); irA('#a-ml'); focusEl('#ml-txt'); }),
   'ml-go': () => { if (puede()) cargarML(filasML(filasPegadas($('#ml-txt').value))); },
+  'ml-traer': () => { if (puede()) mlTraer(); },
+  'ml-conectar': () => { if (esAdmin()) mlConectarCuenta(); },
   'd-ml': () => {
     const p = state.productos[detId]; if (!p || !puede()) return;
     const ml = {}, txt = []; let mal = false;

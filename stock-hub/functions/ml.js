@@ -81,4 +81,42 @@ function normalizar(item) {
   };
 }
 
-module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar };
+// Igual que la pantalla de depósito (ubicaciones-deposito.html): sin tildes, minúsculas, espacios simples.
+const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+// De las publicaciones (ya normalizadas) saca el stock por SKU.
+// Solo cuentan las ACTIVAS y las que NO están en Full: una pausada no vende y el stock de Full no está en tu depósito,
+// así que compararlas daría diferencias falsas. Si un SKU se repite se toma el mayor (igual que la carga manual).
+function stockPorSku(items) {
+  const mapa = new Map();
+  let omitidas = 0, sinSku = 0;
+  const sumar = (sku, n) => {
+    const k = norm(sku);
+    if (!k) { sinSku++; return; }
+    const o = mapa.get(k);
+    if (!o || n > o.n) mapa.set(k, { sku, n });
+  };
+  for (const it of items) {
+    if (it.estado !== 'active' || it.full) { omitidas++; continue; }
+    if (it.variaciones && it.variaciones.length) it.variaciones.forEach((v) => sumar(v.sku, v.stock));
+    else sumar(it.sku, it.stock);
+  }
+  return { mapa, omitidas, sinSku };
+}
+
+// Cruza con los productos del depósito por SKU. La clave del mapa `ml` es el SKU como lo tiene el producto.
+function armarEscrituras(productos, mapa) {
+  const escrituras = [], usados = new Set();
+  for (const p of productos) {
+    const ml = {};
+    for (const s of p.skus || []) {
+      const k = norm(s);
+      if (mapa.has(k)) { ml[s] = mapa.get(k).n; usados.add(k); }
+    }
+    if (Object.keys(ml).length) escrituras.push({ id: p.id, ml });
+  }
+  const sinProducto = [...mapa.entries()].filter(([k]) => !usados.has(k)).map(([, v]) => v.sku);
+  return { escrituras, sinProducto };
+}
+
+module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras };

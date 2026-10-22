@@ -1,0 +1,84 @@
+// Lógica pura de Mercado Libre (sin Firebase), para poder probarla sola.
+
+const API = 'https://api.mercadolibre.com';
+const AUTH = 'https://auth.mercadolibre.com.ar/authorization';
+
+function urlAutorizacion(clientId, redirectUri, state) {
+  const p = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: redirectUri, state });
+  return `${AUTH}?${p}`;
+}
+
+async function pedirToken(body) {
+  const r = await fetch(`${API}/oauth/token`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+    body: new URLSearchParams(body),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(`ML token ${r.status}: ${j.message || j.error || 'error'}`);
+  return {
+    accessToken: j.access_token,
+    refreshToken: j.refresh_token, // ML lo renueva en cada uso: hay que guardar siempre el nuevo
+    mlUserId: String(j.user_id),
+    venceEn: Date.now() + (j.expires_in - 60) * 1000,
+  };
+}
+
+const canjearCodigo = (clientId, clientSecret, code, redirectUri) =>
+  pedirToken({ grant_type: 'authorization_code', client_id: clientId, client_secret: clientSecret, code, redirect_uri: redirectUri });
+
+const renovar = (clientId, clientSecret, refreshToken) =>
+  pedirToken({ grant_type: 'refresh_token', client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken });
+
+async function get(path, token) {
+  const r = await fetch(`${API}${path}`, { headers: { authorization: `Bearer ${token}` } });
+  if (!r.ok) throw new Error(`ML ${r.status} en ${path}`);
+  return r.json();
+}
+
+// Todos los ids de publicaciones del vendedor (modo scan: sirve para más de 1000).
+async function listarIds(mlUserId, token) {
+  const ids = [];
+  let scrollId;
+  for (;;) {
+    const q = new URLSearchParams({ search_type: 'scan', limit: '100' });
+    if (scrollId) q.set('scroll_id', scrollId);
+    const j = await get(`/users/${mlUserId}/items/search?${q}`, token);
+    if (!j.results || j.results.length === 0) break;
+    ids.push(...j.results);
+    scrollId = j.scroll_id;
+    if (!scrollId) break;
+  }
+  return ids;
+}
+
+// Detalle de hasta 20 publicaciones por llamada.
+async function detalle(ids, token) {
+  const filas = await get(`/items?ids=${ids.join(',')}`, token);
+  return filas.filter((f) => f.code === 200).map((f) => f.body);
+}
+
+// Del formato de ML al que guardamos. El SKU puede estar en seller_custom_field o en el atributo SELLER_SKU.
+function normalizar(item) {
+  const attr = (item.attributes || []).find((a) => a.id === 'SELLER_SKU');
+  const sku = item.seller_custom_field || (attr && attr.value_name) || null;
+  const variaciones = (item.variations || []).map((v) => ({
+    id: String(v.id),
+    sku: v.seller_custom_field || ((v.attributes || []).find((a) => a.id === 'SELLER_SKU') || {}).value_name || null,
+    stock: v.available_quantity ?? 0,
+    atributos: (v.attribute_combinations || []).map((a) => a.value_name).filter(Boolean).join(' / '),
+  }));
+  return {
+    titulo: item.title,
+    sku,
+    stock: item.available_quantity ?? 0,
+    precio: item.price ?? null,
+    estado: item.status, // active | paused | closed | under_review ...
+    miniatura: (item.thumbnail || '').replace('http://', 'https://'),
+    link: item.permalink || null,
+    full: Boolean(item.inventory_id), // stock en Full: lo maneja ML
+    variaciones,
+  };
+}
+
+module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar };

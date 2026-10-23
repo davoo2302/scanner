@@ -1,6 +1,6 @@
 // Genera la página de un proyecto propio a partir de ubicaciones-deposito.html, cambiando SOLO el bloque
 // CONFIG_FIJA y el título. Así no hay dos copias que se desarmen con el tiempo.
-//   node stock-hub/generar-pagina.js davidclik
+//   node stock-hub/generar-pagina.js propia
 // Deja stock-hub-<nombre>.html en la raíz del repo. Los datos de `fb` NO son secretos (identifican el proyecto);
 // el acceso lo controlan las reglas y la lista de usuarios.
 
@@ -8,9 +8,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const PROYECTOS = {
-  davidclik: {
-    titulo: 'Stock Hub · DavidClik',
-    empresa: 'davidclik',
+  propia: {
+    titulo: 'Stock Hub',
+    empresa: 'propia',
     fb: {
       apiKey: 'AIzaSyA5zOQ5PtOLWIVyM_0XPqw63sPT9J2coWs',
       authDomain: 'stock-hub-c5a0e.firebaseapp.com',

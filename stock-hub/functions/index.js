@@ -8,7 +8,8 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // Misma empresa y mismo Firebase que ubicaciones-deposito.html (CONFIG_FIJA.empresa).
-const EMPRESA = 'deposito';
+// Se puede cambiar por proyecto con functions/.env.<proyecto> (EMPRESA=...); sin eso es la del depósito.
+const EMPRESA = process.env.EMPRESA || 'deposito';
 const base = () => db.doc(`empresas/${EMPRESA}`);
 
 // Claves de la app de ML: Secret Manager (firebase functions:secrets:set ML_CLIENT_ID), nunca en el código.

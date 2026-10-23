@@ -1,0 +1,47 @@
+// Reglas de Firestore del depósito (copia de las publicadas en ubicaciones-depositos el 2026-10-22).
+// Todo lo que no está escrito acá queda CERRADO para navegadores y teléfonos: por eso mlPrivado y
+// mlOauthStates (tokens de Mercado Libre) solo los tocan las funciones. No agregar un comodín general.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function ficha(emp) {
+      return get(/databases/$(database)/documents/empresas/$(emp)/usuarios/$(request.auth.token.email));
+    }
+    function miembro(emp) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/empresas/$(emp)/usuarios/$(request.auth.token.email))
+        && ficha(emp).data.activo == true;
+    }
+    function escribe(emp) {
+      return miembro(emp) && ficha(emp).data.rol in ['admin', 'empleado'];
+    }
+    function admin(emp) {
+      return miembro(emp) && ficha(emp).data.rol == 'admin';
+    }
+
+    match /empresas/{emp}/usuarios/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if false;
+    }
+    match /empresas/{emp}/config/{id} {
+      allow read: if miembro(emp);
+      allow write: if admin(emp);
+    }
+    match /empresas/{emp}/productos/{id} {
+      allow read: if miembro(emp);
+      allow create, update: if escribe(emp);
+      allow delete: if admin(emp);
+    }
+    match /empresas/{emp}/stock/{id} {
+      allow read: if miembro(emp);
+      allow create, update, delete: if escribe(emp);
+    }
+    match /empresas/{emp}/movimientos/{id} {
+      allow read: if miembro(emp);
+      allow create: if escribe(emp) && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if false;
+    }
+  }
+}

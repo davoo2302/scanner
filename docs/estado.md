@@ -38,7 +38,17 @@ con ML. 19 productos, 91 unidades, 15 con ≤5. NO se vio todavía una "pausada 
 Ojo: con umbral 5 casi todo sale en rojo; evaluar bajarlo a 3 al armar la pantalla.
 Leer los datos desde la compu: token gcloud de argenisdavid17 + REST (ver memoria "consultas desde la compu").
 
-## PRÓXIMO PASO: pantalla de INVENTARIO clara (los datos ya están)
+## Hecho 2026-11-16 (tarde): pantalla de Inventario (en la rama, SIN publicar)
+- Reglas de Firestore PUBLICADAS en stock-hub-c5a0e (las del repo: iguales a las de octubre + `publicaciones` solo lectura).
+- `stock-hub.html`: menú lateral en compu / abajo en celular: Inventario (principal) · Ubicaciones (lo de antes) ·
+  Movimientos · Ajustes. Inventario = panel (Publicaciones, Activas, Poco stock, Sin stock, Pausadas por vos, Frenadas
+  por ML; cada tarjeta filtra), filtros extra (Sin SKU, Sin ubicación, Con diferencia, Cerradas, Full), buscador, lista con
+  foto/estado/motivo/stock ML/contado, lo rojo primero, variantes desglosadas, ficha con "Ver ficha del producto" y
+  "Abrir en ML", botón "Actualizar desde ML". Umbral de poco stock editable en Ajustes (admin).
+- Probado en local (localhost:5500, `.claude/launch.json`) con datos reales, compu y celular. Falta: publicarlo (unir a main).
+- "Poco stock" del panel cuenta PUBLICACIONES (12 hoy); el resumen del servidor cuenta productos por SKU (15).
+
+## Lo que sigue en la pantalla (ideas acordadas, no hechas)
 Feedback textual del dueño: lo actual "se ve feo, confundido": no entiende qué significan el 13 y el 22, no ve faltantes, ceros,
 bajos, ni dónde buscar o editar; quiere primero un buen inventario y después las ubicaciones. Propuesta (a confirmar con él):
 - Inventario como pantalla principal: lista con foto, nombre, SKU, stock en ML, contado, diferencia, estado (activa/pausada).

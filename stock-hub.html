@@ -176,10 +176,47 @@ button.kpi:hover{border-color:var(--muted)}
 .mlrows input{min-height:46px;text-align:center;font-family:var(--cond);font-size:22px;font-weight:700;padding:0 6px}
 .ruta{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
 .ruta .chip{margin:0}
+/* ---------- Inventario (pantalla principal) ---------- */
+.inv-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.inv-top h2{font-family:var(--cond);font-size:28px;margin:0;font-weight:700}
+.panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:599px){.pk{padding:8px 9px}.pk b{font-size:30px}.pk small{font-size:13px;line-height:1.2}}
+.pk{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:10px;padding:10px 12px;min-height:0;color:var(--ink);font-weight:400}
+.pk small{display:block;font-size:14px;color:var(--muted)}
+.pk b{display:block;font-family:var(--cond);font-size:38px;line-height:1.05;font-weight:700}
+.pk.ok{border-left-color:var(--green)}.pk.rojo{border-left-color:var(--red)}.pk.rojo b{color:var(--red)}.pk.gris{border-left-color:var(--muted)}
+.pk.on{outline:3px solid var(--yellow);outline-offset:0}
+.filtros{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
+.filtros button{min-height:40px;padding:0 12px;border-radius:20px;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);font-size:15px;font-weight:500}
+.filtros button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.filtros button span{opacity:.7;margin-left:4px}
+.pubs{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.pub{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:10px;align-items:start;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:8px;padding:10px;width:100%;text-align:left;color:var(--ink);font-weight:400;min-height:0}
+.pub.rojo{border-left-color:var(--red)}.pub.ok{border-left-color:var(--green)}.pub.gris{border-left-color:var(--muted)}
+.pub img,.pub .sinfoto{width:56px;height:56px;border-radius:6px;object-fit:cover;background:var(--panel)}
+.pub .t{font-weight:600;display:block;line-height:1.25}
+.pub small{display:block}
+.pub .st{text-align:right;white-space:nowrap}
+.pub .st b{display:block;font-family:var(--cond);font-size:30px;line-height:1;font-weight:700}
+.pub .st b.bad{color:var(--red)}
+.est{display:inline-block;font-size:13px;font-weight:600;border-radius:4px;padding:1px 7px;margin:4px 6px 0 0;background:var(--panel);border:1px solid var(--line)}
+.est.rojo{background:var(--red);color:#fff;border-color:var(--red)}.est.ok{background:var(--green);color:#fff;border-color:var(--green)}
+.vars{grid-column:2/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:14px;border-top:1px dashed var(--line);padding-top:6px}
+.vars .bad{font-weight:600}
+@media (min-width:960px){
+  /* Menú a un costado (como el /admin de zonaflex) */
+  nav{top:0;bottom:0;right:auto;width:200px;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+  nav button{flex:0 0 auto;min-height:52px;text-align:left;padding:0 20px;border-top:0;border-left:4px solid transparent;font-size:17px}
+  nav button.on{border-left-color:var(--yellow);background:var(--bg)}
+  header{z-index:6}
+  body{padding-left:200px}
+  #toast{left:216px}
+  .panel{grid-template-columns:repeat(6,minmax(0,1fr))}
+}
 @media (min-width:960px){
   header{padding-left:max(16px,calc((100% - 1160px)/2 + 16px));padding-right:max(16px,calc((100% - 1160px)/2 + 16px))}
   main{max-width:1160px}
-  .view:not(#v-inicio){max-width:640px;margin:0 auto}
+  .view:not(#v-inicio):not(#v-inv){max-width:640px;margin:0 auto}
   .toprow{flex-wrap:nowrap}
   .btn.cta{flex:0 0 auto;order:0;font-size:17px;padding:0 22px}
   #b-res{max-width:820px}
@@ -188,15 +225,26 @@ button.kpi:hover{border-color:var(--muted)}
   .kpi.kml{grid-column:auto}
   #i-body .c-mapa{grid-area:mapa}#i-body .c-movs{grid-area:movs}#i-body .c-recs{grid-area:recs}
   #i-body .card{margin-top:0}
-  nav{justify-content:center}nav button{flex:0 1 220px}
 }
 </style>
 </head>
 <body>
-<header><h1>Ubicaciones</h1><div id="mode"></div></header>
+<header><h1>Stock Hub</h1><div id="mode"></div></header>
 
 <main>
-  <section id="v-inicio" class="view on">
+  <section id="v-inv" class="view on">
+    <div class="inv-top">
+      <h2>Inventario</h2>
+      <button class="btn small" data-act="inv-traer" id="inv-traer">🔄 Actualizar desde Mercado Libre</button>
+    </div>
+    <p class="muted" id="inv-fecha"></p>
+    <div id="inv-panel" class="panel" style="margin-top:10px"></div>
+    <div class="filtros" id="inv-filtros"></div>
+    <input class="search" id="inv-q" placeholder="Buscar por nombre o SKU" autocomplete="off" enterkeyhint="search">
+    <div id="inv-list" class="pubs"></div>
+  </section>
+
+  <section id="v-inicio" class="view">
     <div class="row toprow">
       <input class="grow search" id="b-q" placeholder="Producto, SKU o ubicación" autocomplete="off" enterkeyhint="search">
       <button class="btn ghost small" id="b-clear" data-act="b-clear" aria-label="Borrar búsqueda" style="display:none">✕</button>
@@ -210,7 +258,7 @@ button.kpi:hover{border-color:var(--muted)}
   </section>
 
   <section id="v-guardar" class="view">
-    <div class="row" style="margin-bottom:12px"><button class="btn ghost small" data-act="tab" data-v="inicio">← Inicio</button></div>
+    <div class="row" style="margin-bottom:12px"><button class="btn ghost small" data-act="tab" data-v="inicio">← Ubicaciones</button></div>
     <div class="step" id="s1"></div>
     <div class="step" id="s2"></div>
     <div class="step" id="s3"></div>
@@ -264,6 +312,12 @@ button.kpi:hover{border-color:var(--muted)}
       <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
     </div>
 
+    <div class="section stack" id="a-umbral">
+      <h2>Poco stock</h2>
+      <p class="muted">Una publicación activa se marca en rojo como "poco stock" cuando tiene esta cantidad o menos (en cualquiera de sus variantes).</p>
+      <div class="row"><input id="a-poco" type="number" inputmode="numeric" min="0" max="999" autocomplete="off" style="max-width:120px"><button class="btn small" data-act="poco-save">Guardar</button></div>
+    </div>
+
     <div class="section stack" id="a-ml">
       <h2>Stock de Mercado Libre</h2>
       <p class="muted">Pegá dos columnas: SKU y el stock que figura en Mercado Libre. También podés elegir el Excel que bajás de tus publicaciones: la app busca sola las columnas "SKU" y "Stock". Para esos SKU reemplaza lo anotado antes.</p>
@@ -287,7 +341,8 @@ button.kpi:hover{border-color:var(--muted)}
 </main>
 
 <nav>
-  <button data-act="tab" data-v="inicio" class="on">Inicio</button>
+  <button data-act="tab" data-v="inv" class="on">Inventario</button>
+  <button data-act="tab" data-v="inicio">Ubicaciones</button>
   <button data-act="tab" data-v="movs">Movimientos</button>
   <button data-act="tab" data-v="ajustes">Ajustes</button>
 </nav>
@@ -298,7 +353,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-10-07 · 17';
+const VERSION = '2026-11-16 · inventario';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -370,7 +425,8 @@ const CONFIG_FIJA = {
 };
 if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa = CONFIG_FIJA.empresa; }
 
-const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null, dep: null };
+const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null, dep: null,
+  pubs: null, mlRes: null, umbral: 5, invErr: '', invCargando: false };
 let B = null;
 
 function toast(msg, type) {
@@ -485,6 +541,8 @@ const Local = {
     this.persist(); refresh();
   },
   log(m) { state.movs.unshift(m); this.persist(); refresh(); },
+  async cargarPubs() { state.invErr = 'El inventario de Mercado Libre necesita el modo Firebase.'; renderInv(); },
+  guardarUmbral(n) { state.umbral = n; renderInv(); },
   borrar() { localStorage.removeItem(this.key); state.productos = {}; state.stock = {}; state.movs = []; refresh(); }
 };
 
@@ -533,6 +591,33 @@ const Fb = {
       state.movs = s.docs.map(d => ({ id: d.id, ...d.data() }));
       state.pend = s.metadata.hasPendingWrites; refresh();
     }, onErr);
+  },
+  // Inventario de ML: se lee A PEDIDO (al entrar y al tocar "Actualizar"), no en vivo, para no gastar lecturas.
+  // 1 lectura del resumen + 1 del umbral + 1 por publicación.
+  async cargarPubs() {
+    state.invCargando = true; renderInv();
+    try {
+      const [r, c, s] = await Promise.all([
+        this.base.collection('config').doc('mlResumen').get(),
+        this.base.collection('config').doc('inventario').get(),
+        this.base.collection('publicaciones').get(),
+      ]);
+      state.mlRes = r.exists ? r.data() : null;
+      const n = c.exists ? c.data().pocoStock : null;
+      state.umbral = Number.isFinite(n) ? n : 5;
+      state.pubs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      state.invErr = '';
+    } catch (e) {
+      state.invErr = e.code === 'permission-denied'
+        ? 'Todavía no hay permiso para leer las publicaciones (falta publicar las reglas de Firebase).'
+        : 'No se pudo leer el inventario: ' + (e.message || e);
+    }
+    state.invCargando = false; renderInv();
+  },
+  guardarUmbral(n) {
+    state.umbral = n; renderInv();
+    this.base.collection('config').doc('inventario').set({ pocoStock: n, actualizado: Date.now(), por: usuarioActual() }, { merge: true })
+      .catch(e => toast('No se guardó: ' + e.message, 'err'));
   },
   guardarProducto(p) {
     state.productos[p.id] = p; refresh();
@@ -648,7 +733,7 @@ const Fb = {
 const GLOGO = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.8 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
 function pedirLogin() {
   return new Promise(resolve => {
-    $('#login-box').innerHTML = `<h2>Ubicaciones</h2>
+    $('#login-box').innerHTML = `<h2>Stock Hub</h2>
       <p>Entrá con tu cuenta de Google. Solo pueden entrar las cuentas autorizadas por el depósito.</p>
       <button class="gbtn" id="g-login">${GLOGO}Entrar con Google</button>
       <p class="muted" id="login-msg" style="margin-top:14px"></p>`;
@@ -847,6 +932,7 @@ async function mlTraer() {
       + (r.omitidas ? ` Sin contar (pausadas o en Full): ${r.omitidas}.` : '')
       + (r.sinSku ? ` Sin SKU: ${r.sinSku}.` : '')
       + (r.sinProductoTotal ? ` SKU de ML que no están en el depósito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? '…' : '') + ')' : ''}.` : '');
+    B.cargarPubs();
   } catch (e) { res.textContent = 'No se pudo traer: ' + (e.message || e); }
 }
 async function mlImportarProductos() {
@@ -855,7 +941,7 @@ async function mlImportarProductos() {
   res.textContent = 'Importando las publicaciones de Mercado Libre… puede tardar un minuto.';
   try {
     const r = await mlLlamar('mlImportar');
-    await B.refrescarProductos();
+    await B.refrescarProductos(); B.cargarPubs();
     res.textContent = `Listo: ${r.publicaciones} publicaciones leídas. Productos creados: ${r.creados}. Ya estaban: ${r.yaExistian}.`
       + (r.sinSku ? ` Creados SIN SKU (hay que ponerles uno a mano): ${r.sinSku}.` : '')
       + (r.omitidas ? ` No se importaron (cerradas o en Full): ${r.omitidas}.` : '');
@@ -1767,18 +1853,146 @@ function descargar() {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
+/* ---------- Inventario: lo que dice Mercado Libre de cada publicación ---------- */
+// Las fichas (empresas/{e}/publicaciones) las escribe la función mlSincronizar. `clase`:
+// activa · sin_stock (ML la frenó porque llegó a 0) · pausada (la pausó el dueño) · frenada (ML, otro motivo) · cerrada
+let invF = 'todos';
+const CLASE_TXT = { activa: 'Activa', sin_stock: 'Sin stock', pausada: 'Pausada por vos', frenada: 'Frenada por ML', cerrada: 'Cerrada', otro: 'Otro estado' };
+const MOTIVO_TXT = {
+  out_of_stock: 'ML la pausó porque se quedó sin stock. Se reactiva sola cuando le cargás stock.',
+  warning: 'ML marcó un problema en la publicación. Revisala en Mercado Libre.',
+  waiting_for_patch: 'ML te pide que corrijas algo de la publicación.',
+  held: 'Retenida por Mercado Libre.', forbidden: 'Bloqueada por Mercado Libre (no cumple alguna política).',
+  under_review: 'En revisión por Mercado Libre.', suspended: 'Suspendida por Mercado Libre.', banned: 'Dada de baja por Mercado Libre.',
+  picture_download_pending: 'Mercado Libre está procesando las fotos.', expired: 'Venció.', deleted: 'Eliminada.',
+};
+function motivoPub(p) {
+  if (p.clase === 'pausada') return 'La pausaste vos (Mercado Libre no indica otro motivo).';
+  if (p.clase === 'activa') return '';
+  const m = (p.subEstado || []).map(s => MOTIVO_TXT[s] || `Motivo de ML: ${s}`);
+  if (!m.length && p.estado === 'under_review') m.push(MOTIVO_TXT.under_review);
+  if (!m.length && p.estado === 'inactive') m.push('Mercado Libre la dejó inactiva.');
+  return m.join(' ');
+}
+// Una línea por variante (o una sola si no tiene), con lo contado en el depósito del producto de ese SKU.
+function lineasPub(p) {
+  const base = (p.variaciones || []).length ? p.variaciones.map(v => ({ etq: v.atributos || 'Variante', sku: v.sku, ml: v.stock || 0 }))
+    : [{ etq: '', sku: p.sku, ml: p.stock || 0 }];
+  return base.map(l => {
+    const pr = l.sku ? bySku(l.sku) : null;
+    const ub = pr ? stockDe(pr.id) : [];
+    return { ...l, pid: pr ? pr.id : null, real: ub.reduce((a, s) => a + (s.cantidad || 0), 0), ubic: ub.length };
+  });
+}
+function infoPub(p) {
+  const ls = lineasPub(p), activa = p.clase === 'activa' && !p.full;
+  return {
+    ls,
+    poco: activa && ls.some(l => l.ml <= state.umbral),
+    sinSku: ls.some(l => !l.sku),
+    sinUbic: ls.some(l => !l.ubic),
+    dif: ls.some(l => l.ubic && l.real !== l.ml),
+  };
+}
+const INV_F = {
+  todos: () => true, activa: (p) => p.clase === 'activa', poco: (p, i) => i.poco, sin_stock: (p) => p.clase === 'sin_stock',
+  pausada: (p) => p.clase === 'pausada', frenada: (p) => p.clase === 'frenada' || p.clase === 'otro', cerrada: (p) => p.clase === 'cerrada',
+  sinsku: (p, i) => i.sinSku, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
+};
+// Qué tan grave es, para ordenar la lista: lo rojo primero.
+const gravedad = (p, i) => p.clase === 'frenada' || p.clase === 'otro' ? 0 : p.clase === 'sin_stock' ? 1 : i.poco ? 2 : p.clase === 'pausada' ? 3 : p.clase === 'cerrada' ? 5 : 4;
+// Color de la etiqueta de estado (solo por el estado; "poco stock" lleva su propia etiqueta roja).
+const colorEst = p => p.clase === 'activa' ? 'ok' : p.clase === 'pausada' || p.clase === 'cerrada' ? '' : 'rojo';
+const colorPub = (p, i) => p.clase === 'frenada' || p.clase === 'otro' || p.clase === 'sin_stock' || i.poco ? 'rojo' : p.clase === 'activa' ? 'ok' : 'gris';
+
+function renderInv() {
+  const el = $('#inv-list'); if (!el) return;
+  const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
+  if (state.invErr) { fecha.textContent = ''; panel.innerHTML = ''; fil.innerHTML = ''; el.innerHTML = `<p class="empty bad">${esc(state.invErr)}</p>`; return; }
+  if (!state.pubs) { fecha.textContent = state.invCargando ? 'Cargando…' : ''; panel.innerHTML = fil.innerHTML = el.innerHTML = ''; return; }
+  const todas = state.pubs.map(p => [p, infoPub(p)]);
+  if (!todas.length) {
+    fecha.textContent = ''; panel.innerHTML = fil.innerHTML = '';
+    el.innerHTML = '<p class="empty">Todavía no hay publicaciones. Tocá "Actualizar desde Mercado Libre".</p>'; return;
+  }
+  const cuenta = f => todas.filter(([p, i]) => INV_F[f](p, i)).length;
+  const r = state.mlRes;
+  fecha.innerHTML = (r ? `<b>${r.unidades}</b> unidades a la venta en <b>${r.productos ?? '—'}</b> productos · ` : '')
+    + (r && r.fecha ? `actualizado ${fmt(r.fecha)}` : '') + (state.invCargando ? ' · cargando…' : '');
+  const pk = (f, txt, cls) => { const n = cuenta(f);
+    return `<button class="pk ${n ? cls : 'ok'} ${invF === f ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
+  panel.innerHTML = pk('todos', 'Publicaciones', 'gris') + pk('activa', 'Activas', 'ok') + pk('poco', `Poco stock (${state.umbral} o menos)`, 'rojo')
+    + pk('sin_stock', 'Sin stock', 'rojo') + pk('pausada', 'Pausadas por vos', 'gris') + pk('frenada', 'Frenadas por ML', 'rojo');
+  const extra = [['sinsku', 'Sin SKU'], ['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
+    .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
+  fil.innerHTML = extra.map(([f, t, n]) => `<button class="${invF === f ? 'on' : ''}" data-act="inv-f" data-f="${f}">${t}<span>${n}</span></button>`).join('')
+    + (invF !== 'todos' ? '<button data-act="inv-f" data-f="todos">✕ Ver todas</button>' : '');
+
+  const toks = norm($('#inv-q').value).split(' ').filter(Boolean);
+  const lista = todas.filter(([p, i]) => INV_F[invF](p, i))
+    .filter(([p]) => { if (!toks.length) return true;
+      const h = norm([p.titulo, p.sku, ...(p.variaciones || []).map(v => v.sku + ' ' + v.atributos)].join(' ')); return toks.every(t => h.includes(t)); })
+    .sort((a, b) => gravedad(...a) - gravedad(...b) || (a[0].titulo || '').localeCompare(b[0].titulo || ''));
+  if (!lista.length) { el.innerHTML = '<p class="empty">No hay publicaciones con ese filtro.</p>'; return; }
+  el.innerHTML = lista.map(([p, i]) => {
+    const c = colorPub(p, i), varios = i.ls.length > 1;
+    const stock = i.ls.reduce((a, l) => a + l.ml, 0);
+    const conts = i.ls.filter(l => l.ubic);
+    return `<button class="pub ${c}" data-act="inv-open" data-id="${esc(p.id)}">
+      ${p.foto ? `<img src="${esc(p.foto)}" alt="" loading="lazy">` : '<span class="sinfoto"></span>'}
+      <span><span class="t">${esc(p.titulo)}</span>
+        <small>${varios ? `${i.ls.length} variantes` : esc(p.sku || 'Sin SKU')}</small>
+        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est">Sin SKU</span>' : ''}
+        ${p.clase !== 'activa' && motivoPub(p) ? `<small>${esc(motivoPub(p))}</small>` : ''}</span>
+      <span class="st"><small>en ML</small><b class="${i.poco || p.clase === 'sin_stock' ? 'bad' : ''}">${stock}</b>
+        ${!varios ? `<small>${conts.length ? `contado ${conts[0].real}` : 'sin contar'}</small>` : ''}</span>
+      ${varios ? `<span class="vars">${i.ls.map(l => `<span>${esc(l.etq)}${l.sku ? '' : ' <span class="muted">(sin SKU)</span>'}</span><span class="${p.clase === 'activa' && l.ml <= state.umbral ? 'bad' : ''}">${l.ml}${l.ubic ? ` · contado ${l.real}` : ''}</span>`).join('')}</span>` : ''}
+    </button>`;
+  }).join('');
+}
+function openPub(id) {
+  const p = (state.pubs || []).find(x => x.id === id); if (!p) return;
+  detId = null;
+  const i = infoPub(p), mot = motivoPub(p);
+  openModal(`<h3>${esc(p.titulo)}</h3>
+    <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
+    ${mot ? `<p style="margin-top:8px">${esc(mot)}</p>` : ''}
+    <div class="list">${i.ls.map(l => `<div class="item"><b>${esc(l.etq || 'Stock')}</b>
+      <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponéselo en Mercado Libre y en la app, igual en los dos)'}</small>
+      <small>En Mercado Libre: <b style="display:inline">${l.ml}</b>${l.ubic ? ` · contado en el depósito: <b style="display:inline">${l.real}</b>${l.real !== l.ml ? ` <span class="bad">(diferencia ${l.real - l.ml > 0 ? '+' : ''}${l.real - l.ml})</span>` : ' (coincide)'}` : ' · sin ubicación en el depósito'}</small>
+      ${l.pid ? `<div>${chips(l.pid)}</div><button class="btn ghost small" data-act="d-open" data-id="${esc(l.pid)}" style="margin-top:6px">Ver ficha del producto</button>` : ''}
+    </div>`).join('')}</div>
+    <small style="margin-top:10px">Publicación ${esc(p.id)}${p.precio != null ? ` · $ ${Number(p.precio).toLocaleString('es-AR')}` : ''}${p.actualizada ? ` · datos de ML del ${fmt(p.actualizada)}` : ''}</small>
+    ${p.link ? `<a class="btn ghost wide" href="${esc(p.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;font-weight:600;margin-top:12px;text-decoration:none">Abrir en Mercado Libre ↗</a>` : ''}
+    <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cerrar</button>`);
+}
+async function invTraer() {
+  const b = $('#inv-traer'); if (!b || b.disabled) return;
+  b.disabled = true; b.textContent = 'Actualizando… (puede tardar un minuto)';
+  try {
+    const r = await mlLlamar('mlSincronizar');
+    await B.cargarPubs();
+    toast(`Listo: ${r.publicaciones} publicaciones actualizadas`);
+  } catch (e) { toast('No se pudo actualizar: ' + (e.message || e), 'err'); }
+  b.disabled = false; b.textContent = '🔄 Actualizar desde Mercado Libre';
+}
+
 /* ---------- navegación y eventos ---------- */
 function tab(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   if (v === 'inicio') renderInicio();
+  if (v === 'inv') renderInv();
+  if (v === 'ajustes') { const i = $('#a-poco'); if (i) i.value = state.umbral; }
   window.scrollTo(0, 0);
 }
 
 function refresh() {
   if ($('#g-res')) gSearch();
   const pn = $('#g-p-name'); if (pn && g.pid) pn.textContent = state.productos[g.pid]?.nombre || '…';
-  bSearch(); renderMovs(); renderInicio(); setMode(); paintCuenta();
+  bSearch(); renderMovs(); renderInicio(); renderInv(); setMode(); paintCuenta();
+  const it = $('#inv-traer'); if (it) it.style.display = puede() ? '' : 'none';
+  const au = $('#a-umbral'); if (au) au.style.display = esAdmin() ? '' : 'none';
   showGuardar();
   if (detId && !scanner && $('#modal').classList.contains('on')) renderDetalle();
 }
@@ -1789,6 +2003,15 @@ const A = {
   'go-guardar': () => { if (!puede()) return; tab('guardar'); renderG(); },
   'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
+  'inv-f': b => { invF = invF === b.dataset.f && b.dataset.f !== 'todos' ? 'todos' : b.dataset.f; renderInv(); },
+  'inv-open': b => openPub(b.dataset.id),
+  'inv-traer': () => { if (puede()) invTraer(); },
+  'poco-save': () => {
+    if (!esAdmin()) return;
+    const n = parseInt($('#a-poco').value, 10);
+    if (!(n >= 0 && n <= 999)) { toast('Poné un número entre 0 y 999', 'err'); return; }
+    B.guardarUmbral(n); toast(`Listo: poco stock = ${n} o menos`);
+  },
   'ml-ver': () => openML(),
   'ml-cargar': () => closeModal().then(() => { tab('ajustes'); irA('#a-ml'); focusEl('#ml-txt'); }),
   'ml-go': () => { if (puede()) cargarML(filasML(filasPegadas($('#ml-txt').value))); },
@@ -1904,6 +2127,7 @@ document.addEventListener('input', e => {
   if (id === 'g-nombre') { g.nombre = e.target.value; gSearch(); updSave(); }
   else if (id === 'g-sku') { g.sku = e.target.value; gSearch(); updSave(); }
   else if (id === 'b-q') { bFiltroDesde(e.target.value); bSearch(); }
+  else if (id === 'inv-q') renderInv();
   else if (id === 'v-q') vSearch();
   else if (id === 'sc-in' && scanUbic) ubicPrev($('#sc-prev'), e.target.value, $('#sc-ok'));
   else if (id === 'g-ml') g.ml = e.target.value;
@@ -1940,6 +2164,7 @@ async function init() {
     state.fbFallo = true; B = Local; await Local.init();
   }
   renderG(); refresh();
+  B.cargarPubs();
 }
 init();
 </script>

@@ -76,6 +76,17 @@ Depósito (aviso si no está configurado: hoy usa el ejemplo 4×15) · Productos
 SACADO a pedido del dueño: importar productos por Excel, pegar/cargar stock de ML por Excel, "dónde se guardan los datos",
 "borrar datos de este celular" (la app se arma SOLO desde la cuenta de ML conectada). Ya no se carga la librería xlsx.
 
+## Hecho 2026-11-16 (noche, publicado): SKU de variantes, un solo botón, catálogo
+- Causa raíz de "variantes sin SKU": el multiget `/items?ids=` NO trae atributos de variantes sin `&include_attributes=all`.
+- Productos creados sin SKU se completan solos (`completarSkus`, por id publicación+variante) en Actualizar y en Traer nuevas.
+- Un solo botón de actualizar ("Actualizar desde Mercado Libre", en Inventario). Ajustes > ML: Traer publicaciones nuevas + Reconectar.
+- Inventario > "Para revisar": sin SKU · SKU repetido (solo entre publicaciones propias, o entre de catálogo) · productos
+  de la app sin SKU · publicaciones de catálogo (informativo). Se guarda `catalogo` (catalog_listing), `catalogoProducto`
+  y `relacionadas` (item_relations). Verificado: alargue y cortadoras = propia + hermana de catálogo; kit llave 1/2 a 3/4 =
+  directo en catálogo sin hermana. Hoy todo en ✓, 3 de catálogo.
+- Lección (el dueño lo marcó): antes de cambiar CÓMO funcionan los botones, preguntar; y "Actualizar ahora"/"Actualizar
+  desde ML" duplicados confundían → un solo nombre por acción.
+
 ## Ideas del dueño para más adelante (anotadas 2026-11-16)
 - **Roles:** dueño (ve todo, incluida la plata), encargado de inventario, depósito (ubicaciones, contar, mover). Hoy existen
   admin / empleado / consulta. Va en la página (qué se muestra) Y en las reglas (qué se puede leer/escribir).

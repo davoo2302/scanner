@@ -37,6 +37,11 @@ service cloud.firestore {
       allow create, update: if escribe(emp);
       allow delete: if admin(emp);
     }
+    // Copia de lo que dice ML de cada publicación: la escriben SOLO las funciones (mlSincronizar / mlImportar).
+    match /empresas/{emp}/publicaciones/{id} {
+      allow read: if miembro(emp);
+      allow write: if false;
+    }
     match /empresas/{emp}/stock/{id} {
       allow read: if miembro(emp);
       allow create, update, delete: if escribe(emp);

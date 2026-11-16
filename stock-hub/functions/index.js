@@ -110,6 +110,33 @@ async function completarML(items, prods) {
   return { omitidas, sinSku, actualizados: escrituras.length, sinProducto };
 }
 
+// Guarda la foto de ML de cada publicación en empresas/{e}/publicaciones/{itemId} (estado, motivo de pausa, stock...)
+// y el resumen para el panel en empresas/{e}/config/mlResumen (la pantalla abre con 1 sola lectura).
+// Las publicaciones que ML ya no devuelve se borran. Costo por vez: 1 escritura por publicación + 1 lectura por cada
+// una guardada antes + 2 (resumen y umbral). Solo corre cuando alguien aprieta el botón, nunca solo.
+async function guardarPublicaciones(items) {
+  const ahora = Date.now();
+  const col = base().collection('publicaciones');
+  const cfg = (await base().collection('config').doc('inventario').get()).data() || {};
+  const umbral = Number.isFinite(cfg.pocoStock) ? cfg.pocoStock : 5;
+
+  const vigentes = new Set(items.map((it) => it.id).filter(Boolean));
+  const viejas = (await col.select().get()).docs.map((d) => d.id).filter((id) => !vigentes.has(id));
+
+  const ops = [
+    ...items.filter((it) => it.id).map((it) => (b) => b.set(col.doc(it.id), ml.fichaPublicacion(it, ahora))),
+    ...viejas.map((id) => (b) => b.delete(col.doc(id))),
+  ];
+  for (let i = 0; i < ops.length; i += 400) {
+    const b = db.batch();
+    ops.slice(i, i + 400).forEach((op) => op(b));
+    await b.commit();
+  }
+  const resumen = { ...ml.resumir(items, umbral), fecha: ahora };
+  await base().collection('config').doc('mlResumen').set(resumen);
+  return { ...resumen, borradas: viejas.length };
+}
+
 const leerProductos = async () =>
   (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
 
@@ -117,10 +144,12 @@ const leerProductos = async () =>
 exports.mlSincronizar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
   const yo = await exigirRol(req, ['admin', 'empleado']);
   const { items, cuentas: n } = await traerItems();
+  const resumen = await guardarPublicaciones(items);
   const r = await completarML(items, await leerProductos());
   return {
     cuentas: n, publicaciones: items.length, omitidas: r.omitidas, sinSku: r.sinSku,
     actualizados: r.actualizados, sinProductoTotal: r.sinProducto.length, sinProducto: r.sinProducto.slice(0, 20), por: yo.nombre,
+    resumen,
   };
 });
 
@@ -129,6 +158,7 @@ exports.mlSincronizar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_C
 exports.mlImportar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
   const yo = await exigirRol(req, ['admin']);
   const { items, cuentas: n } = await traerItems();
+  const resumen = await guardarPublicaciones(items);
   const existentes = await leerProductos();
   const { nuevos, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, existentes, Date.now());
   for (let i = 0; i < nuevos.length; i += 400) {
@@ -139,6 +169,6 @@ exports.mlImportar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIE
   const r = await completarML(items, [...existentes, ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
   return {
     cuentas: n, publicaciones: items.length, creados: nuevos.length, yaExistian, omitidas, sinSku,
-    conStockML: r.actualizados, por: yo.nombre,
+    conStockML: r.actualizados, por: yo.nombre, resumen,
   };
 });

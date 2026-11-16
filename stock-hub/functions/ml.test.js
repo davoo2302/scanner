@@ -54,6 +54,48 @@ test('norm coincide con la pantalla de depósito', () => {
   assert.strictEqual(norm('  Camión   ÁÉ '), 'camion ae');
 });
 
+const { clasificar, fichaPublicacion, resumir } = require('./ml');
+
+test('clasificar: activa, sin stock, pausada por el dueño, frenada por ML, cerrada', () => {
+  assert.deepStrictEqual([
+    clasificar('active', []),
+    clasificar('paused', ['out_of_stock']),
+    clasificar('paused', []),
+    clasificar('paused', ['warning']),
+    clasificar('under_review', ['forbidden']),
+    clasificar('inactive', []),
+    clasificar('closed', ['expired']),
+    clasificar('raro', []),
+  ], ['activa', 'sin_stock', 'pausada', 'frenada', 'frenada', 'frenada', 'cerrada', 'otro']);
+});
+
+test('normalizar guarda motivo, clase, categoría y vendedor', () => {
+  const r = normalizar({ id: 'MLA9', title: 'X', status: 'paused', sub_status: ['out_of_stock'], category_id: 'MLA1234', seller_id: 77 });
+  assert.deepStrictEqual([r.subEstado, r.clase, r.categoria, r.vendedor], [['out_of_stock'], 'sin_stock', 'MLA1234', '77']);
+  const sin = normalizar({ id: 'MLA8', status: 'active' });
+  assert.deepStrictEqual([sin.subEstado, sin.categoria, sin.vendedor, sin.titulo], [[], null, null, '']);
+});
+
+test('fichaPublicacion no tiene campos undefined', () => {
+  const f = fichaPublicacion(normalizar({ id: 'MLA1', status: 'active', variations: [{ id: 5 }] }), 1);
+  const hayUndefined = (o) => Object.values(o).some((v) => v === undefined || (v && typeof v === 'object' && hayUndefined(v)));
+  assert.strictEqual(hayUndefined(f), false);
+});
+
+test('resumir: cuenta clases, poco stock (<= umbral, solo activas), unidades y detalle crudo', () => {
+  const items = [
+    { estado: 'active', subEstado: [], stock: 10 },
+    { estado: 'active', subEstado: [], stock: 5 },
+    { estado: 'active', subEstado: [], stock: 0, full: true },
+    { estado: 'paused', subEstado: ['out_of_stock'], stock: 0 },
+    { estado: 'paused', subEstado: [], stock: 3 },
+  ].map((it) => ({ ...it, clase: clasificar(it.estado, it.subEstado) }));
+  const r = resumir(items, 5);
+  assert.deepStrictEqual([r.total, r.clases.activa, r.clases.sin_stock, r.clases.pausada, r.poco, r.unidades, r.full],
+    [5, 3, 1, 1, 1, 15, 1]);
+  assert.deepStrictEqual(r.crudo, { active: 3, 'paused / out_of_stock': 1, paused: 1 });
+});
+
 const { productosNuevos } = require('./ml');
 
 test('productosNuevos: un producto por SKU, variaciones, sin SKU, y no pisa lo que ya existe', () => {

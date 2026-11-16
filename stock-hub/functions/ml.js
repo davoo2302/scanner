@@ -68,18 +68,71 @@ function normalizar(item) {
     stock: v.available_quantity ?? 0,
     atributos: (v.attribute_combinations || []).map((a) => a.value_name).filter(Boolean).join(' / '),
   }));
+  const subEstado = Array.isArray(item.sub_status) ? item.sub_status.map(String) : [];
   return {
     id: item.id || null,
-    titulo: item.title,
+    titulo: item.title ?? '',
     sku,
     stock: item.available_quantity ?? 0,
     precio: item.price ?? null,
-    estado: item.status, // active | paused | closed | under_review ...
+    estado: item.status ?? null, // active | paused | closed | under_review | inactive ...
+    subEstado, // motivo que da ML: out_of_stock, warning, held, ... (VERIFICAR con datos reales)
+    clase: clasificar(item.status, subEstado),
+    categoria: item.category_id || null, // para sugerir el rubro más adelante
+    vendedor: item.seller_id != null ? String(item.seller_id) : null,
     miniatura: (item.thumbnail || '').replace('http://', 'https://'),
     link: item.permalink || null,
     full: Boolean(item.inventory_id), // stock en Full: lo maneja ML
     variaciones,
   };
+}
+
+// Estado "para el dueño" de una publicación, a partir de status + sub_status de ML:
+//   activa    = a la venta
+//   sin_stock = la frenó ML porque se acabó el stock (paused + out_of_stock)
+//   pausada   = la pausó el dueño a propósito (paused sin motivo)
+//   frenada   = la bajó ML por otro motivo (moderación, revisión, foto, categoría...)
+//   cerrada   = finalizada
+// Los valores de sub_status no están verificados con datos reales: se guarda también el dato crudo.
+function clasificar(status, subEstado = []) {
+  if (status === 'active') return 'activa';
+  if (status === 'closed') return 'cerrada';
+  if (status === 'paused') {
+    if (subEstado.includes('out_of_stock')) return 'sin_stock';
+    return subEstado.length ? 'frenada' : 'pausada';
+  }
+  if (status === 'under_review' || status === 'inactive') return 'frenada';
+  return 'otro';
+}
+
+// Ficha que se guarda en empresas/{e}/publicaciones/{itemId}. Sin `undefined` (Firestore no los acepta).
+function fichaPublicacion(it, ahora) {
+  return {
+    id: it.id, titulo: it.titulo, sku: it.sku, stock: it.stock, precio: it.precio,
+    estado: it.estado, subEstado: it.subEstado, clase: it.clase, categoria: it.categoria, vendedor: it.vendedor,
+    foto: it.miniatura || null, link: it.link, full: it.full,
+    variaciones: it.variaciones.map((v) => ({ id: v.id, sku: v.sku, stock: v.stock, atributos: v.atributos })),
+    actualizada: ahora,
+  };
+}
+
+// Números del panel: cuántas publicaciones hay de cada clase, unidades a la venta, y el detalle crudo
+// estado/motivo de ML (para verificar qué manda de verdad). `poco` = activas con stock <= umbral.
+function resumir(items, umbral = 5) {
+  const clases = { activa: 0, sin_stock: 0, pausada: 0, frenada: 0, cerrada: 0, otro: 0 };
+  const crudo = {};
+  let unidades = 0, poco = 0, full = 0;
+  for (const it of items) {
+    clases[it.clase] = (clases[it.clase] || 0) + 1;
+    const k = `${it.estado}${it.subEstado.length ? ' / ' + it.subEstado.join(',') : ''}`;
+    crudo[k] = (crudo[k] || 0) + 1;
+    if (it.full) full++; // el stock de Full está en el depósito de ML: no suma a tus unidades ni a "poco stock"
+    else if (it.clase === 'activa') {
+      unidades += it.stock;
+      if (it.stock <= umbral) poco++;
+    }
+  }
+  return { total: items.length, clases, poco, umbral, unidades, full, crudo };
 }
 
 // Igual que la pantalla (stock-hub.html): sin tildes, minúsculas, espacios simples.
@@ -163,4 +216,7 @@ function productosNuevos(items, existentes, ahora) {
   return { nuevos: [...nuevos.values()], omitidas, yaExistian, sinSku };
 }
 
-module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras, productosNuevos };
+module.exports = {
+  urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras, productosNuevos,
+  clasificar, fichaPublicacion, resumir,
+};

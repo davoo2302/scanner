@@ -48,6 +48,18 @@ Leer los datos desde la compu: token gcloud de argenisdavid17 + REST (ver memori
 - Probado en local (localhost:5500, `.claude/launch.json`) con datos reales, compu y celular. Falta: publicarlo (unir a main).
 - "Poco stock" del panel cuenta PUBLICACIONES (12 hoy); el resumen del servidor cuenta productos por SKU (15).
 
+## Hecho 2026-11-16 (noche): GRABADORA DE AVISOS (desplegada y probada)
+- `mlAvisos` (us-central1, pública): URL de notificaciones de la app ML "Hub Stock" =
+  `https://us-central1-stock-hub-c5a0e.cloudfunctions.net/mlAvisos`. Guarda cada aviso TAL CUAL en `empresas/propia/avisos`
+  (id fijo por topic+resource+sent: los reintentos no duplican). Solo acepta avisos con nuestro application_id.
+- `mlAvisoDetalle` (southamerica-east1 = región de la base; trigger al crear el aviso): pide a ML el recurso y lo anota en
+  `detalle` (texto JSON). Regla `avisos`: solo lectura (publicada). Limpieza de imágenes 1 día en las dos regiones.
+- Tópicos marcados en ML: Items, Stock-Locations, Questions, Orders_v2, Shipments, Flex-Handshakes, Post Purchase (Claims + Claims Actions).
+- Prueba real: pausa del cinturón → aviso `items` al segundo, `paused` + sub_status **`paused_by_seller`** (no vacío como se
+  suponía): corregido `clasificar` (pausada por el dueño) y publicado.
+- Leer avisos desde la compu: script node con token gcloud de argenisdavid17 (ver memoria). En la página todavía NO se ven.
+- La devolución del kit (llave 1/2 a 3/4) se aceptó sola antes de grabar: esa prueba se perdió.
+
 ## Lo que sigue en la pantalla (ideas acordadas, no hechas)
 Feedback textual del dueño: lo actual "se ve feo, confundido": no entiende qué significan el 13 y el 22, no ve faltantes, ceros,
 bajos, ni dónde buscar o editar; quiere primero un buen inventario y después las ubicaciones. Propuesta (a confirmar con él):

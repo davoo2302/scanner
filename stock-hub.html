@@ -1846,7 +1846,7 @@ function renderInv() {
     ${rev('sinsku', cuenta('sinsku'), 'Publicaciones sin SKU', 'Ponéselo en Mercado Libre (en cada variante) y tocá Actualizar.')}
     ${rev('repetido', cuenta('repetido'), 'SKU repetido', 'Dos publicaciones tuyas con el mismo SKU: si son productos distintos, poneles SKU distinto en Mercado Libre.')}
     ${rev('prodsin', prodSin, 'Productos de la app sin SKU', 'Se completan solos al tocar Actualizar, si la publicación ya tiene SKU.')}
-    ${rev('catalogo', cuenta('catalogo'), 'Publicaciones de catálogo', 'Comparten SKU y stock con tu publicación. Es normal: solo para que sepas cuáles son.', true)}
+    ${rev('catalogo', cuenta('catalogo'), 'Publicaciones de catálogo', 'Compiten en la ficha de catálogo de Mercado Libre. Es normal: solo para que sepas cuáles son.', true)}
   </div>`;
   const extra = [['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
     .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
@@ -1875,6 +1875,15 @@ function renderInv() {
     </button>`;
   }).join('');
 }
+// Explicación de catálogo en la ficha. ML une la publicación propia y la de catálogo con `item_relations` (ida y vuelta).
+function catalogoTxt(p) {
+  const her = (p.relacionadas || []).map(pubDeItem).filter(Boolean);
+  const nom = her.map(h => `"${esc(h.titulo)}"`).join(', ');
+  if (p.catalogo) return `<p class="muted" style="margin-top:8px"><b>Publicación de catálogo</b>: compite en la ficha del producto de Mercado Libre. `
+    + (her.length ? `Comparte SKU y stock con tu publicación ${nom}: el stock se cuenta una sola vez.` : 'Está directamente en el catálogo, sin publicación hermana.') + '</p>';
+  if (her.length) return `<p class="muted" style="margin-top:8px">Tiene una <b>publicación hermana de catálogo</b>: ${nom}. Comparten SKU y stock; el stock se cuenta una sola vez.</p>`;
+  return '';
+}
 function openPub(id) {
   const p = (state.pubs || []).find(x => x.id === id); if (!p) return;
   detId = null;
@@ -1882,7 +1891,7 @@ function openPub(id) {
   openModal(`<h3>${esc(p.titulo)}</h3>
     <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">Catálogo</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
     ${mot ? `<p style="margin-top:8px">${esc(mot)}</p>` : ''}
-    ${p.catalogo ? `<p class="muted" style="margin-top:8px">Esta es una <b>publicación de catálogo</b>: Mercado Libre la crea para que compitas en la ficha del producto. Comparte SKU y stock con tu publicación propia; el stock se cuenta una sola vez.</p>` : ''}
+    ${catalogoTxt(p)}
     ${i.repetido ? `<p class="bad" style="margin-top:8px">Este SKU también está en otra publicación tuya (que no es de catálogo). Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
     <div class="list">${i.ls.map(l => `<div class="item"><b>${esc(l.etq || 'Stock')}</b>
       <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponéselo en Mercado Libre y en la app, igual en los dos)'}</small>

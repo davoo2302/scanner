@@ -57,8 +57,18 @@ Leer los datos desde la compu: token gcloud de argenisdavid17 + REST (ver memori
 - Tópicos marcados en ML: Items, Stock-Locations, Questions, Orders_v2, Shipments, Flex-Handshakes, Post Purchase (Claims + Claims Actions).
 - Prueba real: pausa del cinturón → aviso `items` al segundo, `paused` + sub_status **`paused_by_seller`** (no vacío como se
   suponía): corregido `clasificar` (pausada por el dueño) y publicado.
-- Leer avisos desde la compu: script node con token gcloud de argenisdavid17 (ver memoria). En la página todavía NO se ven.
+- Leer avisos desde la compu: script node con token gcloud de argenisdavid17 (ver memoria).
 - La devolución del kit (llave 1/2 a 3/4) se aceptó sola antes de grabar: esa prueba se perdió.
+- Sección **"Mercado Libre"** en la página (publicada): avisos traducidos a frases, por día, sin repetidos (solo cuando
+  cambia lo que dice ML); el admin ve el dato crudo. **Movimientos** queda para lo que hace la GENTE en el depósito (quién movió qué).
+- Para reclamos, `mlAvisoDetalle` también guarda `devolucion` (= `/post-purchase/v2/claims/{id}/returns`).
+
+### Prueba en curso: venta del Soporte con brazo (orden 2000019221937902, reclamo 5613920395)
+Venta de prueba a una amiga (Flex): el dueño probó "no entregado" dos veces y después marcó entregado, pero el producto
+NUNCA salió → stock físico real = 4; ML dice 3. El 16-nov 18:42 ella abrió un reclamo (mediación, motivo PDD9939, orden
+"paid + delivered"); el dueño ofreció devolución (18:54: ML entra como mediador). Ella despacha una caja de prueba.
+Mirar al final: envío de vuelta, "te llegó", cierre del reclamo y SI ML SUBE EL STOCK de 3 a 4 solo (el dueño no lo toca a mano).
+Aprendido: un producto ya entregado no se puede "cancelar": es reclamo → devolución (regla "en camino de vuelta").
 
 ## Lo que sigue en la pantalla (ideas acordadas, no hechas)
 Feedback textual del dueño: lo actual "se ve feo, confundido": no entiende qué significan el 13 y el 22, no ve faltantes, ceros,

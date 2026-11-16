@@ -99,7 +99,9 @@ function clasificar(status, subEstado = []) {
   if (status === 'closed') return 'cerrada';
   if (status === 'paused') {
     if (subEstado.includes('out_of_stock')) return 'sin_stock';
-    return subEstado.length ? 'frenada' : 'pausada';
+    // Verificado con un aviso real (2026-11-16): cuando el dueño pausa, ML manda sub_status ['paused_by_seller'].
+    const otros = subEstado.filter((s) => s !== 'paused_by_seller');
+    return otros.length ? 'frenada' : 'pausada';
   }
   if (status === 'under_review' || status === 'inactive') return 'frenada';
   return 'otro';

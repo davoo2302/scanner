@@ -1867,7 +1867,7 @@ const MOTIVO_TXT = {
   picture_download_pending: 'Mercado Libre está procesando las fotos.', expired: 'Venció.', deleted: 'Eliminada.',
 };
 function motivoPub(p) {
-  if (p.clase === 'pausada') return 'La pausaste vos (Mercado Libre no indica otro motivo).';
+  if (p.clase === 'pausada') return 'La pausaste vos. Se vuelve a vender cuando la reactivás.';
   if (p.clase === 'activa') return '';
   const m = (p.subEstado || []).map(s => MOTIVO_TXT[s] || `Motivo de ML: ${s}`);
   if (!m.length && p.estado === 'under_review') m.push(MOTIVO_TXT.under_review);

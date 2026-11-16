@@ -60,7 +60,7 @@ test('clasificar: activa, sin stock, pausada por el dueño, frenada por ML, cerr
   assert.deepStrictEqual([
     clasificar('active', []),
     clasificar('paused', ['out_of_stock']),
-    clasificar('paused', []),
+    clasificar('paused', ['paused_by_seller']),
     clasificar('paused', ['warning']),
     clasificar('under_review', ['forbidden']),
     clasificar('inactive', []),

@@ -70,6 +70,20 @@ NUNCA salió → stock físico real = 4; ML dice 3. El 16-nov 18:42 ella abrió 
 Mirar al final: envío de vuelta, "te llegó", cierre del reclamo y SI ML SUBE EL STOCK de 3 a 4 solo (el dueño no lo toca a mano).
 Aprendido: un producto ya entregado no se puede "cancelar": es reclamo → devolución (regla "en camino de vuelta").
 
+## Hecho 2026-11-16 (noche): Ajustes en tarjetas (en la rama, se publica junto con lo anterior)
+Tarjetas: Tu cuenta · Mercado Libre (estado + Actualizar / Traer publicaciones nuevas / Reconectar) · Poco stock ·
+Depósito (aviso si no está configurado: hoy usa el ejemplo 4×15) · Productos repetidos · Copia de seguridad.
+SACADO a pedido del dueño: importar productos por Excel, pegar/cargar stock de ML por Excel, "dónde se guardan los datos",
+"borrar datos de este celular" (la app se arma SOLO desde la cuenta de ML conectada). Ya no se carga la librería xlsx.
+
+## Ideas del dueño para más adelante (anotadas 2026-11-16)
+- **Roles:** dueño (ve todo, incluida la plata), encargado de inventario, depósito (ubicaciones, contar, mover). Hoy existen
+  admin / empleado / consulta. Va en la página (qué se muestra) Y en las reglas (qué se puede leer/escribir).
+- **Plata:** valor del stock a precio de venta (ya tenemos `precio`), por rubro; ganancia necesita COSTO por producto.
+  Ojo: para esconder precios de verdad hay que guardarlos aparte con regla propia (si están en `publicaciones`, cualquier miembro los lee).
+- **Pruebas automáticas (Playwright):** el dueño lo pidió. Traba: no puede loguearse con Google → armar un modo prueba
+  (emulador de Firebase + datos de mentira) y un recorrido de todas las pantallas. Mientras tanto se prueba con el navegador de la app.
+
 ## Lo que sigue en la pantalla (ideas acordadas, no hechas)
 Feedback textual del dueño: lo actual "se ve feo, confundido": no entiende qué significan el 13 y el 22, no ve faltantes, ceros,
 bajos, ni dónde buscar o editar; quiere primero un buen inventario y después las ubicaciones. Propuesta (a confirmar con él):

@@ -204,6 +204,10 @@ button.kpi:hover{border-color:var(--muted)}
 .vars{grid-column:2/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:14px;border-top:1px dashed var(--line);padding-top:6px}
 .vars .bad{font-weight:600}
 @media (max-width:959px){nav button{font-size:13px;padding:0 2px;line-height:1.15}}
+.ajustes{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.ajustes .card{margin-top:0}
+.aj-d{margin-bottom:12px}
+details summary{cursor:pointer;color:var(--steel);font-weight:600;font-size:15px}
 .act-dia{font-family:var(--cond);font-size:20px;font-weight:700;margin:14px 0 2px;color:var(--muted)}
 .act{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;text-align:left;color:var(--ink);font-weight:400;min-height:0}
 .act.rojo{border-left-color:var(--red)}.act.ok{border-left-color:var(--green)}.act.azul{border-left-color:var(--steel)}
@@ -224,7 +228,9 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
 @media (min-width:960px){
   header{padding-left:max(16px,calc((100% - 1160px)/2 + 16px));padding-right:max(16px,calc((100% - 1160px)/2 + 16px))}
   main{max-width:1160px}
-  .view:not(#v-inicio):not(#v-inv):not(#v-ml){max-width:640px;margin:0 auto}
+  .view:not(#v-inicio):not(#v-inv):not(#v-ml):not(#v-ajustes){max-width:640px;margin:0 auto}
+  #v-ajustes{max-width:1000px}
+  .ajustes{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
   #v-ml{max-width:900px}
   .toprow{flex-wrap:nowrap}
   .btn.cta{flex:0 0 auto;order:0;font-size:17px;padding:0 22px}
@@ -285,74 +291,55 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   <section id="v-movs" class="view"><div id="m-list"></div></section>
 
   <section id="v-ajustes" class="view">
-    <div class="stack" id="a-cuenta" style="display:none"></div>
-    <div class="stack" id="a-userbox">
-      <div><label for="a-user">Tu nombre (queda registrado en cada movimiento)</label><input id="a-user" autocomplete="off"></div>
-      <button class="btn small" data-act="user-save">Guardar nombre</button>
-    </div>
+    <div class="inv-top"><h2>Ajustes</h2></div>
+    <div class="ajustes">
+      <div class="card aj" id="a-cuenta"></div>
 
-    <div class="section stack" id="a-dep">
-      <h2>Depósito</h2>
-      <p class="muted" id="a-dep-info">Cuántos tramos tiene cada lado de cada pasillo. Vale para todos los usuarios.</p>
-      <div id="a-dep-edit" class="stack">
-        <div><label for="a-pasillos">Cantidad de pasillos</label><input id="a-pasillos" type="number" inputmode="numeric" min="1" max="30" autocomplete="off"></div>
-        <div class="deptab" id="a-deptab"></div>
-        <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
+      <div class="card aj" id="a-ml">
+        <h2>Mercado Libre</h2>
+        <p class="muted aj-d" id="a-ml-estado"></p>
+        <div class="stack">
+          <button class="btn wide" data-act="ml-traer">🔄 Actualizar ahora</button>
+          <button class="btn ghost wide" data-act="ml-importar" id="a-ml-imp">📥 Traer publicaciones nuevas</button>
+          <button class="btn ghost wide" data-act="ml-conectar" id="a-ml-con">🔗 Reconectar la cuenta</button>
+        </div>
+        <p class="muted" id="ml-res" style="font-size:14px;margin-top:8px"></p>
+        <small class="muted" style="margin-top:6px">"Actualizar" trae el estado y el stock de todas tus publicaciones. "Traer publicaciones nuevas" agrega como productos las que publicaste y todavía no están en la app (no toca las que ya están).</small>
       </div>
-      <p id="a-dep-ro"></p>
-    </div>
 
-    <div class="section stack" id="a-modo">
-      <h2>Dónde se guardan los datos</h2>
-      <div class="seg"><button data-act="modo" data-m="local">Solo este celular</button><button data-act="modo" data-m="firebase">Firebase (compartido)</button></div>
-      <div id="a-fb" class="stack">
-        <div><label for="a-cfg">Configuración de Firebase (pegá el bloque firebaseConfig)</label><textarea id="a-cfg" placeholder='apiKey: "...", authDomain: "...", projectId: "...", appId: "..."'></textarea></div>
-        <div><label for="a-emp">Identificador de la empresa</label><input id="a-emp" placeholder="deposito-prueba" autocomplete="off"></div>
+      <div class="card aj" id="a-umbral">
+        <h2>Poco stock</h2>
+        <p class="muted aj-d">Una publicación activa se marca en rojo cuando tiene esta cantidad o menos (en cualquiera de sus variantes).</p>
+        <div class="row"><input id="a-poco" type="number" inputmode="numeric" min="0" max="999" autocomplete="off" style="max-width:110px"><span class="grow muted">unidades o menos</span><button class="btn small" data-act="poco-save">Guardar</button></div>
       </div>
-      <button class="btn" data-act="modo-save">Guardar y reiniciar</button>
-    </div>
 
-    <div class="section stack">
-      <h2>Formato de ubicaciones</h2>
-      <p>Pasillo, lado y tramo: <code>P1-A-T5</code> es pasillo 1, lado A (izquierda), tramo 5. El tramo 1 es el de la entrada del pasillo, en los dos lados. Si hace falta, también se puede agregar nivel: <code>P1-A-T5-N2</code>.</p>
-      <p class="muted">También se puede escribir a mano, por ejemplo "pasillo 2 tramo 5 nivel 3" o "pasillo 1 lado a". La app lo traduce al código y no guarda nada que no entienda.</p>
-      <p class="muted">Los QR de cada pasillo se hacen por fuera de la app: contenido <code>P1</code>, texto impreso "PASILLO 1".</p>
-    </div>
+      <div class="card aj" id="a-dep">
+        <h2>Depósito</h2>
+        <p class="muted aj-d" id="a-dep-info">Cuántos pasillos hay y cuántos tramos tiene cada lado. Vale para todos los usuarios.</p>
+        <p class="bad" id="a-dep-aviso" style="margin-bottom:10px"></p>
+        <div id="a-dep-edit" class="stack">
+          <div class="row"><label for="a-pasillos" class="grow" style="margin:0">Cantidad de pasillos</label><input id="a-pasillos" type="number" inputmode="numeric" min="1" max="30" autocomplete="off" style="max-width:110px"></div>
+          <div class="deptab" id="a-deptab"></div>
+          <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
+        </div>
+        <p id="a-dep-ro"></p>
+        <details style="margin-top:12px"><summary>¿Cómo se escriben las ubicaciones?</summary>
+          <p style="margin-top:8px"><code>P1-A-T5</code> es pasillo 1, lado A (izquierda), tramo 5. El tramo 1 es el de la entrada del pasillo, en los dos lados. Si hace falta, se agrega el nivel: <code>P1-A-T5-N2</code>.</p>
+          <p class="muted" style="margin-top:6px">También se puede escribir a mano, por ejemplo "pasillo 2 tramo 5 nivel 3". La app lo traduce y no guarda nada que no entienda. Los QR de cada pasillo se imprimen aparte: contenido <code>P1</code>, texto "PASILLO 1".</p>
+        </details>
+      </div>
 
-    <div class="section stack" id="a-import">
-      <h2>Importar productos</h2>
-      <p class="muted">Pegá columnas copiadas de Excel en este orden: nombre, SKU, código de barras. Si un producto tiene varios SKU, separalos con " | ". Los productos que ya existen (mismo nombre) no se duplican.</p>
-      <textarea id="i-txt" placeholder="Secador 2441 negro	secador 2441 negro	7791234567890"></textarea>
-      <label class="btn ghost wide" for="i-file" style="display:flex;align-items:center;justify-content:center;cursor:pointer">📂 Elegir archivo (Excel o CSV)</label>
-      <input type="file" id="i-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
-      <button class="btn" data-act="i-go">Importar</button>
-      <p class="muted" id="i-res" style="font-size:14px"></p>
-      <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
-    </div>
+      <div class="card aj" id="a-mant">
+        <h2>Productos repetidos</h2>
+        <p class="muted aj-d">Si alguien creó dos veces el mismo producto, acá se ven juntos y se pueden unir en uno (con sus ubicaciones y su stock).</p>
+        <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
+      </div>
 
-    <div class="section stack" id="a-umbral">
-      <h2>Poco stock</h2>
-      <p class="muted">Una publicación activa se marca en rojo como "poco stock" cuando tiene esta cantidad o menos (en cualquiera de sus variantes).</p>
-      <div class="row"><input id="a-poco" type="number" inputmode="numeric" min="0" max="999" autocomplete="off" style="max-width:120px"><button class="btn small" data-act="poco-save">Guardar</button></div>
-    </div>
-
-    <div class="section stack" id="a-ml">
-      <h2>Stock de Mercado Libre</h2>
-      <p class="muted">Pegá dos columnas: SKU y el stock que figura en Mercado Libre. También podés elegir el Excel que bajás de tus publicaciones: la app busca sola las columnas "SKU" y "Stock". Para esos SKU reemplaza lo anotado antes.</p>
-      <textarea id="ml-txt" placeholder="secador 2441 negro	12"></textarea>
-      <label class="btn ghost wide" for="ml-file" style="display:flex;align-items:center;justify-content:center;cursor:pointer">📂 Elegir archivo (Excel o CSV)</label>
-      <input type="file" id="ml-file" accept=".xlsx,.xls,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" style="display:none">
-      <button class="btn" data-act="ml-go">Cargar stock de Mercado Libre</button>
-      <button class="btn ghost wide" data-act="ml-traer" style="margin-top:10px">🔄 Traer de Mercado Libre (automático)</button>
-      <button class="btn ghost wide" data-act="ml-conectar" style="margin-top:10px">🔗 Conectar cuenta de Mercado Libre (administrador)</button>
-<button class="btn ghost wide" data-act="ml-importar" style="margin-top:10px">📥 Importar mis publicaciones como productos (administrador)</button>
-      <p class="muted" id="ml-res" style="font-size:14px"></p>
-    </div>
-
-    <div class="section stack" id="a-resp">
-      <h2>Respaldo</h2>
-      <button class="btn ghost wide" data-act="x-json">Descargar datos (JSON)</button>
-      <button class="btn ghost wide" data-act="x-borrar" id="a-borrar">Borrar datos de este celular</button>
+      <div class="card aj" id="a-resp">
+        <h2>Copia de seguridad</h2>
+        <p class="muted aj-d">Descarga un archivo con tus productos, ubicaciones y movimientos, por si algún día hace falta recuperarlos.</p>
+        <button class="btn ghost wide" data-act="x-json">⬇️ Descargar copia</button>
+      </div>
     </div>
     <p class="muted section" id="a-ver" style="text-align:center"></p>
   </section>
@@ -372,7 +359,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-11-16 · inventario';
+const VERSION = '2026-11-16 · ajustes';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -900,7 +887,7 @@ function openML() {
   if (!todos.length) {
     openModal(`<h3>Diferencias con Mercado Libre</h3>
       <p style="margin-bottom:12px">Todavía no hay stock de Mercado Libre anotado. Cargalo desde Ajustes (pegando SKU y stock, o con el Excel de tus publicaciones) o desde cada producto.</p>
-      ${puede() ? '<button class="btn main" data-act="ml-cargar">Cargar stock de Mercado Libre</button>' : ''}
+      ${puede() ? '<button class="btn main" data-act="ml-cargar">Ir a Inventario y actualizar desde Mercado Libre</button>' : ''}
       <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
     return;
   }
@@ -917,7 +904,7 @@ function openML() {
       Coinciden: ${ok}.${sinDato ? ` Sin dato de ML: ${sinDato}.` : ''}</p>
     ${grupo('riesgo')}${grupo('revisar')}${grupo('falta')}
     ${ok === todos.length ? '<p style="margin-top:14px"><b>Todo coincide.</b></p>' : ''}
-    ${puede() ? '<button class="btn ghost wide" data-act="ml-cargar" style="margin-top:16px">Cargar stock de Mercado Libre</button>' : ''}
+    ${puede() ? '<button class="btn ghost wide" data-act="ml-cargar" style="margin-top:16px">Ir a Inventario</button>' : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cerrar</button>`);
 }
 // Bloque del detalle del producto: comparación y, si puede editar, un casillero por SKU.
@@ -929,21 +916,6 @@ function mlDetalle(p) {
       <button class="btn small" data-act="d-ml">Guardar stock de ML</button>` : ''}
     ${p.mlFecha ? `<small style="display:block">Anotado ${fmt(p.mlFecha)}${p.mlPor ? ' por ' + esc(p.mlPor) : ''}</small>` : ''}
   </div>`;
-}
-// Lee filas de una planilla buscando la fila de títulos con "SKU" y "Stock"/"Cantidad".
-// Si no la encuentra usa columna 1 = SKU y 2 = stock. Se saltean las filas sin número.
-function filasML(hojas) {
-  const out = [];
-  hojas.forEach(h => {
-    const f = h.filas.map(r => (r || []).map(c => String(c ?? '').trim()));
-    let ini = 0, cs = 0, cn = 1;
-    for (let i = 0; i < Math.min(f.length, 15); i++) {
-      const s = f[i].findIndex(c => /\bsku\b/i.test(c)), n = f[i].findIndex(c => /^(stock|cantidad|disponible)/.test(norm(c)));
-      if (s >= 0 && n >= 0) { ini = i + 1; cs = s; cn = n; break; }
-    }
-    f.slice(ini).forEach(r => { const sku = r[cs], n = r[cn]; if (sku && /^\d+(\.0+)?$/.test(n || '')) out.push([sku, parseInt(n, 10)]); });
-  });
-  return out;
 }
 // Conexión automática con Mercado Libre: las funciones están en el mismo proyecto de Firebase (carpeta stock-hub/).
 async function mlLlamar(nombre) {
@@ -981,34 +953,6 @@ async function mlImportarProductos() {
     renderInicio();
   } catch (e) { res.textContent = 'No se pudo importar: ' + (e.message || e); }
 }
-async function cargarML(filas) {
-  const res = $('#ml-res');
-  if (!filas.length) { res.textContent = 'No encontré filas con SKU y un número de stock.'; return; }
-  res.textContent = 'Buscando los productos…';
-  await B.refrescarProductos();
-  // Si un SKU viene repetido (dos publicaciones con el mismo SKU) se toma el mayor.
-  const porSku = new Map();
-  filas.forEach(([sku, n]) => { const k = norm(sku), o = porSku.get(k); porSku.set(k, { sku, n: o ? Math.max(o.n, n) : n }); });
-  const porProd = new Map(), noEsta = [];
-  porSku.forEach(({ sku, n }, k) => {
-    const p = bySku(sku); if (!p) { noEsta.push(sku); return; }
-    const key = p.skus.find(x => norm(x) === k);
-    if (!porProd.has(p.id)) porProd.set(p.id, {});
-    porProd.get(p.id)[key] = n;
-  });
-  const list = [...porProd].map(([id, ml]) => ({ id, ml }));
-  if (list.length) {
-    B.guardarML(list);
-    B.log(movData('', '', 0, 'ml_carga', { cantidadImportada: list.length, nombre: 'Mercado Libre' }));
-  }
-  const txt = `Stock de ML cargado en ${list.length} producto${list.length === 1 ? '' : 's'}. SKU que no están en la app: ${noEsta.length}.`;
-  toast(txt, list.length ? '' : 'err');
-  res.innerHTML = `<b>${esc(txt)}</b>${noEsta.length ? '<br>' + noEsta.slice(0, 40).map(esc).join('<br>') + (noEsta.length > 40 ? `<br>… y ${noEsta.length - 40} más` : '') : ''}
-    ${list.length ? '<br><button class="btn small" data-act="ml-ver" style="margin-top:8px">Ver diferencias</button>' : ''}`;
-  $('#ml-txt').value = '';
-}
-const filasPegadas = t => { const sep = t.includes('\t') ? '\t' : (t.includes(';') ? ';' : ','); return [{ nombre: 'pegado', filas: t.split(/\r?\n/).map(l => l.split(sep)) }]; };
-
 function itemHTML(p, act) {
   const skus = (p.skus || []).join(' / ') || 'Sin SKU';
   return `<button class="item" data-act="${act}" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc(skus)}</small><small>Stock total: ${total(p.id)}</small></button>`;
@@ -1677,7 +1621,6 @@ function goGuardar(pid, u) {
 }
 
 /* ---------- ajustes ---------- */
-let selModo = 'local';
 // Cuando cambia la configuración del depósito: redibuja sin borrar lo que se está escribiendo.
 function depCambio() {
   refresh(); pintarDep();
@@ -1703,7 +1646,11 @@ function pintarDep() {
   if (!$('#a-dep')) return;
   const adm = esAdmin();
   $('#a-dep-edit').style.display = adm ? '' : 'none';
-  $('#a-dep-info').textContent = adm ? 'Cuántos tramos tiene cada lado de cada pasillo. Vale para todos los usuarios.' : 'Lo configura el administrador.';
+  $('#a-dep-info').textContent = adm ? 'Cuántos pasillos hay y cuántos tramos tiene cada lado. Vale para todos los usuarios.' : 'Lo configura el administrador.';
+  // Sin configuración guardada la app usa valores de ejemplo: avisarlo para que no parezca un error.
+  $('#a-dep-aviso').textContent = state.dep ? '' : adm
+    ? `Todavía no configuraste tu depósito. Estos números son de ejemplo (${maxPasillos()} pasillos de ${maxTramos()} tramos): cambialos por los reales y tocá Guardar.`
+    : 'El administrador todavía no configuró el depósito.';
   const ro = [];
   for (let p = 1; p <= maxPasillos(); p++) ro.push(`P${p}: A ${tramosDe(`P${p}-A`)} · B ${tramosDe(`P${p}-B`)}`);
   $('#a-dep-ro').innerHTML = adm ? '' : ro.map(esc).join('<br>');
@@ -1711,127 +1658,35 @@ function pintarDep() {
   if (adm && !editando) { $('#a-pasillos').value = maxPasillos(); pintarTabla(maxPasillos(), {}); }
 }
 const ROL_TXT = { admin: 'Administrador', empleado: 'Empleado', consulta: 'Solo consulta' };
+// Ajustes en tarjetas: cada una se muestra según el rol (administrador / empleado / consulta).
 function paintCuenta() {
   const c = $('#a-cuenta'); if (!c) return;
+  const ver = (id, si) => { const e = $(id); if (e) e.style.display = si ? '' : 'none'; };
   c.style.display = state.me ? '' : 'none';
-  $('#a-userbox').style.display = state.me ? 'none' : '';
-  $('#a-import').style.display = esAdmin() ? '' : 'none';
-  $('#a-resp').style.display = esAdmin() ? '' : 'none';
-  $('#a-ml').style.display = puede() ? '' : 'none';
-  if (CONFIG_FIJA) { $('#a-modo').style.display = 'none'; $('#a-borrar').style.display = 'none'; }
-  if (state.me) c.innerHTML = `<h2>Tu cuenta</h2><p><b>${esc(state.me.nombre)}</b><br><span class="muted">${esc(state.me.email)} · ${ROL_TXT[state.me.rol]}</span></p>
+  ver('#a-ml', puede()); ver('#a-ml-imp', esAdmin()); ver('#a-ml-con', esAdmin());
+  ver('#a-umbral', esAdmin()); ver('#a-mant', esAdmin()); ver('#a-resp', esAdmin());
+  if (state.me) c.innerHTML = `<h2>Tu cuenta</h2>
+    <p><b>${esc(state.me.nombre)}</b><br><span class="muted">${esc(state.me.email)}</span></p>
+    <p style="margin:8px 0 12px"><span class="est ${state.me.rol === 'admin' ? 'ok' : ''}">${ROL_TXT[state.me.rol]}</span></p>
     <button class="btn ghost wide" data-act="logout">Cerrar sesión</button>`;
+  paintMLEstado();
 }
-function paintModo() {
-  document.querySelectorAll('[data-act="modo"]').forEach(b => b.classList.toggle('on', b.dataset.m === selModo));
-  $('#a-fb').style.display = selModo === 'firebase' ? '' : 'none';
+function paintMLEstado() {
+  const e = $('#a-ml-estado'); if (!e) return;
+  const r = state.mlRes;
+  e.innerHTML = r && r.fecha ? `✅ Cuenta conectada · última actualización <b>${fmt(r.fecha)}</b> · ${r.total} publicaciones`
+    : state.invErr ? esc(state.invErr) : 'Todavía no se trajo nada de Mercado Libre.';
 }
 function fillAjustes() {
   pintarDep();
   $('#a-ver').textContent = 'Versión ' + VERSION;
-  $('#a-user').value = cfg.usuario || '';
-  selModo = cfg.modo || 'local';
-  $('#a-cfg').value = cfg.fb ? JSON.stringify(cfg.fb, null, 1) : '';
-  $('#a-emp').value = cfg.empresa || '';
-  paintModo();
-}
-function parseCfg(t) {
-  t = t.trim();
-  try { const j = JSON.parse(t); if (j && j.apiKey) return j; } catch (e) {}
-  const o = {};
-  t.replace(/([A-Za-z]+)\s*:\s*["'`]([^"'`]+)["'`]/g, (m, k, v) => { o[k] = v; });
-  return o;
-}
-function guardarModo() {
-  if (selModo === 'firebase') {
-    const fb = parseCfg($('#a-cfg').value);
-    const emp = norm($('#a-emp').value).replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
-    if (!fb.apiKey || !fb.projectId) { toast('La configuración no tiene apiKey y projectId', 'err'); return; }
-    if (!emp) { toast('Poné un identificador de empresa', 'err'); return; }
-    cfg.fb = fb; cfg.empresa = emp;
-  }
-  cfg.modo = selModo; saveCfg(); location.reload();
+  const i = $('#a-poco'); if (i) i.value = state.umbral;
 }
 function setMode() {
   let t = 'Solo este celular';
   if (cfg.modo === 'firebase') t = state.fbFallo ? 'Firebase falló, usando este celular' : (state.me ? state.me.nombre.split(' ')[0] + ' · ' : '') + cfg.empresa + (state.pend ? ' (sincronizando)' : '');
   if (!navigator.onLine) t += ', sin conexión';
   $('#mode').textContent = t;
-}
-
-// Importar: columnas nombre, SKU, código. Varios SKU del mismo producto van separados por " | ".
-// Si el producto ya existe (mismo nombre), no se duplica: solo se le agregan los SKU que le falten.
-async function importar() {
-  const lines = $('#i-txt').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if (!lines.length) { toast('Pegá al menos una fila', 'err'); return; }
-  $('#i-res').textContent = 'Revisando qué productos ya existen…';
-  await B.refrescarProductos();
-  const sep = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
-  const inicio = /nombre/i.test(lines[0]) ? 1 : 0;
-  const nuevos = [], actualizados = [], problemas = [], vistosNom = new Map(), vistosSku = new Map(), vistosCod = new Set();
-  let iguales = 0;
-  for (const l of lines.slice(inicio)) {
-    const [nombre, skuTxt, cod] = l.split(sep).map(x => (x || '').trim());
-    if (!nombre) { problemas.push(`Fila sin nombre: "${l.slice(0, 40)}"`); continue; }
-    const skus = [...new Set(String(skuTxt || '').split('|').map(x => x.trim()).filter(Boolean))];
-    const c = (cod || '').replace(/\s/g, '');
-    const existente = state.productos[idDeNombre(nombre)] || prods().find(p => norm(p.nombre) === norm(nombre)) || vistosNom.get(norm(nombre));
-    // SKU que ya son de OTRO producto: no se tocan.
-    const ajenos = skus.filter(k => { const o = bySku(k) || vistosSku.get(norm(k)); return o && (!existente || o.id !== existente.id); });
-    if (ajenos.length) { problemas.push(`"${nombre}": el SKU ${ajenos.join(', ')} ya es de otro producto`); continue; }
-    if (existente) {
-      const faltan = skus.filter(k => !(existente.skus || []).some(x => norm(x) === norm(k)));
-      if (faltan.length) {
-        existente.skus = [...(existente.skus || []), ...faltan];
-        if (!nuevos.includes(existente) && !actualizados.includes(existente)) actualizados.push(existente);
-        faltan.forEach(k => vistosSku.set(norm(k), existente));
-      } else iguales++;
-      continue;
-    }
-    const codOk = c && !byCode(c) && !vistosCod.has(c);
-    if (codOk) vistosCod.add(c);
-    const p = { id: idDeNombre(nombre), nombre, skus, codigos: codOk ? [c] : [], creado: Date.now() };
-    nuevos.push(p); vistosNom.set(norm(nombre), p); skus.forEach(k => vistosSku.set(norm(k), p));
-  }
-  if (nuevos.length) B.importarProductos(nuevos);
-  actualizados.forEach(p => B.guardarProducto({ ...p }));
-  if (nuevos.length || actualizados.length) B.log(movData('', '', 0, 'importacion', { cantidadImportada: nuevos.length, nombre: 'Productos' }));
-  const res = `Nuevos: ${nuevos.length}. Ya existían: ${iguales + actualizados.length}${actualizados.length ? ` (a ${actualizados.length} se les agregó SKU)` : ''}. Con problemas: ${problemas.length}.`;
-  toast(res, problemas.length ? 'err' : '');
-  $('#i-res').innerHTML = `<b>${esc(res)}</b>` + (problemas.length ? '<br>' + problemas.map(esc).join('<br>') : '');
-  $('#i-txt').value = '';
-}
-
-// Devuelve las hojas de un Excel o CSV: [{ nombre, filas: [[celda, ...], ...] }].
-async function hojasArchivo(f, msg) {
-  if (/\.(xlsx|xls)$/i.test(f.name) || /sheet|excel/i.test(f.type)) {
-    msg.textContent = 'Leyendo el Excel…';
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
-    return wb.SheetNames.map(n => ({ nombre: n, filas: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '' }) }));
-  }
-  return filasPegadas(await f.text());
-}
-// Lee un Excel o CSV elegido desde el celular o la PC y lo deja listo en el recuadro para importar.
-async function leerArchivo(f) {
-  const msg = $('#i-res');
-  try {
-    const hojas = await hojasArchivo(f, msg);
-    const filas = (hojas.find(h => /importar/i.test(h.nombre)) || hojas[0]).filas;
-    const lineas = filas.filter(r => r.some(c => String(c ?? '').trim()))
-      .map(r => [r[0], r[1], r[2]].map(c => String(c ?? '').replace(/[\t\r\n]+/g, ' ').trim()).join('\t'));
-    if (!lineas.length) { msg.textContent = 'El archivo está vacío.'; return; }
-    $('#i-txt').value = lineas.join('\n');
-    const n = lineas.length - (/nombre/i.test(lineas[0]) ? 1 : 0);
-    msg.innerHTML = `<b>Se leyeron ${n} productos de "${esc(f.name)}".</b> Revisá el recuadro y tocá Importar.`;
-  } catch (e) {
-    msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.';
-  }
-}
-async function leerArchivoML(f) {
-  const msg = $('#ml-res');
-  try { await cargarML(filasML(await hojasArchivo(f, msg))); }
-  catch (e) { msg.textContent = 'No se pudo leer el archivo: ' + (e.message || e) + '. Revisá la conexión o probá con un CSV.'; }
 }
 
 /* ---------- duplicados ---------- */
@@ -1939,6 +1794,7 @@ const colorEst = p => p.clase === 'activa' ? 'ok' : p.clase === 'pausada' || p.c
 const colorPub = (p, i) => p.clase === 'frenada' || p.clase === 'otro' || p.clase === 'sin_stock' || i.poco ? 'rojo' : p.clase === 'activa' ? 'ok' : 'gris';
 
 function renderInv() {
+  paintMLEstado();
   const el = $('#inv-list'); if (!el) return;
   const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
   if (state.invErr) { fecha.textContent = ''; panel.innerHTML = ''; fil.innerHTML = ''; el.innerHTML = `<p class="empty bad">${esc(state.invErr)}</p>`; return; }
@@ -2122,8 +1978,7 @@ const A = {
     B.guardarUmbral(n); toast(`Listo: poco stock = ${n} o menos`);
   },
   'ml-ver': () => openML(),
-  'ml-cargar': () => closeModal().then(() => { tab('ajustes'); irA('#a-ml'); focusEl('#ml-txt'); }),
-  'ml-go': () => { if (puede()) cargarML(filasML(filasPegadas($('#ml-txt').value))); },
+  'ml-cargar': () => closeModal().then(() => tab('inv')),
   'ml-traer': () => { if (puede()) mlTraer(); },
   'ml-conectar': () => { if (esAdmin()) mlConectarCuenta(); },
   'ml-importar': () => { if (esAdmin()) mlImportarProductos(); },
@@ -2216,15 +2071,10 @@ const A = {
     logProd(detId, 'prod_nombre', { antes: p.nombre, despues: v });
     updP(x => { x.nombre = v; return x; }); toast('Nombre actualizado');
   },
-  'modo': b => { selModo = b.dataset.m; paintModo(); },
-  'modo-save': guardarModo,
-  'user-save': () => { cfg.usuario = $('#a-user').value.trim(); saveCfg(); toast('Nombre guardado'); renderG(); },
-  'i-go': () => { if (esAdmin()) importar(); },
   'dups': () => { if (esAdmin()) openDups(); },
   'dups-ok': () => { if (confirm('¿Unir los productos repetidos? No se puede deshacer, pero queda registrado en el historial.')) unirDuplicados(); },
   'logout': () => { if (confirm('¿Cerrar sesión en este dispositivo?')) cerrarSesion(); },
-  'x-json': descargar,
-  'x-borrar': () => { if (confirm('¿Borrar todos los datos de este celular? No se puede deshacer.')) B.borrar(); }
+  'x-json': descargar
 };
 
 document.addEventListener('click', e => {
@@ -2255,10 +2105,6 @@ document.addEventListener('keydown', e => {
   if (act) { e.preventDefault(); A[act](); }
 });
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('change', e => {
-  if (e.target.id === 'i-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; leerArchivo(f); }
-  if (e.target.id === 'ml-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; if (puede()) leerArchivoML(f); }
-});
 window.addEventListener('online', setMode);
 window.addEventListener('offline', setMode);
 

@@ -53,3 +53,25 @@ test('armarEscrituras: cruza por SKU sin importar mayúsculas/tildes y usa el SK
 test('norm coincide con la pantalla de depósito', () => {
   assert.strictEqual(norm('  Camión   ÁÉ '), 'camion ae');
 });
+
+const { productosNuevos } = require('./ml');
+
+test('productosNuevos: un producto por SKU, variaciones, sin SKU, y no pisa lo que ya existe', () => {
+  const items = [
+    { id: 'MLA1', titulo: 'Remera', sku: 'REM-01', estado: 'active', full: false, variaciones: [], miniatura: 'https://x/a.jpg' },
+    { id: 'MLA2', titulo: 'Remera (otra publi)', sku: 'rem-01', estado: 'paused', full: false, variaciones: [] }, // mismo SKU
+    { id: 'MLA3', titulo: 'Gorra', sku: null, estado: 'active', full: false, variaciones: [] },                    // sin SKU
+    { id: 'MLA4', titulo: 'Buzo', sku: null, estado: 'active', full: false, variaciones: [
+      { id: 11, sku: 'BUZ-R', atributos: 'Rojo' }, { id: 12, sku: 'BUZ-A', atributos: 'Azul' }] },
+    { id: 'MLA5', titulo: 'Taza', sku: 'TAZ', estado: 'active', full: false, variaciones: [] },                    // ya existe
+    { id: 'MLA6', titulo: 'Full', sku: 'F-1', estado: 'active', full: true, variaciones: [] },                      // Full: no
+    { id: 'MLA7', titulo: 'Cerrada', sku: 'C-1', estado: 'closed', full: false, variaciones: [] },                 // cerrada: no
+  ];
+  const r = productosNuevos(items, [{ id: 'p1', skus: ['taz'] }], 123);
+  assert.deepStrictEqual(r.nuevos.map((p) => p.nombre).sort(), ['Buzo (Azul)', 'Buzo (Rojo)', 'Gorra', 'Remera']);
+  assert.deepStrictEqual([r.omitidas, r.yaExistian, r.sinSku], [2, 1, 1]);
+  assert.strictEqual(r.nuevos.find((p) => p.nombre === 'Remera').foto, 'https://x/a.jpg');
+  // Importar de nuevo con lo ya creado no agrega nada.
+  const otra = productosNuevos(items, [{ id: 'p1', skus: ['taz'] }, ...r.nuevos.map((p) => ({ id: p.id, skus: p.skus }))], 456);
+  assert.strictEqual(otra.nuevos.length, 0);
+});

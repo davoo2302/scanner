@@ -7,10 +7,13 @@ const ml = require('./ml');
 admin.initializeApp();
 const db = admin.firestore();
 
-// Misma empresa y mismo Firebase que ubicaciones-deposito.html (CONFIG_FIJA.empresa).
-// Se puede cambiar por proyecto con functions/.env.<proyecto> (EMPRESA=...); sin eso es la del depósito.
-const EMPRESA = process.env.EMPRESA || 'deposito';
-const base = () => db.doc(`empresas/${EMPRESA}`);
+// Empresa de este proyecto: viene de functions/.env.<proyecto> (EMPRESA=propia). Sin eso las funciones se niegan a
+// trabajar: antes caían en 'deposito' y podían escribir en datos que no son tuyos.
+const EMPRESA = process.env.EMPRESA;
+const base = () => {
+  if (!EMPRESA) throw new HttpsError('failed-precondition', 'Falta EMPRESA en functions/.env.<proyecto>.');
+  return db.doc(`empresas/${EMPRESA}`);
+};
 
 // Claves de la app de ML: Secret Manager (firebase functions:secrets:set ML_CLIENT_ID), nunca en el código.
 const ML_CLIENT_ID = defineSecret('ML_CLIENT_ID');
@@ -25,7 +28,7 @@ const redirectUri = () => `https://us-central1-${proyecto()}.cloudfunctions.net/
 const cuentas = () => db.collection('mlPrivado');
 const estados = () => db.collection('mlOauthStates');
 
-// Misma lista de autorizados que usa la pantalla: empresas/deposito/usuarios/{mail} con rol y activo === true.
+// Misma lista de autorizados que usa la pantalla: empresas/{EMPRESA}/usuarios/{mail} con rol y activo === true.
 async function exigirRol(req, roles) {
   if (!req.auth) throw new HttpsError('unauthenticated', 'Iniciá sesión.');
   const email = String(req.auth.token.email || '').toLowerCase();
@@ -80,24 +83,23 @@ async function tokenValido(doc) {
   }
 }
 
-// 3) Trae las publicaciones de ML y completa el campo `ml` de cada producto del depósito (por SKU).
-// Solo LEE de ML: no cambia nada en tus publicaciones.
-exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
-  const yo = await exigirRol(req, ['admin', 'empleado']);
+// Lee de ML TODAS las publicaciones de las cuentas conectadas (solo LEE: no cambia nada en tus publicaciones).
+async function traerItems() {
   const conectadas = await cuentas().where('empresa', '==', EMPRESA).get();
   if (conectadas.empty) throw new HttpsError('failed-precondition', 'Todavía no conectaste ninguna cuenta de Mercado Libre.');
-
   const items = [];
   for (const c of conectadas.docs) {
     const token = await tokenValido(c);
     const ids = await ml.listarIds(c.data().mlUserId, token);
     for (let i = 0; i < ids.length; i += 20) items.push(...(await ml.detalle(ids.slice(i, i + 20), token)).map(ml.normalizar));
   }
+  return { items, cuentas: conectadas.size };
+}
 
+// Completa el campo `ml` (stock en ML) de los productos, por SKU.
+async function completarML(items, prods) {
   const { mapa, omitidas, sinSku } = ml.stockPorSku(items);
-  const prods = (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
   const { escrituras, sinProducto } = ml.armarEscrituras(prods, mapa);
-
   const ahora = Date.now();
   for (let i = 0; i < escrituras.length; i += 400) {
     const b = db.batch();
@@ -105,8 +107,38 @@ exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], time
       b.set(base().collection('productos').doc(x.id), { ml: x.ml, mlFecha: ahora, mlPor: 'Mercado Libre (automático)' }, { merge: true }));
     await b.commit();
   }
+  return { omitidas, sinSku, actualizados: escrituras.length, sinProducto };
+}
+
+const leerProductos = async () =>
+  (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
+
+// 3) Trae las publicaciones de ML y completa el campo `ml` de cada producto que YA existe (por SKU).
+exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+  const yo = await exigirRol(req, ['admin', 'empleado']);
+  const { items, cuentas: n } = await traerItems();
+  const r = await completarML(items, await leerProductos());
   return {
-    cuentas: conectadas.size, publicaciones: items.length, omitidas, sinSku,
-    actualizados: escrituras.length, sinProductoTotal: sinProducto.length, sinProducto: sinProducto.slice(0, 20), por: yo.nombre,
+    cuentas: n, publicaciones: items.length, omitidas: r.omitidas, sinSku: r.sinSku,
+    actualizados: r.actualizados, sinProductoTotal: r.sinProducto.length, sinProducto: r.sinProducto.slice(0, 20), por: yo.nombre,
+  };
+});
+
+// 4) IMPORTAR: crea un producto por cada publicación (nombre, SKU, foto) que todavía no esté en la app y le pone el stock
+// de ML. Nunca pisa productos existentes (ubicaciones, conteos, códigos): se puede apretar las veces que haga falta.
+exports.mlImportar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+  const yo = await exigirRol(req, ['admin']);
+  const { items, cuentas: n } = await traerItems();
+  const existentes = await leerProductos();
+  const { nuevos, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, existentes, Date.now());
+  for (let i = 0; i < nuevos.length; i += 400) {
+    const b = db.batch();
+    nuevos.slice(i, i + 400).forEach((p) => b.create(base().collection('productos').doc(p.id), p));
+    await b.commit();
+  }
+  const r = await completarML(items, [...existentes, ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
+  return {
+    cuentas: n, publicaciones: items.length, creados: nuevos.length, yaExistian, omitidas, sinSku,
+    conStockML: r.actualizados, por: yo.nombre,
   };
 });

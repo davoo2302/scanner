@@ -1,6 +1,9 @@
-// Reglas de Firestore del depósito (copia de las publicadas en ubicaciones-depositos el 2026-10-22).
+// Reglas de Firestore de Stock Hub (proyecto stock-hub-c5a0e). Parten de las del depósito (copia del 2026-10-22).
+// NO están publicadas todavía en stock-hub-c5a0e: publicarlas a propósito, una vez, antes de usarlo.
 // Todo lo que no está escrito acá queda CERRADO para navegadores y teléfonos: por eso mlPrivado y
 // mlOauthStates (tokens de Mercado Libre) solo los tocan las funciones. No agregar un comodín general.
+// PENDIENTE (libro de movimientos): las ventas/cancelaciones de ML las escriben solo las funciones; hoy cualquier
+// usuario con rol de escritura puede crear `movimientos` desde la pantalla.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

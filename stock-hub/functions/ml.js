@@ -69,6 +69,7 @@ function normalizar(item) {
     atributos: (v.attribute_combinations || []).map((a) => a.value_name).filter(Boolean).join(' / '),
   }));
   return {
+    id: item.id || null,
     titulo: item.title,
     sku,
     stock: item.available_quantity ?? 0,
@@ -81,7 +82,7 @@ function normalizar(item) {
   };
 }
 
-// Igual que la pantalla de depósito (ubicaciones-deposito.html): sin tildes, minúsculas, espacios simples.
+// Igual que la pantalla (stock-hub.html): sin tildes, minúsculas, espacios simples.
 const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 
 // De las publicaciones (ya normalizadas) saca el stock por SKU.
@@ -119,4 +120,47 @@ function armarEscrituras(productos, mapa) {
   return { escrituras, sinProducto };
 }
 
-module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras };
+// Productos a CREAR a partir de las publicaciones (ya normalizadas). `existentes` = [{ id, skus }] de la app.
+// - Un producto por SKU (dos publicaciones con el mismo SKU son el mismo producto físico).
+// - Cada variación con SKU es su propio producto. Sin SKU: un producto marcado `sinSku`, para ponerle SKU a mano.
+// - Entran las activas y las pausadas (hay mercadería en el depósito); no entran las cerradas ni las de Full.
+// - Nunca pisa un producto que ya existe (mismo SKU o mismo id): importar dos veces no duplica nada.
+const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+
+function productosNuevos(items, existentes, ahora) {
+  const ids = new Set(existentes.map((p) => p.id));
+  const skusYa = new Set();
+  existentes.forEach((p) => (p.skus || []).forEach((s) => skusYa.add(norm(s))));
+  const nuevos = new Map();
+  let omitidas = 0, yaExistian = 0, sinSku = 0;
+
+  const agregar = (sku, nombre, it, extraId) => {
+    const k = norm(sku);
+    let id;
+    if (k) {
+      if (skusYa.has(k)) { yaExistian++; return; }
+      id = 'ml_' + slug(sku) + '_' + hash(k); // el hash evita que dos SKU distintos choquen al limpiarlos
+      if (nuevos.has(id)) return; // mismo SKU en otra publicación: ya está
+    } else {
+      id = 'ml_' + slug(it.id || nombre) + (extraId ? '-' + extraId : '') + '_' + hash(String(it.id || nombre) + extraId);
+      if (nuevos.has(id)) return;
+    }
+    if (ids.has(id)) { yaExistian++; return; }
+    if (!k) sinSku++;
+    nuevos.set(id, {
+      id, nombre, skus: k ? [sku] : [], codigos: [], creado: ahora,
+      foto: it.miniatura || null, mlLink: it.link || null, mlItem: it.id || null, sinSku: !k,
+    });
+  };
+
+  for (const it of items) {
+    if (!['active', 'paused'].includes(it.estado) || it.full) { omitidas++; continue; }
+    if (it.variaciones && it.variaciones.length) {
+      for (const v of it.variaciones) agregar(v.sku, v.atributos ? `${it.titulo} (${v.atributos})` : it.titulo, it, String(v.id));
+    } else agregar(it.sku, it.titulo, it, '');
+  }
+  return { nuevos: [...nuevos.values()], omitidas, yaExistian, sinSku };
+}
+
+module.exports = { urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras, productosNuevos };

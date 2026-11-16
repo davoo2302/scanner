@@ -1,7 +1,16 @@
-# scanner (apps HTML sueltas)
+# scanner (apps HTML sueltas + Stock Hub)
 
 Páginas HTML independientes (ubicaciones-deposito, stock-ventas, flexsort, scan_terminal, panel-salon…),
 publicadas con GitHub Pages desde la rama `main`.
+
+## ➜ Proyecto activo: Stock Hub (ubicaciones + stock de Mercado Libre)
+**Estado, decisiones y pendientes: `docs/estado.md`** (leerlo al empezar; se reescribe, no se acumula).
+- Es el proyecto PROPIO del dueño: Firebase `stock-hub-c5a0e` (cuenta argenisdavid17), empresa `propia`.
+  NO tocar el Firebase del depósito (`ubicaciones-depositos`): son datos del trabajo del dueño (la base de datos sigue ahí; solo se borró la página vieja).
+- Código: `stock-hub/` (funciones que leen ML) y `stock-hub.html` (la pantalla; ES el programa, se edita directo)
+- La página vieja `ubicaciones-deposito.html` (la del trabajo) se BORRÓ del repo el 2026-11-15 a pedido del dueño: no se usa. Sigue en el historial de git. Stock Hub es el único programa (para él, el trabajo y otros).
+- Rama de trabajo: `stock-hub-compu`. Nada de esto está unido a `main` ni publicado.
+- Nunca claves ni secretos en el repo (es PÚBLICO). Deploy siempre con `--only functions`.
 
 ## ⚠️ Subir a `main` = publicar
 Cualquier commit en `main` sale publicado en GitHub Pages al minuto, sin revisión.

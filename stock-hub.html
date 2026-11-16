@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1C2226">
-<title>Ubicaciones del depósito</title>
+<title>Stock Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
@@ -273,6 +273,7 @@ button.kpi:hover{border-color:var(--muted)}
       <button class="btn" data-act="ml-go">Cargar stock de Mercado Libre</button>
       <button class="btn ghost wide" data-act="ml-traer" style="margin-top:10px">🔄 Traer de Mercado Libre (automático)</button>
       <button class="btn ghost wide" data-act="ml-conectar" style="margin-top:10px">🔗 Conectar cuenta de Mercado Libre (administrador)</button>
+<button class="btn ghost wide" data-act="ml-importar" style="margin-top:10px">📥 Importar mis publicaciones como productos (administrador)</button>
       <p class="muted" id="ml-res" style="font-size:14px"></p>
     </div>
 
@@ -357,14 +358,14 @@ const saveCfg = () => localStorage.setItem('ubic_cfg', JSON.stringify(cfg));
 // Configuración fija del depósito: cualquier dispositivo que abra el link se conecta a Firebase y pide login.
 // No es secreta: solo identifica el proyecto. El acceso lo controlan las reglas y la lista de usuarios.
 const CONFIG_FIJA = {
-  empresa: 'deposito',
+  empresa: 'propia',
   fb: {
-    apiKey: 'AIzaSyDjdHjpnsLFjpmP3Rhhls2NBec1108wiaM',
-    authDomain: 'ubicaciones-depositos.firebaseapp.com',
-    projectId: 'ubicaciones-depositos',
-    storageBucket: 'ubicaciones-depositos.firebasestorage.app',
-    messagingSenderId: '37276298499',
-    appId: '1:37276298499:web:7af97a9f6f32d2da460d36'
+    apiKey: 'AIzaSyA5zOQ5PtOLWIVyM_0XPqw63sPT9J2coWs',
+    authDomain: 'stock-hub-c5a0e.firebaseapp.com',
+    projectId: 'stock-hub-c5a0e',
+    storageBucket: 'stock-hub-c5a0e.firebasestorage.app',
+    messagingSenderId: '307036609631',
+    appId: '1:307036609631:web:7a9f959f5f2fda7bda8fea'
   }
 };
 if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa = CONFIG_FIJA.empresa; }
@@ -847,6 +848,19 @@ async function mlTraer() {
       + (r.sinSku ? ` Sin SKU: ${r.sinSku}.` : '')
       + (r.sinProductoTotal ? ` SKU de ML que no están en el depósito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? '…' : '') + ')' : ''}.` : '');
   } catch (e) { res.textContent = 'No se pudo traer: ' + (e.message || e); }
+}
+async function mlImportarProductos() {
+  const res = $('#ml-res');
+  if (!confirm('Esto crea en la app un producto por cada publicación de Mercado Libre que todavía no esté. No toca los productos que ya tenés. ¿Seguir?')) return;
+  res.textContent = 'Importando las publicaciones de Mercado Libre… puede tardar un minuto.';
+  try {
+    const r = await mlLlamar('mlImportar');
+    await B.refrescarProductos();
+    res.textContent = `Listo: ${r.publicaciones} publicaciones leídas. Productos creados: ${r.creados}. Ya estaban: ${r.yaExistian}.`
+      + (r.sinSku ? ` Creados SIN SKU (hay que ponerles uno a mano): ${r.sinSku}.` : '')
+      + (r.omitidas ? ` No se importaron (cerradas o en Full): ${r.omitidas}.` : '');
+    renderInicio();
+  } catch (e) { res.textContent = 'No se pudo importar: ' + (e.message || e); }
 }
 async function cargarML(filas) {
   const res = $('#ml-res');
@@ -1780,6 +1794,7 @@ const A = {
   'ml-go': () => { if (puede()) cargarML(filasML(filasPegadas($('#ml-txt').value))); },
   'ml-traer': () => { if (puede()) mlTraer(); },
   'ml-conectar': () => { if (esAdmin()) mlConectarCuenta(); },
+  'ml-importar': () => { if (esAdmin()) mlImportarProductos(); },
   'd-ml': () => {
     const p = state.productos[detId]; if (!p || !puede()) return;
     const ml = {}, txt = []; let mal = false;

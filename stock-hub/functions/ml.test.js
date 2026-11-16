@@ -76,6 +76,13 @@ test('normalizar guarda motivo, clase, categoría y vendedor', () => {
   assert.deepStrictEqual([sin.subEstado, sin.categoria, sin.vendedor, sin.titulo], [[], null, null, '']);
 });
 
+test('normalizar: publicación de catálogo y sus relacionadas', () => {
+  const c = normalizar({ id: 'MLA2', status: 'active', catalog_listing: true, catalog_product_id: 'MLA555', item_relations: [{ id: 'MLA1' }] });
+  assert.deepStrictEqual([c.catalogo, c.catalogoProducto, c.relacionadas], [true, 'MLA555', ['MLA1']]);
+  const p = normalizar({ id: 'MLA1', status: 'active' });
+  assert.deepStrictEqual([p.catalogo, p.catalogoProducto, p.relacionadas], [false, null, []]);
+});
+
 test('fichaPublicacion no tiene campos undefined', () => {
   const f = fichaPublicacion(normalizar({ id: 'MLA1', status: 'active', variations: [{ id: 5 }] }), 1);
   const hayUndefined = (o) => Object.values(o).some((v) => v === undefined || (v && typeof v === 'object' && hayUndefined(v)));

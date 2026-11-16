@@ -85,6 +85,11 @@ function normalizar(item) {
     miniatura: (item.thumbnail || '').replace('http://', 'https://'),
     link: item.permalink || null,
     full: Boolean(item.inventory_id), // stock en Full: lo maneja ML
+    // Publicación de catálogo (la que ML pide crear para competir en la ficha del producto). Tiene el mismo SKU y stock
+    // que la publicación propia: no es un SKU repetido de verdad.
+    catalogo: item.catalog_listing === true,
+    catalogoProducto: item.catalog_product_id || null,
+    relacionadas: (item.item_relations || []).map((r) => r.id).filter(Boolean),
     variaciones,
   };
 }
@@ -115,6 +120,7 @@ function fichaPublicacion(it, ahora) {
     id: it.id, titulo: it.titulo, sku: it.sku, stock: it.stock, precio: it.precio,
     estado: it.estado, subEstado: it.subEstado, clase: it.clase, categoria: it.categoria, vendedor: it.vendedor,
     foto: it.miniatura || null, link: it.link, full: it.full,
+    catalogo: Boolean(it.catalogo), catalogoProducto: it.catalogoProducto ?? null, relacionadas: it.relacionadas || [],
     variaciones: it.variaciones.map((v) => ({ id: v.id, sku: v.sku, stock: v.stock, atributos: v.atributos })),
     actualizada: ahora,
   };

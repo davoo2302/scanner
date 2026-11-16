@@ -191,6 +191,7 @@ button.kpi:hover{border-color:var(--muted)}
 .rev{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:8px;padding:8px 10px;min-height:0;color:var(--ink);font-weight:400}
 .rev b{font-family:var(--cond);font-size:28px;line-height:1;min-width:30px}
 .rev small{display:block;margin-top:2px}
+.rev.info{border-left-color:var(--steel)}.rev.info b{color:var(--steel)}
 .rev.mal{border-left-color:var(--red)}.rev.mal b{color:var(--red)}
 .rev.on{outline:3px solid var(--yellow)}
 .filtros{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
@@ -1781,23 +1782,26 @@ function lineasPub(p) {
     return { ...l, pid: pr ? pr.id : null, real: ub.reduce((a, s) => a + (s.cantidad || 0), 0), ubic: ub.length };
   });
 }
-// Cuántas veces aparece cada SKU entre TODAS las publicaciones y variantes (para detectar repetidos).
+// Cuántas veces aparece cada SKU, contando aparte las publicaciones propias y las de catálogo.
+// La de catálogo comparte SKU y stock con la propia: eso NO es un repetido. Repetido de verdad = el mismo SKU en dos
+// publicaciones propias (o en dos de catálogo): dos productos distintos con el mismo SKU.
 let skuCache = { pubs: null, m: null };
 function skuCuenta() {
   if (skuCache.pubs === state.pubs) return skuCache.m;
   const m = new Map();
   (state.pubs || []).forEach(p => ((p.variaciones || []).length ? p.variaciones.map(v => v.sku) : [p.sku])
-    .forEach(s => { const k = norm(s); if (k) m.set(k, (m.get(k) || 0) + 1); }));
+    .forEach(s => { const k = (p.catalogo ? 'c|' : 'p|') + norm(s); if (norm(s)) m.set(k, (m.get(k) || 0) + 1); }));
   skuCache = { pubs: state.pubs, m };
   return m;
 }
+const vecesSku = (p, sku) => skuCuenta().get((p.catalogo ? 'c|' : 'p|') + norm(sku)) || 0;
 function infoPub(p) {
   const ls = lineasPub(p), activa = p.clase === 'activa' && !p.full;
   return {
     ls,
     poco: activa && ls.some(l => l.ml <= state.umbral),
     sinSku: ls.some(l => !l.sku),
-    repetido: ls.some(l => l.sku && (skuCuenta().get(norm(l.sku)) || 0) > 1),
+    repetido: ls.some(l => l.sku && vecesSku(p, l.sku) > 1),
     sinUbic: ls.some(l => !l.ubic),
     dif: ls.some(l => l.ubic && l.real !== l.ml),
   };
@@ -1805,7 +1809,7 @@ function infoPub(p) {
 const INV_F = {
   todos: () => true, activa: (p) => p.clase === 'activa', poco: (p, i) => i.poco, sin_stock: (p) => p.clase === 'sin_stock',
   pausada: (p) => p.clase === 'pausada', frenada: (p) => p.clase === 'frenada' || p.clase === 'otro', cerrada: (p) => p.clase === 'cerrada',
-  sinsku: (p, i) => i.sinSku, repetido: (p, i) => i.repetido, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
+  sinsku: (p, i) => i.sinSku, repetido: (p, i) => i.repetido, catalogo: (p) => p.catalogo, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
 };
 // Qué tan grave es, para ordenar la lista: lo rojo primero.
 const gravedad = (p, i) => p.clase === 'frenada' || p.clase === 'otro' ? 0 : p.clase === 'sin_stock' ? 1 : i.poco ? 2 : p.clase === 'pausada' ? 3 : p.clase === 'cerrada' ? 5 : 4;
@@ -1835,13 +1839,14 @@ function renderInv() {
     + pk('sin_stock', 'Sin stock', 'rojo') + pk('pausada', 'Pausadas por vos', 'gris') + pk('frenada', 'Frenadas por ML', 'rojo');
   // "Para revisar": lo que hay que arreglar en las publicaciones. Siempre visible (en verde si está todo bien).
   const prodSin = prods().filter(p => !(p.skus || []).length).length;
-  const rev = (f, n, txt, ayuda) => `<button class="rev ${n ? 'mal' : ''} ${invF === f ? 'on' : ''}" data-act="${f === 'prodsin' ? 'prod-sinsku' : 'inv-f'}" data-f="${f}">
-    <b>${n || '✓'}</b><span><span style="font-weight:600">${txt}</span><small>${ayuda}</small></span></button>`;
+  const rev = (f, n, txt, ayuda, info) => `<button class="rev ${info ? 'info' : n ? 'mal' : ''} ${invF === f ? 'on' : ''}" data-act="${f === 'prodsin' ? 'prod-sinsku' : 'inv-f'}" data-f="${f}">
+    <b>${info ? n : n || '✓'}</b><span><span style="font-weight:600">${txt}</span><small>${ayuda}</small></span></button>`;
   const rv = $('#inv-revisar'); rv.style.display = '';
   rv.innerHTML = `<h2>Para revisar</h2><div class="revs">
     ${rev('sinsku', cuenta('sinsku'), 'Publicaciones sin SKU', 'Ponéselo en Mercado Libre (en cada variante) y tocá Actualizar.')}
-    ${rev('repetido', cuenta('repetido'), 'Con SKU repetido', 'Normal si es tu publicación + la de catálogo. Si son productos distintos, poneles SKU distinto.')}
+    ${rev('repetido', cuenta('repetido'), 'SKU repetido', 'Dos publicaciones tuyas con el mismo SKU: si son productos distintos, poneles SKU distinto en Mercado Libre.')}
     ${rev('prodsin', prodSin, 'Productos de la app sin SKU', 'Se completan solos al tocar Actualizar, si la publicación ya tiene SKU.')}
+    ${rev('catalogo', cuenta('catalogo'), 'Publicaciones de catálogo', 'Comparten SKU y stock con tu publicación. Es normal: solo para que sepas cuáles son.', true)}
   </div>`;
   const extra = [['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
     .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
@@ -1862,7 +1867,7 @@ function renderInv() {
       ${p.foto ? `<img src="${esc(p.foto)}" alt="" loading="lazy">` : '<span class="sinfoto"></span>'}
       <span><span class="t">${esc(p.titulo)}</span>
         <small>${varios ? `${i.ls.length} variantes` : esc(p.sku || 'Sin SKU')}</small>
-        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est rojo">Sin SKU</span>' : ''}${i.repetido ? '<span class="est">SKU repetido</span>' : ''}
+        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est rojo">Sin SKU</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">Catálogo</span>' : ''}${i.repetido ? '<span class="est rojo">SKU repetido</span>' : ''}
         ${p.clase !== 'activa' && motivoPub(p) ? `<small>${esc(motivoPub(p))}</small>` : ''}</span>
       <span class="st"><small>en ML</small><b class="${i.poco || p.clase === 'sin_stock' ? 'bad' : ''}">${stock}</b>
         ${!varios ? `<small>${conts.length ? `contado ${conts[0].real}` : 'sin contar'}</small>` : ''}</span>
@@ -1875,9 +1880,10 @@ function openPub(id) {
   detId = null;
   const i = infoPub(p), mot = motivoPub(p);
   openModal(`<h3>${esc(p.titulo)}</h3>
-    <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
+    <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">Catálogo</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
     ${mot ? `<p style="margin-top:8px">${esc(mot)}</p>` : ''}
-    ${i.repetido ? `<p class="muted" style="margin-top:8px">Este SKU también está en otra publicación. Es normal si es la misma mercadería (tu publicación + la de catálogo): el stock se cuenta una sola vez. Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
+    ${p.catalogo ? `<p class="muted" style="margin-top:8px">Esta es una <b>publicación de catálogo</b>: Mercado Libre la crea para que compitas en la ficha del producto. Comparte SKU y stock con tu publicación propia; el stock se cuenta una sola vez.</p>` : ''}
+    ${i.repetido ? `<p class="bad" style="margin-top:8px">Este SKU también está en otra publicación tuya (que no es de catálogo). Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
     <div class="list">${i.ls.map(l => `<div class="item"><b>${esc(l.etq || 'Stock')}</b>
       <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponéselo en Mercado Libre y en la app, igual en los dos)'}</small>
       <small>En Mercado Libre: <b style="display:inline">${l.ml}</b>${l.ubic ? ` · contado en el depósito: <b style="display:inline">${l.real}</b>${l.real !== l.ml ? ` <span class="bad">(diferencia ${l.real - l.ml > 0 ? '+' : ''}${l.real - l.ml})</span>` : ' (coincide)'}` : ' · sin ubicación en el depósito'}</small>

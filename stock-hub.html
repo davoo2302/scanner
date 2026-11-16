@@ -203,6 +203,14 @@ button.kpi:hover{border-color:var(--muted)}
 .est.rojo{background:var(--red);color:#fff;border-color:var(--red)}.est.ok{background:var(--green);color:#fff;border-color:var(--green)}
 .vars{grid-column:2/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:14px;border-top:1px dashed var(--line);padding-top:6px}
 .vars .bad{font-weight:600}
+@media (max-width:959px){nav button{font-size:13px;padding:0 2px;line-height:1.15}}
+.act-dia{font-family:var(--cond);font-size:20px;font-weight:700;margin:14px 0 2px;color:var(--muted)}
+.act{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;text-align:left;color:var(--ink);font-weight:400;min-height:0}
+.act.rojo{border-left-color:var(--red)}.act.ok{border-left-color:var(--green)}.act.azul{border-left-color:var(--steel)}
+.act img,.act .ico{width:44px;height:44px;border-radius:6px;object-fit:cover;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:22px}
+.act b{display:block;font-weight:600;line-height:1.25}
+.act .h{font-family:var(--cond);font-size:18px;font-weight:700;color:var(--muted);white-space:nowrap}
+pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:50vh;overflow:auto}
 @media (min-width:960px){
   /* Menú a un costado (como el /admin de zonaflex) */
   nav{top:0;bottom:0;right:auto;width:200px;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
@@ -216,7 +224,8 @@ button.kpi:hover{border-color:var(--muted)}
 @media (min-width:960px){
   header{padding-left:max(16px,calc((100% - 1160px)/2 + 16px));padding-right:max(16px,calc((100% - 1160px)/2 + 16px))}
   main{max-width:1160px}
-  .view:not(#v-inicio):not(#v-inv){max-width:640px;margin:0 auto}
+  .view:not(#v-inicio):not(#v-inv):not(#v-ml){max-width:640px;margin:0 auto}
+  #v-ml{max-width:900px}
   .toprow{flex-wrap:nowrap}
   .btn.cta{flex:0 0 auto;order:0;font-size:17px;padding:0 22px}
   #b-res{max-width:820px}
@@ -242,6 +251,15 @@ button.kpi:hover{border-color:var(--muted)}
     <div class="filtros" id="inv-filtros"></div>
     <input class="search" id="inv-q" placeholder="Buscar por nombre o SKU" autocomplete="off" enterkeyhint="search">
     <div id="inv-list" class="pubs"></div>
+  </section>
+
+  <section id="v-ml" class="view">
+    <div class="inv-top">
+      <h2>Mercado Libre</h2>
+      <button class="btn small ghost" data-act="act-cargar">↻ Ver lo último</button>
+    </div>
+    <p class="muted">Todo lo que Mercado Libre avisa de tu cuenta: ventas, cancelaciones, reclamos, devoluciones, envíos y cambios en tus publicaciones. Se graba solo, al momento.</p>
+    <div id="act-list" class="pubs"></div>
   </section>
 
   <section id="v-inicio" class="view">
@@ -342,6 +360,7 @@ button.kpi:hover{border-color:var(--muted)}
 
 <nav>
   <button data-act="tab" data-v="inv" class="on">Inventario</button>
+  <button data-act="tab" data-v="ml">Mercado Libre</button>
   <button data-act="tab" data-v="inicio">Ubicaciones</button>
   <button data-act="tab" data-v="movs">Movimientos</button>
   <button data-act="tab" data-v="ajustes">Ajustes</button>
@@ -426,7 +445,8 @@ const CONFIG_FIJA = {
 if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa = CONFIG_FIJA.empresa; }
 
 const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null, dep: null,
-  pubs: null, mlRes: null, umbral: 5, invErr: '', invCargando: false };
+  pubs: null, mlRes: null, umbral: 5, invErr: '', invCargando: false,
+  avisos: null, actErr: '', actCargando: false };
 let B = null;
 
 function toast(msg, type) {
@@ -542,6 +562,7 @@ const Local = {
   },
   log(m) { state.movs.unshift(m); this.persist(); refresh(); },
   async cargarPubs() { state.invErr = 'El inventario de Mercado Libre necesita el modo Firebase.'; renderInv(); },
+  async cargarAvisos() { state.actErr = 'Los avisos de Mercado Libre necesitan el modo Firebase.'; renderAct(); },
   guardarUmbral(n) { state.umbral = n; renderInv(); },
   borrar() { localStorage.removeItem(this.key); state.productos = {}; state.stock = {}; state.movs = []; refresh(); }
 };
@@ -613,6 +634,18 @@ const Fb = {
         : 'No se pudo leer el inventario: ' + (e.message || e);
     }
     state.invCargando = false; renderInv();
+  },
+  // Avisos de ML (grabadora): los últimos 150, a pedido (al abrir la sección o tocar "Ver lo último").
+  async cargarAvisos() {
+    state.actCargando = true; renderAct();
+    try {
+      const s = await this.base.collection('avisos').orderBy('recibido', 'desc').limit(150).get({ source: 'server' });
+      state.avisos = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      state.actErr = '';
+    } catch (e) {
+      state.actErr = e.code === 'permission-denied' ? 'No hay permiso para leer los avisos.' : 'No se pudieron leer los avisos: ' + (e.message || e);
+    }
+    state.actCargando = false; renderAct();
   },
   guardarUmbral(n) {
     state.umbral = n; renderInv();
@@ -1977,12 +2010,86 @@ async function invTraer() {
   b.disabled = false; b.textContent = '🔄 Actualizar desde Mercado Libre';
 }
 
+/* ---------- Actividad de Mercado Libre (avisos grabados por mlAvisos) ---------- */
+// Cada aviso trae `detalle` = lo que decía ML de ese recurso en ese momento (texto JSON). Acá se traduce a una frase.
+const ENVIO_TXT = { pending: 'pendiente', handling: 'preparándose', ready_to_ship: 'listo para despachar', shipped: 'en camino',
+  delivered: 'entregado', not_delivered: 'no entregado', cancelled: 'cancelado', to_be_agreed: 'a acordar' };
+const DEV_TXT = { pending: 'esperando que la compradora la despache', label_generated: 'con etiqueta, falta despacharla', shipped: 'en camino de vuelta',
+  delivered: 'te llegó la devolución', cancelled: 'devolución cancelada', closed: 'devolución cerrada', expired: 'devolución vencida', failed: 'devolución fallida' };
+const jsonSeguro = t => { try { return t ? JSON.parse(t) : null; } catch (e) { return null; } };
+const pubDeItem = id => (state.pubs || []).find(p => p.id === id);
+function fraseAviso(a) {
+  const d = jsonSeguro(a.detalle), t = a.topic;
+  const base = { ico: '•', color: '', foto: null, txt: `Aviso de ML (${t})`, sub: a.resource };
+  if (!d) return { ...base, sub: a.detalleError ? 'No se pudo consultar: ' + a.detalleError : 'Consultando a Mercado Libre…' };
+  if (t === 'items' || t === 'stock-locations') {
+    const cl = d.status === 'active' ? 'activa' : d.status === 'paused' ? ((d.sub_status || []).includes('out_of_stock') ? 'sin_stock'
+      : (d.sub_status || []).some(s => s !== 'paused_by_seller') ? 'frenada' : 'pausada') : d.status === 'closed' ? 'cerrada' : 'frenada';
+    return { ico: '🏷️', foto: (d.thumbnail || '').replace('http://', 'https://') || pubDeItem(d.id)?.foto,
+      color: cl === 'activa' ? 'ok' : cl === 'pausada' ? '' : 'rojo',
+      txt: `${d.title || d.id}`, sub: `Publicación: ${(CLASE_TXT[cl] || cl).toLowerCase()} · stock en ML ${d.available_quantity ?? '—'}` };
+  }
+  if (t === 'orders_v2') {
+    const its = (d.order_items || []).map(o => `${o.quantity}× ${o.item.title}`).join(', ');
+    const p = pubDeItem(d.order_items?.[0]?.item?.id);
+    const tags = d.tags || [];
+    const est = d.status === 'cancelled' ? 'Venta cancelada' : d.status === 'paid' ? 'Venta pagada' : `Venta (${d.status})`;
+    const extra = [tags.includes('delivered') && 'entregada', (d.mediations || []).length && 'con reclamo', d.total_amount != null && `$ ${Number(d.total_amount).toLocaleString('es-AR')}`].filter(Boolean).join(' · ');
+    return { ico: '🛒', foto: p?.foto, color: d.status === 'cancelled' || (d.mediations || []).length ? 'rojo' : 'ok', txt: `${est}: ${its}`, sub: `Orden ${d.id}${extra ? ' · ' + extra : ''}` };
+  }
+  if (t === 'shipments') return { ico: '🚚', color: 'azul', txt: `Envío ${ENVIO_TXT[d.status] || d.status}${d.substatus ? ' (' + d.substatus + ')' : ''}`, sub: `Envío ${d.id}${d.order_id ? ' · orden ' + d.order_id : ''}` };
+  if (t === 'flex-handshakes') return { ico: '🤝', color: 'azul', txt: 'Flex: el paquete pasó al chofer', sub: a.resource };
+  if (t === 'post_purchase' || t === 'claims') {
+    const dev = jsonSeguro(a.devolucion), dv = Array.isArray(dev) ? dev[0] : dev;
+    const ml = (d.players || []).some(p => p.role === 'mediator');
+    const que = d.type === 'mediations' ? 'Reclamo' : d.type === 'returns' ? 'Devolución' : `Reclamo (${d.type})`;
+    const estado = d.status === 'opened' ? 'abierto' : d.status === 'closed' ? 'cerrado' : d.status;
+    return { ico: '⚠️', color: d.status === 'closed' ? '' : 'rojo',
+      txt: `${que} ${estado}${ml ? ' · interviene Mercado Libre' : ''}`,
+      sub: `Orden ${d.resource_id || '—'}${dv && dv.status ? ' · ' + (DEV_TXT[dv.status] || 'devolución: ' + dv.status) : ''}${d.resolution ? ' · resuelto: ' + (d.resolution.reason || '') : ''}` };
+  }
+  if (t === 'questions') return { ico: '❓', color: 'azul', txt: `Pregunta: ${(d.text || '').slice(0, 120)}`, sub: d.status === 'ANSWERED' ? 'respondida' : 'sin responder' };
+  return base;
+}
+function renderAct() {
+  const el = $('#act-list'); if (!el) return;
+  if (state.actErr) { el.innerHTML = `<p class="empty bad">${esc(state.actErr)}</p>`; return; }
+  if (!state.avisos) { el.innerHTML = `<p class="empty">${state.actCargando ? 'Cargando…' : ''}</p>`; return; }
+  if (!state.avisos.length) { el.innerHTML = '<p class="empty">Todavía no llegó ningún aviso de Mercado Libre.</p>'; return; }
+  // ML manda varios avisos iguales del mismo recurso: se muestra solo cuando cambia lo que dice.
+  const crono = [...state.avisos].sort((a, b) => a.recibido - b.recibido), ultimo = {}, vis = [];
+  crono.forEach(a => { const f = fraseAviso(a), k = f.txt + '|' + f.sub;
+    if (ultimo[a.resource] !== k) { ultimo[a.resource] = k; vis.push([a, f]); } });
+  vis.reverse();
+  let dia = '';
+  el.innerHTML = vis.map(([a, f]) => {
+    const dd = new Date(a.recibido), d = dd.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const cab = d !== dia ? `<div class="act-dia">${esc(d)}</div>` : ''; dia = d;
+    return `${cab}<button class="act ${f.color}" data-act="act-open" data-id="${esc(a.id)}">
+      ${f.foto ? `<img src="${esc(f.foto)}" alt="" loading="lazy">` : `<span class="ico">${f.ico}</span>`}
+      <span><b>${esc(f.txt)}</b><small>${esc(f.sub)}</small></span>
+      <span class="h">${dd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span></button>`;
+  }).join('') + (state.actCargando ? '<p class="muted">Actualizando…</p>' : '');
+}
+function openAviso(id) {
+  const a = (state.avisos || []).find(x => x.id === id); if (!a) return;
+  detId = null;
+  const f = fraseAviso(a), d = jsonSeguro(a.detalle), dev = jsonSeguro(a.devolucion);
+  openModal(`<h3>${esc(f.txt)}</h3><p class="muted">${esc(f.sub)}</p>
+    <small style="margin-top:8px">Recibido ${new Date(a.recibido).toLocaleString('es-AR')} · tema ${esc(a.topic)} · ${esc(a.resource)}${a.intentos > 1 ? ` · ML lo mandó ${a.intentos} veces` : ''}</small>
+    ${esAdmin() ? `<details style="margin-top:12px"><summary>Dato crudo de Mercado Libre (para revisar)</summary>
+      <pre class="crudo">${esc(JSON.stringify(d, null, 1) || a.detalleError || '—')}</pre>
+      ${dev || a.devolucionError ? `<p style="margin-top:8px"><b>Devolución</b></p><pre class="crudo">${esc(dev ? JSON.stringify(dev, null, 1) : a.devolucionError)}</pre>` : ''}</details>` : ''}
+    <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
+}
+
 /* ---------- navegación y eventos ---------- */
 function tab(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   if (v === 'inicio') renderInicio();
   if (v === 'inv') renderInv();
+  if (v === 'ml') { renderAct(); B.cargarAvisos(); }
   if (v === 'ajustes') { const i = $('#a-poco'); if (i) i.value = state.umbral; }
   window.scrollTo(0, 0);
 }
@@ -2005,6 +2112,8 @@ const A = {
   'sin-ubic': () => openSinUbic(),
   'inv-f': b => { invF = invF === b.dataset.f && b.dataset.f !== 'todos' ? 'todos' : b.dataset.f; renderInv(); },
   'inv-open': b => openPub(b.dataset.id),
+  'act-open': b => openAviso(b.dataset.id),
+  'act-cargar': () => B.cargarAvisos(),
   'inv-traer': () => { if (puede()) invTraer(); },
   'poco-save': () => {
     if (!esAdmin()) return;

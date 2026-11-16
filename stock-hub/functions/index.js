@@ -188,8 +188,16 @@ exports.mlAvisoDetalle = onDocumentCreated({
     if (!ml.rutaSegura(a.resource)) return ref.update({ detalleError: 'ruta no válida' });
     const cta = await cuentas().doc(`${ev.params.emp}__${a.userId}`).get();
     if (!cta.exists) return ref.update({ detalleError: 'esa cuenta de ML no está conectada' });
-    const d = await ml.get(a.resource, await tokenValido(cta));
-    await ref.update({ detalle: JSON.stringify(d).slice(0, 800000), detalleEn: Date.now() });
+    const token = await tokenValido(cta);
+    const d = await ml.get(a.resource, token);
+    const extra = {};
+    // Reclamo: también la ficha de la devolución (puede no existir todavía: se anota el motivo y listo).
+    const rd = ml.rutaDevolucion(a.resource);
+    if (rd) {
+      try { extra.devolucion = JSON.stringify(await ml.get(rd, token)).slice(0, 200000); }
+      catch (e) { extra.devolucionError = String(e.message || e).slice(0, 300); }
+    }
+    await ref.update({ detalle: JSON.stringify(d).slice(0, 800000), detalleEn: Date.now(), ...extra });
   } catch (e) {
     await ref.update({ detalleError: String(e.message || e).slice(0, 500), detalleEn: Date.now() });
   }

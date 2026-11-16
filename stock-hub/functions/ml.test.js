@@ -129,6 +129,13 @@ test('grabadora: solo consulta rutas de la API de ML', () => {
   assert.deepStrictEqual(['/orders/1', '/items/MLA1', 'https://x.com/a', '/a/../b', 'orders/1'].map(rutaSegura), [true, true, false, false, false]);
 });
 
+test('grabadora: de un aviso de reclamo saca la ruta de su devolución', () => {
+  const { rutaDevolucion } = require('./ml');
+  assert.strictEqual(rutaDevolucion('/post-purchase/v1/claims/5613920395'), '/post-purchase/v2/claims/5613920395/returns');
+  assert.strictEqual(rutaDevolucion('/orders/1'), null);
+  assert.strictEqual(rutaDevolucion('/post-purchase/v1/claims/5/x'), null);
+});
+
 const { productosNuevos } = require('./ml');
 
 test('productosNuevos: un producto por SKU, variaciones, sin SKU, y no pisa lo que ya existe', () => {

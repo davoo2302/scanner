@@ -238,11 +238,17 @@ function avisoValido(b, clientId) {
   return Boolean(b && typeof b === 'object' && String(b.application_id ?? '') === String(clientId)
     && typeof b.resource === 'string' && b.topic && b.user_id != null);
 }
+// Si el aviso es de un reclamo, la devolución vive aparte: /post-purchase/v2/claims/{id}/returns
+// (estado de la devolución, envío de vuelta, fechas). Devuelve esa ruta o null.
+function rutaDevolucion(resource) {
+  const m = /^\/post-purchase\/v\d+\/claims\/(\d+)$/.exec(String(resource || ''));
+  return m ? `/post-purchase/v2/claims/${m[1]}/returns` : null;
+}
 // Solo rutas de la API de ML (nada de URLs completas ni "..").
 const rutaSegura = (r) => typeof r === 'string' && r.startsWith('/') && !r.includes('..') && !r.includes('://') && r.length < 300;
 
 module.exports = {
-  get, idAviso, avisoValido, rutaSegura,
+  get, idAviso, avisoValido, rutaSegura, rutaDevolucion,
   urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras, productosNuevos,
   clasificar, fichaPublicacion, resumir,
 };

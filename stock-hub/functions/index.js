@@ -39,7 +39,7 @@ async function exigirRol(req, roles) {
 }
 
 // 1) El administrador pide la URL para conectar una cuenta de ML.
-exports.mlConectar = onCall({ secrets: [ML_CLIENT_ID] }, async (req) => {
+exports.mlConectar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID] }, async (req) => {
   const yo = await exigirRol(req, ['admin']);
   const nonce = crypto.randomBytes(24).toString('hex');
   await estados().doc(nonce).set({ email: yo.email, vence: Date.now() + 10 * 60 * 1000 });
@@ -47,7 +47,7 @@ exports.mlConectar = onCall({ secrets: [ML_CLIENT_ID] }, async (req) => {
 });
 
 // 2) ML vuelve acá con ?code=…&state=…. El state dice quién pidió la conexión (de un solo uso, vence en 10 min).
-exports.mlCallback = onRequest({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET] }, async (req, res) => {
+exports.mlCallback = onRequest({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET] }, async (req, res) => {
   try {
     const { code, state } = req.query;
     if (!code || !state) return res.status(400).send('Faltan datos.');
@@ -114,7 +114,7 @@ const leerProductos = async () =>
   (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
 
 // 3) Trae las publicaciones de ML y completa el campo `ml` de cada producto que YA existe (por SKU).
-exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+exports.mlSincronizar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
   const yo = await exigirRol(req, ['admin', 'empleado']);
   const { items, cuentas: n } = await traerItems();
   const r = await completarML(items, await leerProductos());
@@ -126,7 +126,7 @@ exports.mlSincronizar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], time
 
 // 4) IMPORTAR: crea un producto por cada publicación (nombre, SKU, foto) que todavía no esté en la app y le pone el stock
 // de ML. Nunca pisa productos existentes (ubicaciones, conteos, códigos): se puede apretar las veces que haga falta.
-exports.mlImportar = onCall({ secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
+exports.mlImportar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
   const yo = await exigirRol(req, ['admin']);
   const { items, cuentas: n } = await traerItems();
   const existentes = await leerProductos();

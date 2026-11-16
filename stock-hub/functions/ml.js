@@ -223,7 +223,24 @@ function productosNuevos(items, existentes, ahora) {
   return { nuevos: [...nuevos.values()], omitidas, yaExistian, sinSku };
 }
 
+// ---------- Grabadora de avisos ----------
+// ML manda un POST por cada cosa que pasa: { resource: '/orders/123', user_id, topic, application_id, attempts, sent, received }.
+// Se guarda TAL CUAL, sin decidir nada. Si ML reintenta (no respondimos a tiempo) cae en el mismo id: no se duplica.
+function idAviso(b) {
+  const clave = `${b.topic}|${b.resource}|${b.sent || ''}`;
+  if (!b.sent) return null; // sin fecha de envío no se puede reconocer el reintento: id automático
+  let h = 2166136261; for (const c of clave) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return `${String(b.topic || 'x').replace(/[^a-z0-9_]/gi, '')}_${(h >>> 0).toString(36)}_${String(b.sent).replace(/[^0-9]/g, '').slice(0, 17)}`;
+}
+function avisoValido(b, clientId) {
+  return Boolean(b && typeof b === 'object' && String(b.application_id ?? '') === String(clientId)
+    && typeof b.resource === 'string' && b.topic && b.user_id != null);
+}
+// Solo rutas de la API de ML (nada de URLs completas ni "..").
+const rutaSegura = (r) => typeof r === 'string' && r.startsWith('/') && !r.includes('..') && !r.includes('://') && r.length < 300;
+
 module.exports = {
+  get, idAviso, avisoValido, rutaSegura,
   urlAutorizacion, canjearCodigo, renovar, listarIds, detalle, normalizar, norm, stockPorSku, armarEscrituras, productosNuevos,
   clasificar, fichaPublicacion, resumir,
 };

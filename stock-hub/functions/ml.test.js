@@ -107,6 +107,28 @@ test('resumir: catálogo + propia con el mismo SKU cuentan una vez; variaciones 
   assert.deepStrictEqual([r.clases.activa, r.productos, r.unidades, r.poco], [3, 3, 10, 2]);
 });
 
+const { idAviso, avisoValido, rutaSegura } = require('./ml');
+
+test('grabadora: solo acepta avisos de nuestra app y con los datos mínimos', () => {
+  const b = { resource: '/orders/2000001', user_id: 123, topic: 'orders_v2', application_id: 3981023890865971, attempts: 1, sent: '2026-11-16T20:00:00.123Z' };
+  assert.strictEqual(avisoValido(b, '3981023890865971'), true);
+  assert.strictEqual(avisoValido({ ...b, application_id: 999 }, '3981023890865971'), false);
+  assert.strictEqual(avisoValido({ ...b, resource: undefined }, '3981023890865971'), false);
+  assert.strictEqual(avisoValido(null, '1'), false);
+});
+
+test('grabadora: un reintento de ML cae en el mismo id; otro aviso, en otro', () => {
+  const b = { resource: '/orders/2000001', topic: 'orders_v2', sent: '2026-11-16T20:00:00.123Z', attempts: 1 };
+  assert.strictEqual(idAviso(b), idAviso({ ...b, attempts: 3 }));
+  assert.notStrictEqual(idAviso(b), idAviso({ ...b, resource: '/orders/2000002' }));
+  assert.match(idAviso(b), /^orders_v2_/);
+  assert.strictEqual(idAviso({ ...b, sent: undefined }), null);
+});
+
+test('grabadora: solo consulta rutas de la API de ML', () => {
+  assert.deepStrictEqual(['/orders/1', '/items/MLA1', 'https://x.com/a', '/a/../b', 'orders/1'].map(rutaSegura), [true, true, false, false, false]);
+});
+
 const { productosNuevos } = require('./ml');
 
 test('productosNuevos: un producto por SKU, variaciones, sin SKU, y no pisa lo que ya existe', () => {

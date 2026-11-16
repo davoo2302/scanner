@@ -42,6 +42,11 @@ service cloud.firestore {
       allow read: if miembro(emp);
       allow write: if false;
     }
+    // Grabadora: cada aviso de ML tal cual. Lo escriben SOLO las funciones (mlAvisos / mlAvisoDetalle).
+    match /empresas/{emp}/avisos/{id} {
+      allow read: if miembro(emp);
+      allow write: if false;
+    }
     match /empresas/{emp}/stock/{id} {
       allow read: if miembro(emp);
       allow create, update, delete: if escribe(emp);

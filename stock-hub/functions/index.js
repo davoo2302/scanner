@@ -1,4 +1,5 @@
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
@@ -151,6 +152,47 @@ exports.mlSincronizar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_C
     actualizados: r.actualizados, sinProductoTotal: r.sinProducto.length, sinProducto: r.sinProducto.slice(0, 20), por: yo.nombre,
     resumen,
   };
+});
+
+// 5) GRABADORA DE AVISOS. URL que se carga en la app de ML como "URL de notificaciones".
+// Guarda cada aviso tal cual en empresas/{EMPRESA}/avisos y responde enseguida (ML pide respuesta en menos de 500 ms;
+// si no, reintenta). NO decide nada ni cambia stock: es para mirar qué manda ML en cada situación.
+// Solo acepta avisos de NUESTRA app de ML (application_id = ML_CLIENT_ID); el resto se ignora sin guardar.
+exports.mlAvisos = onRequest({ invoker: 'public', secrets: [ML_CLIENT_ID], memory: '256MiB', maxInstances: 5 }, async (req, res) => {
+  try {
+    const b = req.body;
+    if (req.method !== 'POST' || !ml.avisoValido(b, ML_CLIENT_ID.value())) return res.status(200).send('ok');
+    const doc = {
+      topic: String(b.topic), resource: b.resource, userId: String(b.user_id),
+      intentos: b.attempts ?? null, enviado: b.sent ?? null, recibido: Date.now(), crudo: JSON.stringify(b).slice(0, 5000),
+    };
+    const id = ml.idAviso(b);
+    const col = base().collection('avisos');
+    if (id) await col.doc(id).create(doc).catch((e) => { if (e.code !== 6) throw e; }); // 6 = ya existía (reintento)
+    else await col.add(doc);
+    res.status(200).send('ok');
+  } catch (e) {
+    console.error('aviso', e);
+    res.status(500).send('error'); // ML reintenta más tarde
+  }
+});
+
+// 6) Cuando entra un aviso, le pregunta a ML qué dice ESE recurso en ese momento (la orden, el envío, la publicación)
+// y lo anota en el mismo aviso (`detalle`, como texto). Corre en la región de la base (southamerica-east1).
+exports.mlAvisoDetalle = onDocumentCreated({
+  document: 'empresas/{emp}/avisos/{id}', region: 'southamerica-east1', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], memory: '256MiB',
+}, async (ev) => {
+  const a = ev.data && ev.data.data(); if (!a) return;
+  const ref = ev.data.ref;
+  try {
+    if (!ml.rutaSegura(a.resource)) return ref.update({ detalleError: 'ruta no válida' });
+    const cta = await cuentas().doc(`${ev.params.emp}__${a.userId}`).get();
+    if (!cta.exists) return ref.update({ detalleError: 'esa cuenta de ML no está conectada' });
+    const d = await ml.get(a.resource, await tokenValido(cta));
+    await ref.update({ detalle: JSON.stringify(d).slice(0, 800000), detalleEn: Date.now() });
+  } catch (e) {
+    await ref.update({ detalleError: String(e.message || e).slice(0, 500), detalleEn: Date.now() });
+  }
 });
 
 // 4) IMPORTAR: crea un producto por cada publicación (nombre, SKU, foto) que todavía no esté en la app y le pone el stock

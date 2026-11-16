@@ -117,22 +117,29 @@ function fichaPublicacion(it, ahora) {
 }
 
 // Números del panel: cuántas publicaciones hay de cada clase, unidades a la venta, y el detalle crudo
-// estado/motivo de ML (para verificar qué manda de verdad). `poco` = activas con stock <= umbral.
+// estado/motivo de ML (para verificar qué manda de verdad).
+// Unidades y "poco stock" se cuentan POR PRODUCTO (SKU), no por publicación: la de catálogo y la propia con el mismo SKU
+// muestran el mismo stock físico, sumarlas lo contaría dos veces. Se toma el mayor (igual que stockPorSku).
+// Variación sin SKU o publicación sin SKU = producto propio. `productos` = productos activos distintos.
 function resumir(items, umbral = 5) {
   const clases = { activa: 0, sin_stock: 0, pausada: 0, frenada: 0, cerrada: 0, otro: 0 };
   const crudo = {};
-  let unidades = 0, poco = 0, full = 0;
+  const porProducto = new Map();
+  const anotar = (clave, n) => { if (!porProducto.has(clave) || n > porProducto.get(clave)) porProducto.set(clave, n); };
+  let full = 0;
   for (const it of items) {
     clases[it.clase] = (clases[it.clase] || 0) + 1;
     const k = `${it.estado}${it.subEstado.length ? ' / ' + it.subEstado.join(',') : ''}`;
     crudo[k] = (crudo[k] || 0) + 1;
-    if (it.full) full++; // el stock de Full está en el depósito de ML: no suma a tus unidades ni a "poco stock"
-    else if (it.clase === 'activa') {
-      unidades += it.stock;
-      if (it.stock <= umbral) poco++;
-    }
+    if (it.full) { full++; continue; } // el stock de Full está en el depósito de ML: no suma a tus unidades ni a "poco stock"
+    if (it.clase !== 'activa') continue;
+    if (it.variaciones && it.variaciones.length) {
+      it.variaciones.forEach((v) => anotar(norm(v.sku) || `pub:${it.id}:${v.id}`, v.stock));
+    } else anotar(norm(it.sku) || `pub:${it.id}`, it.stock);
   }
-  return { total: items.length, clases, poco, umbral, unidades, full, crudo };
+  let unidades = 0, poco = 0;
+  for (const n of porProducto.values()) { unidades += n; if (n <= umbral) poco++; }
+  return { total: items.length, clases, productos: porProducto.size, poco, umbral, unidades, full, crudo };
 }
 
 // Igual que la pantalla (stock-hub.html): sin tildes, minúsculas, espacios simples.

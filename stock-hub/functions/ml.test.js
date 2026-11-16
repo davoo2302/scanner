@@ -84,16 +84,27 @@ test('fichaPublicacion no tiene campos undefined', () => {
 
 test('resumir: cuenta clases, poco stock (<= umbral, solo activas), unidades y detalle crudo', () => {
   const items = [
-    { estado: 'active', subEstado: [], stock: 10 },
-    { estado: 'active', subEstado: [], stock: 5 },
-    { estado: 'active', subEstado: [], stock: 0, full: true },
-    { estado: 'paused', subEstado: ['out_of_stock'], stock: 0 },
-    { estado: 'paused', subEstado: [], stock: 3 },
-  ].map((it) => ({ ...it, clase: clasificar(it.estado, it.subEstado) }));
+    { id: 'A', sku: 'X-1', estado: 'active', subEstado: [], stock: 10 },
+    { id: 'B', sku: null, estado: 'active', subEstado: [], stock: 5 },
+    { id: 'C', sku: 'F', estado: 'active', subEstado: [], stock: 0, full: true },
+    { id: 'D', sku: 'Y', estado: 'paused', subEstado: ['out_of_stock'], stock: 0 },
+    { id: 'E', sku: 'Z', estado: 'paused', subEstado: [], stock: 3 },
+  ].map((it) => ({ ...it, variaciones: [], clase: clasificar(it.estado, it.subEstado) }));
   const r = resumir(items, 5);
-  assert.deepStrictEqual([r.total, r.clases.activa, r.clases.sin_stock, r.clases.pausada, r.poco, r.unidades, r.full],
-    [5, 3, 1, 1, 1, 15, 1]);
+  assert.deepStrictEqual([r.total, r.clases.activa, r.clases.sin_stock, r.clases.pausada, r.productos, r.poco, r.unidades, r.full],
+    [5, 3, 1, 1, 2, 1, 15, 1]);
   assert.deepStrictEqual(r.crudo, { active: 3, 'paused / out_of_stock': 1, paused: 1 });
+});
+
+test('resumir: catálogo + propia con el mismo SKU cuentan una vez; variaciones por separado', () => {
+  const items = [
+    { id: 'P1', sku: 'ALARGUE 7 TOMAS', estado: 'active', subEstado: [], stock: 2, variaciones: [] },
+    { id: 'P2', sku: 'alargue 7 tomas', estado: 'active', subEstado: [], stock: 2, variaciones: [] }, // catálogo
+    { id: 'P3', sku: null, estado: 'active', subEstado: [], stock: 8, variaciones: [
+      { id: 1, sku: null, stock: 3 }, { id: 2, sku: null, stock: 5 }] },
+  ].map((it) => ({ ...it, clase: clasificar(it.estado, it.subEstado) }));
+  const r = resumir(items, 3);
+  assert.deepStrictEqual([r.clases.activa, r.productos, r.unidades, r.poco], [3, 3, 10, 2]);
 });
 
 const { productosNuevos } = require('./ml');

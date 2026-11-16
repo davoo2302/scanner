@@ -53,8 +53,10 @@ async function listarIds(mlUserId, token) {
 }
 
 // Detalle de hasta 20 publicaciones por llamada.
+// include_attributes=all: sin esto ML NO manda los atributos de cada variante (ahí está el SKU de la variante).
+// Visto el 2026-11-16: el reposamuñecas tiene SKU en sus 4 variantes en ML y llegaban vacíos.
 async function detalle(ids, token) {
-  const filas = await get(`/items?ids=${ids.join(',')}`, token);
+  const filas = await get(`/items?ids=${ids.join(',')}&include_attributes=all`, token);
   return filas.filter((f) => f.code === 200).map((f) => f.body);
 }
 

@@ -141,14 +141,28 @@ async function guardarPublicaciones(items) {
 const leerProductos = async () =>
   (await base().collection('productos').select('skus').get()).docs.map((d) => ({ id: d.id, skus: d.get('skus') || [] }));
 
+// Productos que se crearon sin SKU y ahora ML ya trae el SKU de su publicación/variante: se les pone.
+// Corre en "Actualizar" y en "Traer publicaciones nuevas" (no hace falta saber cuál tocar). Devuelve los productos con el SKU puesto.
+async function completarSkus(items, prods) {
+  const { completar } = ml.productosNuevos(items, prods, Date.now());
+  for (let i = 0; i < completar.length; i += 400) {
+    const b = db.batch();
+    completar.slice(i, i + 400).forEach((c) => b.set(base().collection('productos').doc(c.id), { skus: [c.sku], sinSku: false }, { merge: true }));
+    await b.commit();
+  }
+  const conSku = new Map(completar.map((c) => [c.id, [c.sku]]));
+  return { prods: prods.map((p) => ({ id: p.id, skus: conSku.get(p.id) || p.skus })), completados: completar.length };
+}
+
 // 3) Trae las publicaciones de ML y completa el campo `ml` de cada producto que YA existe (por SKU).
 exports.mlSincronizar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIENT_SECRET], timeoutSeconds: 300, memory: '512MiB' }, async (req) => {
   const yo = await exigirRol(req, ['admin', 'empleado']);
   const { items, cuentas: n } = await traerItems();
   const resumen = await guardarPublicaciones(items);
-  const r = await completarML(items, await leerProductos());
+  const { prods, completados } = await completarSkus(items, await leerProductos());
+  const r = await completarML(items, prods);
   return {
-    cuentas: n, publicaciones: items.length, omitidas: r.omitidas, sinSku: r.sinSku,
+    cuentas: n, publicaciones: items.length, omitidas: r.omitidas, sinSku: r.sinSku, completados,
     actualizados: r.actualizados, sinProductoTotal: r.sinProducto.length, sinProducto: r.sinProducto.slice(0, 20), por: yo.nombre,
     resumen,
   };
@@ -210,22 +224,17 @@ exports.mlImportar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIE
   const { items, cuentas: n } = await traerItems();
   const resumen = await guardarPublicaciones(items);
   const existentes = await leerProductos();
-  const { nuevos, completar, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, existentes, Date.now());
+  // Primero se completan los SKU que faltan (así no se crean productos repetidos), después se crean los nuevos.
+  const { prods, completados } = await completarSkus(items, existentes);
+  const { nuevos, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, prods, Date.now());
   for (let i = 0; i < nuevos.length; i += 400) {
     const b = db.batch();
     nuevos.slice(i, i + 400).forEach((p) => b.create(base().collection('productos').doc(p.id), p));
     await b.commit();
   }
-  // Productos que se habían creado sin SKU y ahora ML trae el SKU de su variante: se les pone (no se duplican).
-  for (let i = 0; i < completar.length; i += 400) {
-    const b = db.batch();
-    completar.slice(i, i + 400).forEach((c) => b.set(base().collection('productos').doc(c.id), { skus: [c.sku], sinSku: false }, { merge: true }));
-    await b.commit();
-  }
-  const conSku = new Map(completar.map((c) => [c.id, [c.sku]]));
-  const r = await completarML(items, [...existentes.map((p) => ({ id: p.id, skus: conSku.get(p.id) || p.skus })), ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
+  const r = await completarML(items, [...prods, ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
   return {
-    cuentas: n, publicaciones: items.length, creados: nuevos.length, completados: completar.length, yaExistian, omitidas, sinSku,
+    cuentas: n, publicaciones: items.length, creados: nuevos.length, completados, yaExistian, omitidas, sinSku,
     conStockML: r.actualizados, por: yo.nombre, resumen,
   };
 });

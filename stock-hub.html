@@ -186,6 +186,12 @@ button.kpi:hover{border-color:var(--muted)}
 .pk b{display:block;font-family:var(--cond);font-size:38px;line-height:1.05;font-weight:700}
 .pk.ok{border-left-color:var(--green)}.pk.rojo{border-left-color:var(--red)}.pk.rojo b{color:var(--red)}.pk.gris{border-left-color:var(--muted)}
 .pk.on{outline:3px solid var(--yellow);outline-offset:0}
+#inv-revisar h2{font-size:17px;margin:0 0 8px}
+.revs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.rev{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--green);border-radius:8px;padding:8px 10px;min-height:0;color:var(--ink);font-weight:400}
+.rev b{font-family:var(--cond);font-size:28px;line-height:1;min-width:30px}
+.rev.mal{border-left-color:var(--red)}.rev.mal b{color:var(--red)}
+.rev.on{outline:3px solid var(--yellow)}
 .filtros{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
 .filtros button{min-height:40px;padding:0 12px;border-radius:20px;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);font-size:15px;font-weight:500}
 .filtros button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -254,6 +260,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
     </div>
     <p class="muted" id="inv-fecha"></p>
     <div id="inv-panel" class="panel" style="margin-top:10px"></div>
+    <div id="inv-revisar" class="card" style="display:none"></div>
     <div class="filtros" id="inv-filtros"></div>
     <input class="search" id="inv-q" placeholder="Buscar por nombre o SKU" autocomplete="off" enterkeyhint="search">
     <div id="inv-list" class="pubs"></div>
@@ -934,6 +941,7 @@ async function mlTraer() {
   try {
     const r = await mlLlamar('mlSincronizar');
     res.textContent = `Listo: ${r.publicaciones} publicaciones leídas, ${r.actualizados} productos actualizados.`
+      + (r.completados ? ` A ${r.completados} productos que no tenían SKU se les puso el de Mercado Libre.` : '')
       + (r.omitidas ? ` Sin contar (pausadas o en Full): ${r.omitidas}.` : '')
       + (r.sinSku ? ` Sin SKU: ${r.sinSku}.` : '')
       + (r.sinProductoTotal ? ` SKU de ML que no están en el depósito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? '…' : '') + ')' : ''}.` : '');
@@ -1773,12 +1781,23 @@ function lineasPub(p) {
     return { ...l, pid: pr ? pr.id : null, real: ub.reduce((a, s) => a + (s.cantidad || 0), 0), ubic: ub.length };
   });
 }
+// Cuántas veces aparece cada SKU entre TODAS las publicaciones y variantes (para detectar repetidos).
+let skuCache = { pubs: null, m: null };
+function skuCuenta() {
+  if (skuCache.pubs === state.pubs) return skuCache.m;
+  const m = new Map();
+  (state.pubs || []).forEach(p => ((p.variaciones || []).length ? p.variaciones.map(v => v.sku) : [p.sku])
+    .forEach(s => { const k = norm(s); if (k) m.set(k, (m.get(k) || 0) + 1); }));
+  skuCache = { pubs: state.pubs, m };
+  return m;
+}
 function infoPub(p) {
   const ls = lineasPub(p), activa = p.clase === 'activa' && !p.full;
   return {
     ls,
     poco: activa && ls.some(l => l.ml <= state.umbral),
     sinSku: ls.some(l => !l.sku),
+    repetido: ls.some(l => l.sku && (skuCuenta().get(norm(l.sku)) || 0) > 1),
     sinUbic: ls.some(l => !l.ubic),
     dif: ls.some(l => l.ubic && l.real !== l.ml),
   };
@@ -1786,7 +1805,7 @@ function infoPub(p) {
 const INV_F = {
   todos: () => true, activa: (p) => p.clase === 'activa', poco: (p, i) => i.poco, sin_stock: (p) => p.clase === 'sin_stock',
   pausada: (p) => p.clase === 'pausada', frenada: (p) => p.clase === 'frenada' || p.clase === 'otro', cerrada: (p) => p.clase === 'cerrada',
-  sinsku: (p, i) => i.sinSku, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
+  sinsku: (p, i) => i.sinSku, repetido: (p, i) => i.repetido, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
 };
 // Qué tan grave es, para ordenar la lista: lo rojo primero.
 const gravedad = (p, i) => p.clase === 'frenada' || p.clase === 'otro' ? 0 : p.clase === 'sin_stock' ? 1 : i.poco ? 2 : p.clase === 'pausada' ? 3 : p.clase === 'cerrada' ? 5 : 4;
@@ -1798,6 +1817,7 @@ function renderInv() {
   paintMLEstado();
   const el = $('#inv-list'); if (!el) return;
   const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
+  $('#inv-revisar').style.display = 'none';
   if (state.invErr) { fecha.textContent = ''; panel.innerHTML = ''; fil.innerHTML = ''; el.innerHTML = `<p class="empty bad">${esc(state.invErr)}</p>`; return; }
   if (!state.pubs) { fecha.textContent = state.invCargando ? 'Cargando…' : ''; panel.innerHTML = fil.innerHTML = el.innerHTML = ''; return; }
   const todas = state.pubs.map(p => [p, infoPub(p)]);
@@ -1813,7 +1833,17 @@ function renderInv() {
     return `<button class="pk ${n ? cls : 'ok'} ${invF === f ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
   panel.innerHTML = pk('todos', 'Publicaciones', 'gris') + pk('activa', 'Activas', 'ok') + pk('poco', `Poco stock (${state.umbral} o menos)`, 'rojo')
     + pk('sin_stock', 'Sin stock', 'rojo') + pk('pausada', 'Pausadas por vos', 'gris') + pk('frenada', 'Frenadas por ML', 'rojo');
-  const extra = [['sinsku', 'Sin SKU'], ['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
+  // "Para revisar": lo que hay que arreglar en las publicaciones. Siempre visible (en verde si está todo bien).
+  const prodSin = prods().filter(p => !(p.skus || []).length).length;
+  const rev = (f, n, txt, ayuda) => `<button class="rev ${n ? 'mal' : ''} ${invF === f ? 'on' : ''}" data-act="${f === 'prodsin' ? 'prod-sinsku' : 'inv-f'}" data-f="${f}">
+    <b>${n || '✓'}</b><span><span style="font-weight:600">${txt}</span><small>${ayuda}</small></span></button>`;
+  const rv = $('#inv-revisar'); rv.style.display = '';
+  rv.innerHTML = `<h2>Para revisar</h2><div class="revs">
+    ${rev('sinsku', cuenta('sinsku'), 'Publicaciones sin SKU', 'Ponéselo en Mercado Libre (en cada variante) y tocá Actualizar.')}
+    ${rev('repetido', cuenta('repetido'), 'Con SKU repetido', 'Normal si es tu publicación + la de catálogo. Si son productos distintos, poneles SKU distinto.')}
+    ${rev('prodsin', prodSin, 'Productos de la app sin SKU', 'Se completan solos al tocar Actualizar, si la publicación ya tiene SKU.')}
+  </div>`;
+  const extra = [['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
     .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
   fil.innerHTML = extra.map(([f, t, n]) => `<button class="${invF === f ? 'on' : ''}" data-act="inv-f" data-f="${f}">${t}<span>${n}</span></button>`).join('')
     + (invF !== 'todos' ? '<button data-act="inv-f" data-f="todos">✕ Ver todas</button>' : '');
@@ -1832,7 +1862,7 @@ function renderInv() {
       ${p.foto ? `<img src="${esc(p.foto)}" alt="" loading="lazy">` : '<span class="sinfoto"></span>'}
       <span><span class="t">${esc(p.titulo)}</span>
         <small>${varios ? `${i.ls.length} variantes` : esc(p.sku || 'Sin SKU')}</small>
-        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est">Sin SKU</span>' : ''}
+        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est rojo">Sin SKU</span>' : ''}${i.repetido ? '<span class="est">SKU repetido</span>' : ''}
         ${p.clase !== 'activa' && motivoPub(p) ? `<small>${esc(motivoPub(p))}</small>` : ''}</span>
       <span class="st"><small>en ML</small><b class="${i.poco || p.clase === 'sin_stock' ? 'bad' : ''}">${stock}</b>
         ${!varios ? `<small>${conts.length ? `contado ${conts[0].real}` : 'sin contar'}</small>` : ''}</span>
@@ -1847,6 +1877,7 @@ function openPub(id) {
   openModal(`<h3>${esc(p.titulo)}</h3>
     <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
     ${mot ? `<p style="margin-top:8px">${esc(mot)}</p>` : ''}
+    ${i.repetido ? `<p class="muted" style="margin-top:8px">Este SKU también está en otra publicación. Es normal si es la misma mercadería (tu publicación + la de catálogo): el stock se cuenta una sola vez. Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
     <div class="list">${i.ls.map(l => `<div class="item"><b>${esc(l.etq || 'Stock')}</b>
       <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponéselo en Mercado Libre y en la app, igual en los dos)'}</small>
       <small>En Mercado Libre: <b style="display:inline">${l.ml}</b>${l.ubic ? ` · contado en el depósito: <b style="display:inline">${l.real}</b>${l.real !== l.ml ? ` <span class="bad">(diferencia ${l.real - l.ml > 0 ? '+' : ''}${l.real - l.ml})</span>` : ' (coincide)'}` : ' · sin ubicación en el depósito'}</small>
@@ -1861,8 +1892,8 @@ async function invTraer() {
   b.disabled = true; b.textContent = 'Actualizando… (puede tardar un minuto)';
   try {
     const r = await mlLlamar('mlSincronizar');
-    await B.cargarPubs();
-    toast(`Listo: ${r.publicaciones} publicaciones actualizadas`);
+    await Promise.all([B.cargarPubs(), B.refrescarProductos()]);
+    toast(`Listo: ${r.publicaciones} publicaciones actualizadas` + (r.completados ? `. A ${r.completados} productos se les puso el SKU de Mercado Libre` : ''));
   } catch (e) { toast('No se pudo actualizar: ' + (e.message || e), 'err'); }
   b.disabled = false; b.textContent = '🔄 Actualizar desde Mercado Libre';
 }
@@ -1969,6 +2000,14 @@ const A = {
   'sin-ubic': () => openSinUbic(),
   'inv-f': b => { invF = invF === b.dataset.f && b.dataset.f !== 'todos' ? 'todos' : b.dataset.f; renderInv(); },
   'inv-open': b => openPub(b.dataset.id),
+  'prod-sinsku': () => {
+    detId = null;
+    const l = prods().filter(p => !(p.skus || []).length).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    openModal(`<h3>Productos de la app sin SKU (${l.length})</h3>
+      <p class="muted">Sin SKU, la app no puede unir el producto con su publicación de Mercado Libre (ni su stock). Si la publicación ya tiene SKU en Mercado Libre, se completa solo al tocar "Actualizar desde Mercado Libre". Si no, ponéselo en Mercado Libre primero.</p>
+      <div class="list">${l.length ? l.slice(0, 300).map(p => itemHTML(p, 'd-open')).join('') : '<p class="empty">Todos los productos tienen SKU.</p>'}</div>
+      <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
+  },
   'act-open': b => openAviso(b.dataset.id),
   'act-cargar': () => B.cargarAvisos(),
   'inv-traer': () => { if (puede()) invTraer(); },

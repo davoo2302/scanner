@@ -157,3 +157,16 @@ test('productosNuevos: un producto por SKU, variaciones, sin SKU, y no pisa lo q
   const otra = productosNuevos(items, [{ id: 'p1', skus: ['taz'] }, ...r.nuevos.map((p) => ({ id: p.id, skus: p.skus }))], 456);
   assert.strictEqual(otra.nuevos.length, 0);
 });
+
+test('productosNuevos: variante creada sin SKU y ahora con SKU → se completa, no se duplica', () => {
+  const sinSku = [{ id: 'MLA9', titulo: 'Vaso', sku: null, estado: 'active', full: false, variaciones: [
+    { id: 11, sku: null, atributos: 'Negro' }, { id: 12, sku: null, atributos: 'Blanco' }] }];
+  const primera = productosNuevos(sinSku, [], 1);
+  assert.strictEqual(primera.nuevos.length, 2);
+  const existentes = primera.nuevos.map((p) => ({ id: p.id, skus: p.skus }));
+  const conSku = [{ ...sinSku[0], variaciones: [{ id: 11, sku: 'vaso negro', atributos: 'Negro' }, { id: 12, sku: 'vaso blanco', atributos: 'Blanco' }] }];
+  const r = productosNuevos(conSku, existentes, 2);
+  assert.strictEqual(r.nuevos.length, 0);
+  assert.deepStrictEqual(r.completar.map((c) => c.sku).sort(), ['vaso blanco', 'vaso negro']);
+  assert.deepStrictEqual(r.completar.map((c) => c.id).sort(), existentes.map((p) => p.id).sort());
+});

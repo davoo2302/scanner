@@ -192,11 +192,16 @@ function armarEscrituras(productos, mapa) {
 const slug = (s) => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
 
+// Id que se le dio a un producto creado SIN SKU (por publicación + variante). Sirve para encontrarlo después.
+const idSinSku = (it, nombre, extraId) => 'ml_' + slug(it.id || nombre) + (extraId ? '-' + extraId : '') + '_' + hash(String(it.id || nombre) + extraId);
+
 function productosNuevos(items, existentes, ahora) {
   const ids = new Set(existentes.map((p) => p.id));
+  const sinSkuYa = new Set(existentes.filter((p) => !(p.skus || []).length).map((p) => p.id));
   const skusYa = new Set();
   existentes.forEach((p) => (p.skus || []).forEach((s) => skusYa.add(norm(s))));
   const nuevos = new Map();
+  const completar = []; // productos que se crearon sin SKU y ahora ML ya trae el SKU: se les pone, no se duplican
   let omitidas = 0, yaExistian = 0, sinSku = 0;
 
   const agregar = (sku, nombre, it, extraId) => {
@@ -204,10 +209,12 @@ function productosNuevos(items, existentes, ahora) {
     let id;
     if (k) {
       if (skusYa.has(k)) { yaExistian++; return; }
+      const viejo = idSinSku(it, nombre, extraId);
+      if (sinSkuYa.has(viejo)) { completar.push({ id: viejo, sku }); sinSkuYa.delete(viejo); skusYa.add(k); return; }
       id = 'ml_' + slug(sku) + '_' + hash(k); // el hash evita que dos SKU distintos choquen al limpiarlos
       if (nuevos.has(id)) return; // mismo SKU en otra publicación: ya está
     } else {
-      id = 'ml_' + slug(it.id || nombre) + (extraId ? '-' + extraId : '') + '_' + hash(String(it.id || nombre) + extraId);
+      id = idSinSku(it, nombre, extraId);
       if (nuevos.has(id)) return;
     }
     if (ids.has(id)) { yaExistian++; return; }
@@ -224,7 +231,7 @@ function productosNuevos(items, existentes, ahora) {
       for (const v of it.variaciones) agregar(v.sku, v.atributos ? `${it.titulo} (${v.atributos})` : it.titulo, it, String(v.id));
     } else agregar(it.sku, it.titulo, it, '');
   }
-  return { nuevos: [...nuevos.values()], omitidas, yaExistian, sinSku };
+  return { nuevos: [...nuevos.values()], completar, omitidas, yaExistian, sinSku };
 }
 
 // ---------- Grabadora de avisos ----------

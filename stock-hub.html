@@ -948,6 +948,7 @@ async function mlImportarProductos() {
     const r = await mlLlamar('mlImportar');
     await B.refrescarProductos(); B.cargarPubs();
     res.textContent = `Listo: ${r.publicaciones} publicaciones leídas. Productos creados: ${r.creados}. Ya estaban: ${r.yaExistian}.`
+      + (r.completados ? ` A ${r.completados} que no tenían SKU se les puso el de Mercado Libre.` : '')
       + (r.sinSku ? ` Creados SIN SKU (hay que ponerles uno a mano): ${r.sinSku}.` : '')
       + (r.omitidas ? ` No se importaron (cerradas o en Full): ${r.omitidas}.` : '');
     renderInicio();

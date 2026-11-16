@@ -210,15 +210,22 @@ exports.mlImportar = onCall({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_CLIE
   const { items, cuentas: n } = await traerItems();
   const resumen = await guardarPublicaciones(items);
   const existentes = await leerProductos();
-  const { nuevos, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, existentes, Date.now());
+  const { nuevos, completar, omitidas, yaExistian, sinSku } = ml.productosNuevos(items, existentes, Date.now());
   for (let i = 0; i < nuevos.length; i += 400) {
     const b = db.batch();
     nuevos.slice(i, i + 400).forEach((p) => b.create(base().collection('productos').doc(p.id), p));
     await b.commit();
   }
-  const r = await completarML(items, [...existentes, ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
+  // Productos que se habían creado sin SKU y ahora ML trae el SKU de su variante: se les pone (no se duplican).
+  for (let i = 0; i < completar.length; i += 400) {
+    const b = db.batch();
+    completar.slice(i, i + 400).forEach((c) => b.set(base().collection('productos').doc(c.id), { skus: [c.sku], sinSku: false }, { merge: true }));
+    await b.commit();
+  }
+  const conSku = new Map(completar.map((c) => [c.id, [c.sku]]));
+  const r = await completarML(items, [...existentes.map((p) => ({ id: p.id, skus: conSku.get(p.id) || p.skus })), ...nuevos.map((p) => ({ id: p.id, skus: p.skus }))]);
   return {
-    cuentas: n, publicaciones: items.length, creados: nuevos.length, yaExistian, omitidas, sinSku,
+    cuentas: n, publicaciones: items.length, creados: nuevos.length, completados: completar.length, yaExistian, omitidas, sinSku,
     conStockML: r.actualizados, por: yo.nombre, resumen,
   };
 });

@@ -97,7 +97,14 @@ SACADO a pedido del dueño: importar productos por Excel, pegar/cargar stock de 
 - Aviso `stock-locations` llega por `/user-products/{id}/stock` (solo cantidad); se muestra como "Cambió el stock".
 - Devolución del soporte: etiqueta generada, esperando que la despachen (dinero retenido hasta el envío).
 - Para el dueño NO hacen falta pasillos/ubicaciones (no tiene depósito); sí para el trabajo, cuando haya roles y varias empresas.
-- Propuesto, sin hacer (esperando su OK): botón "Conectar" cuando no hay cuenta + aviso rojo si se corta la conexión con ML.
+- HECHO y publicado: estado de la conexión (`config/mlConexion`, lo anota la función solo cuando cambia): franja roja en
+  Inventario + "Conectar de nuevo" si se corta; "Conectar cuenta" si nunca se conectó; "Reconectar" chico si está bien.
+- HECHO y publicado: Inventario con pestañas Activas (al entrar) / No activas / Todas; los recuadros llevan a la pestaña
+  que corresponde; el buscador busca en todas.
+
+### Para retomar (próxima sesión)
+- Devolución del soporte: ver en la sección Mercado Libre si la despacharon/llegó y si ML sube el stock de 3 a 4 solo.
+- Siguiente trabajo a elegir: rubros · roles + varias empresas (para llevarlo al trabajo como auditor) · libro de movimientos.
 
 ## PLAN PARA EL TRABAJO: Stock Hub como AUDITOR (decidido por el dueño 2026-11-16)
 **Solo lectura.** Stock Hub escucha callado con los números reales; cuando Ecomm-App falla, se ve la diferencia y se

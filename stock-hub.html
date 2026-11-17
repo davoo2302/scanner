@@ -272,6 +272,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
       <h2>Inventario</h2>
       <button class="btn small" data-act="inv-traer" id="inv-traer">🔄 Actualizar desde Mercado Libre</button>
     </div>
+    <div id="inv-conexion"></div>
     <p class="muted" id="inv-fecha"></p>
     <div id="inv-panel" class="panel" style="margin-top:10px"></div>
     <div id="inv-revisar" class="card" style="display:none"></div>
@@ -489,7 +490,7 @@ if (CONFIG_FIJA) { cfg.modo = 'firebase'; cfg.fb = CONFIG_FIJA.fb; cfg.empresa =
 
 const state = { productos: {}, stock: {}, movs: [], pend: false, fbFallo: false, me: null, dep: null,
   pubs: null, mlRes: null, umbral: 5, invErr: '', invCargando: false,
-  avisos: null, actErr: '', actCargando: false };
+  avisos: null, actErr: '', actCargando: false, mlCon: null };
 let B = null;
 
 function toast(msg, type) {
@@ -643,6 +644,8 @@ const Fb = {
     state.me = { email, rol: ['admin', 'empleado', 'consulta'].includes(u.rol) ? u.rol : 'consulta', nombre: u.nombre || user.displayName || email };
     const onErr = e => toast('Firebase: ' + e.message, 'err');
     base.collection('config').doc('deposito').onSnapshot(d => { state.dep = d.exists ? d.data() : null; depCambio(); }, () => {});
+    // Estado de la conexión con Mercado Libre (lo anota la función): si se corta, la pantalla avisa en rojo.
+    base.collection('config').doc('mlConexion').onSnapshot(d => { state.mlCon = d.exists ? d.data() : null; renderInv(); }, () => {});
     base.collection('productos').onSnapshot(s => {
       const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
       state.productos = o; refresh();
@@ -987,8 +990,9 @@ async function mlLlamar(nombre) {
 }
 async function mlConectarCuenta() {
   const res = $('#ml-res');
+  toast('Abriendo Mercado Libre para conectar la cuenta…');
   try { res.textContent = 'Preparando la conexión…'; const r = await mlLlamar('mlConectar'); location.href = r.url; }
-  catch (e) { res.textContent = 'No se pudo: ' + (e.message || e); }
+  catch (e) { res.textContent = 'No se pudo: ' + (e.message || e); toast('No se pudo conectar: ' + (e.message || e), 'err'); }
 }
 async function mlTraer() {
   const res = $('#ml-res');
@@ -1736,11 +1740,36 @@ function paintCuenta() {
     <button class="btn ghost wide" data-act="logout">Cerrar sesión</button>`;
   paintMLEstado();
 }
+// Conexión con ML: 'cortada' (la función no pudo renovar el permiso o ML lo rechazó), 'ok', o 'nunca' (no se conectó).
+function conexionML() {
+  if (state.mlCon && state.mlCon.estado === 'cortada') return 'cortada';
+  if ((state.mlCon && state.mlCon.estado === 'ok') || state.mlRes || (state.pubs && state.pubs.length)) return 'ok';
+  return 'nunca';
+}
 function paintMLEstado() {
   const e = $('#a-ml-estado'); if (!e) return;
-  const r = state.mlRes;
-  e.innerHTML = r && r.fecha ? `✅ Cuenta conectada · última actualización <b>${fmt(r.fecha)}</b> · ${r.total} publicaciones`
-    : state.invErr ? esc(state.invErr) : 'Todavía no se trajo nada de Mercado Libre.';
+  const c = conexionML(), btn = $('#a-ml-con');
+  const ultima = Math.max(0, ...(state.pubs || []).map(p => p.actualizada || 0));
+  if (c === 'cortada') e.innerHTML = `<span class="bad">❌ Se cortó la conexión (${fmt(state.mlCon.fecha)}). Hasta que la conectes de nuevo, la app no recibe ventas, cambios ni avisos.</span>`;
+  else if (c === 'ok') e.innerHTML = `✅ Cuenta conectada${ultima ? ` · último cambio de Mercado Libre <b>${fmt(ultima)}</b>` : ''}${state.pubs ? ` · ${state.pubs.length} publicaciones` : ''}`;
+  else e.innerHTML = 'Todavía no conectaste tu cuenta de Mercado Libre.';
+  if (btn) {
+    btn.textContent = c === 'ok' ? '🔗 Reconectar la cuenta' : c === 'cortada' ? '🔗 Conectar de nuevo' : '🔗 Conectar cuenta de Mercado Libre';
+    btn.className = c === 'ok' ? 'btn ghost wide' : 'btn main red';
+  }
+}
+// Aviso grande en Inventario cuando la conexión se cortó (o nunca se hizo).
+function paintConexion() {
+  const el = $('#inv-conexion'); if (!el) return;
+  const c = conexionML();
+  if (c === 'ok') { el.innerHTML = ''; return; }
+  const txt = c === 'cortada'
+    ? `<b>Se cortó la conexión con Mercado Libre</b> (${fmt(state.mlCon.fecha)}). Los números de abajo pueden estar viejos: no llegan ventas ni cambios.`
+    : '<b>Todavía no conectaste tu cuenta de Mercado Libre.</b>';
+  el.innerHTML = `<div class="card" style="border-color:var(--red);border-left:6px solid var(--red);margin:0 0 12px">
+    <p>${txt}</p>
+    ${esAdmin() ? `<button class="btn main red" data-act="ml-conectar" style="margin-top:10px">🔗 ${c === 'cortada' ? 'Conectar de nuevo' : 'Conectar cuenta'}</button>`
+      : '<p class="muted" style="margin-top:6px">Avisale al administrador para que la conecte.</p>'}</div>`;
 }
 function fillAjustes() {
   pintarDep();
@@ -1873,7 +1902,7 @@ const colorEst = p => p.clase === 'activa' ? 'ok' : p.clase === 'pausada' || p.c
 const colorPub = (p, i) => p.clase === 'frenada' || p.clase === 'otro' || p.clase === 'sin_stock' || i.poco ? 'rojo' : p.clase === 'activa' ? 'ok' : 'gris';
 
 function renderInv() {
-  paintMLEstado();
+  paintMLEstado(); paintConexion();
   const el = $('#inv-list'); if (!el) return;
   const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
   $('#inv-revisar').style.display = 'none';

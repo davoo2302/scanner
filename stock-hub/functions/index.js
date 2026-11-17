@@ -62,6 +62,8 @@ exports.mlCallback = onRequest({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_C
       empresa: EMPRESA, mlUserId: t.mlUserId, conectadaPor: snap.data().email, conectadaEn: Date.now(),
       accessToken: t.accessToken, refreshToken: t.refreshToken, venceEn: t.venceEn,
     }, { merge: true });
+    conexionMemo.delete(`${EMPRESA}|${t.mlUserId}`);
+    await anotarConexion(EMPRESA, 'ok', t.mlUserId);
     res.status(200).send('Cuenta de Mercado Libre conectada. Ya podés volver a la app.');
   } catch (e) {
     console.error(e);
@@ -69,17 +71,38 @@ exports.mlCallback = onRequest({ invoker: 'public', secrets: [ML_CLIENT_ID, ML_C
   }
 });
 
+// Estado de la conexión con ML, para que la pantalla pueda avisar si se cortó (los tokens están en mlPrivado, que la
+// pantalla no puede leer). empresas/{emp}/config/mlConexion = { estado: 'ok' | 'cortada', fecha, motivo?, cuenta }.
+// Solo escribe cuando CAMBIA el estado (no gasta una escritura en cada aviso).
+const conexionMemo = new Map();
+async function anotarConexion(emp, estado, cuenta, motivo) {
+  const k = `${emp}|${cuenta}`;
+  if (conexionMemo.get(k) === estado) return;
+  const ref = db.doc(`empresas/${emp}/config/mlConexion`);
+  const ant = (await ref.get()).data();
+  conexionMemo.set(k, estado);
+  if (ant && ant.estado === estado && ant.cuenta === cuenta) return;
+  await ref.set({ estado, cuenta, fecha: Date.now(), ...(motivo ? { motivo } : {}) });
+}
+
+// ML responde 401/403 cuando el permiso se revocó (p. ej. el dueño quitó la app en su cuenta de ML).
+async function marcarSiRechazo(emp, cuenta, e) {
+  if (/ML (401|403)\b/.test(String(e && e.message))) await anotarConexion(emp, 'cortada', cuenta, 'Mercado Libre rechazó el permiso').catch(() => {});
+}
+
 async function tokenValido(doc) {
   const t = doc.data();
   if (t.venceEn > Date.now()) return t.accessToken;
   try {
     const n = await ml.renovar(ML_CLIENT_ID.value(), ML_CLIENT_SECRET.value(), t.refreshToken);
     await doc.ref.update({ accessToken: n.accessToken, refreshToken: n.refreshToken, venceEn: n.venceEn });
+    await anotarConexion(t.empresa, 'ok', t.mlUserId).catch(() => {});
     return n.accessToken;
   } catch (e) {
     // Si otra sincronización renovó justo antes, el refresh token ya se gastó: se usa el que dejó guardado.
     const otra = (await doc.ref.get()).data();
     if (otra.venceEn > Date.now()) return otra.accessToken;
+    await anotarConexion(t.empresa, 'cortada', t.mlUserId, String(e.message || e).slice(0, 200)).catch(() => {});
     throw new HttpsError('failed-precondition', 'La conexión con Mercado Libre venció. Volvé a conectar la cuenta.');
   }
 }
@@ -91,7 +114,10 @@ async function traerItems() {
   const items = [];
   for (const c of conectadas.docs) {
     const token = await tokenValido(c);
-    const ids = await ml.listarIds(c.data().mlUserId, token);
+    let ids;
+    try { ids = await ml.listarIds(c.data().mlUserId, token); }
+    catch (e) { await marcarSiRechazo(EMPRESA, c.data().mlUserId, e); throw e; }
+    await anotarConexion(EMPRESA, 'ok', c.data().mlUserId).catch(() => {});
     for (let i = 0; i < ids.length; i += 20) items.push(...(await ml.detalle(ids.slice(i, i + 20), token)).map(ml.normalizar));
   }
   return { items, cuentas: conectadas.size };
@@ -228,6 +254,7 @@ exports.mlAvisoDetalle = onDocumentCreated({
     const esItem = a.topic === 'items' && /^\/items\/MLA?\w+$/.test(a.resource);
     // Para publicaciones se piden también los atributos de las variantes (ahí está el SKU de cada una).
     const d = await ml.get(esItem ? `${a.resource}?include_attributes=all` : a.resource, token);
+    await anotarConexion(ev.params.emp, 'ok', a.userId).catch(() => {});
     const extra = {};
     // INVENTARIO EN VIVO: el aviso de una publicación trae su estado y stock nuevos → se actualiza su ficha y el stock
     // de ML de los productos con ese SKU, sin esperar a que alguien toque "Actualizar".
@@ -243,6 +270,7 @@ exports.mlAvisoDetalle = onDocumentCreated({
     }
     await ref.update({ detalle: JSON.stringify(d).slice(0, 800000), detalleEn: Date.now(), ...extra });
   } catch (e) {
+    await marcarSiRechazo(ev.params.emp, a.userId, e);
     await ref.update({ detalleError: String(e.message || e).slice(0, 500), detalleEn: Date.now() });
   }
 });

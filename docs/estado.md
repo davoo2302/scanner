@@ -99,6 +99,21 @@ SACADO a pedido del dueño: importar productos por Excel, pegar/cargar stock de 
 - Para el dueño NO hacen falta pasillos/ubicaciones (no tiene depósito); sí para el trabajo, cuando haya roles y varias empresas.
 - Propuesto, sin hacer (esperando su OK): botón "Conectar" cuando no hay cuenta + aviso rojo si se corta la conexión con ML.
 
+## PLAN PARA EL TRABAJO: Stock Hub como AUDITOR (decidido por el dueño 2026-11-16)
+**Solo lectura.** Stock Hub escucha callado con los números reales; cuando Ecomm-App falla, se ve la diferencia y se
+muestra "acá el nuestro dice X". Escribir en ML (descontar ventas, sumar llegadas, reemplazar Ecomm-App) es MUCHO más
+adelante y lo decide el jefe del trabajo al ver que el nuestro acierta. Primero probar que los datos se mantienen estables.
+Datos del trabajo: DOS cuentas de ML (Rumish y Moda Import; él migró publicaciones de Rumish a Moda, muchas están en las
+dos y comparten inventario; algunas solo en una). +200 publicaciones. Una cuenta usa Full. Usan Ecomm-App (no Shopify,
+a confirmar quién manda el stock). Permiso: las cuentas son de allá, se conectan allá.
+Incidente que hay que evitar: SKU genéricos ("rojo" en una raqueta, una pistola y otra cosa) → Ecomm-App les puso el
+mismo stock a todos → ventas de lo que no había; él fue cambiando SKU ("azul 2508"…).
+Orden: 1) roles + varias empresas (espacio del trabajo separado); 2) conectar las dos cuentas (ya se puede: `traerItems`
+recorre todas las cuentas de la empresa) y mostrar el stock POR CUENTA lado a lado (hoy `stockPorSku` toma el mayor y lo
+escondería) + columna Full aparte, solo mirar; 3) revisión de grupos por SKU (confirmar "son el mismo producto") +
+alertas de SKU sospechoso: SKU genérico (solo un color/palabra), categorías de ML distintas, precios muy distintos;
+4) comparar con el conteo a mano; 5) (algún día, si el jefe quiere) escribir stock.
+
 ## Ideas del dueño para más adelante (anotadas 2026-11-16)
 - **Roles:** dueño (ve todo, incluida la plata), encargado de inventario, depósito (ubicaciones, contar, mover). Hoy existen
   admin / empleado / consulta. Va en la página (qué se muestra) Y en las reglas (qué se puede leer/escribir).

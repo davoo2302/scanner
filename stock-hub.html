@@ -658,25 +658,31 @@ const Fb = {
   },
   // Inventario de ML: se lee A PEDIDO (al entrar y al tocar "Actualizar"), no en vivo, para no gastar lecturas.
   // 1 lectura del resumen + 1 del umbral + 1 por publicación.
+  // Inventario EN VIVO: las publicaciones se escuchan (onSnapshot). La función las actualiza con cada aviso de ML,
+  // así que la pantalla cambia sola. Costo: 1 lectura por publicación al abrir + 1 por cada publicación que cambia.
   async cargarPubs() {
     state.invCargando = true; renderInv();
+    const err = e => {
+      state.invErr = e.code === 'permission-denied'
+        ? 'Todavía no hay permiso para leer las publicaciones (falta publicar las reglas de Firebase).'
+        : 'No se pudo leer el inventario: ' + (e.message || e);
+      state.invCargando = false; renderInv();
+    };
     try {
-      const [r, c, s] = await Promise.all([
+      const [r, c] = await Promise.all([
         this.base.collection('config').doc('mlResumen').get(),
         this.base.collection('config').doc('inventario').get(),
-        this.base.collection('publicaciones').get(),
       ]);
       state.mlRes = r.exists ? r.data() : null;
       const n = c.exists ? c.data().pocoStock : null;
       state.umbral = Number.isFinite(n) ? n : 5;
+    } catch (e) { err(e); return; }
+    if (this.pubsVivo) { state.invCargando = false; renderInv(); return; } // ya se está escuchando
+    this.pubsVivo = this.base.collection('publicaciones').onSnapshot(s => {
       state.pubs = s.docs.map(d => ({ id: d.id, ...d.data() }));
-      state.invErr = '';
-    } catch (e) {
-      state.invErr = e.code === 'permission-denied'
-        ? 'Todavía no hay permiso para leer las publicaciones (falta publicar las reglas de Firebase).'
-        : 'No se pudo leer el inventario: ' + (e.message || e);
-    }
-    state.invCargando = false; renderInv();
+      state.invErr = ''; state.invCargando = false; renderInv();
+      if ($('#v-ml')?.classList.contains('on')) renderAct();
+    }, e => { this.pubsVivo = null; err(e); });
   },
   // Avisos de ML (grabadora): los últimos 150, a pedido (al abrir la sección o tocar "Ver lo último").
   async cargarAvisos() {
@@ -1879,9 +1885,16 @@ function renderInv() {
     el.innerHTML = '<p class="empty">Todavía no hay publicaciones. Tocá "Actualizar desde Mercado Libre".</p>'; return;
   }
   const cuenta = f => todas.filter(([p, i]) => INV_F[f](p, i)).length;
-  const r = state.mlRes;
-  fecha.innerHTML = (r ? `<b>${r.unidades}</b> unidades a la venta en <b>${r.productos ?? '—'}</b> productos · ` : '')
-    + (r && r.fecha ? `actualizado ${fmt(r.fecha)}` : '') + (state.invCargando ? ' · cargando…' : '');
+  // Unidades y productos a la venta: por SKU (propia + catálogo = el mismo stock, se cuenta una vez), solo activas y fuera
+  // de Full; sin SKU = producto aparte. Igual que el resumen de la función, pero se recalcula con cada cambio en vivo.
+  const porProd = new Map();
+  state.pubs.filter(p => p.clase === 'activa' && !p.full).forEach(p =>
+    ((p.variaciones || []).length ? p.variaciones.map(v => [v.sku, v.stock, 'v' + v.id]) : [[p.sku, p.stock, '']])
+      .forEach(([s, n, x]) => { const k = norm(s) || `pub:${p.id}${x}`; porProd.set(k, Math.max(porProd.get(k) ?? 0, n || 0)); }));
+  const unidades = [...porProd.values()].reduce((a, n) => a + n, 0);
+  const ultima = Math.max(0, ...state.pubs.map(p => p.actualizada || 0));
+  fecha.innerHTML = `<b>${unidades}</b> unidades a la venta en <b>${porProd.size}</b> productos`
+    + (ultima ? ` · último cambio de Mercado Libre ${fmt(ultima)}` : '') + (state.invCargando ? ' · cargando…' : '');
   const pk = (f, txt, cls) => { const n = cuenta(f);
     return `<button class="pk ${n ? cls : 'ok'} ${invF === f ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
   panel.innerHTML = pk('todos', 'Publicaciones', 'gris') + pk('activa', 'Activas', 'ok') + pk('poco', `Poco stock (${state.umbral} o menos)`, 'rojo')

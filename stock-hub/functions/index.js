@@ -191,6 +191,28 @@ exports.mlAvisos = onRequest({ invoker: 'public', secrets: [ML_CLIENT_ID], memor
   }
 });
 
+// Actualiza UNA publicación (ficha + stock de ML de sus productos) a partir de un aviso. Barato: 1 escritura de la ficha
+// y solo los productos que tienen esos SKU (búsqueda por SKU, no lee todo). Devuelve un resumen para dejar en el aviso.
+async function actualizarDesdeAviso(emp, it) {
+  const b = db.doc(`empresas/${emp}`);
+  await b.collection('publicaciones').doc(it.id).set(ml.fichaPublicacion(it, Date.now()));
+  const skus = [...new Set((it.variaciones.length ? it.variaciones.map((v) => v.sku) : [it.sku]).filter(Boolean))];
+  if (!skus.length) return 'ficha actualizada (sin SKU)';
+  const prods = [];
+  for (let i = 0; i < skus.length; i += 10) {
+    const s = await b.collection('productos').where('skus', 'array-contains-any', skus.slice(i, i + 10)).select('skus').get();
+    s.docs.forEach((x) => prods.push({ id: x.id, skus: x.get('skus') || [] }));
+  }
+  const { mapa } = ml.stockPorSku([it]); // solo activas y fuera de Full, igual que "Actualizar"
+  const { escrituras } = ml.armarEscrituras(prods, mapa);
+  const ahora = Date.now();
+  // set + merge mezcla el mapa `ml` clave por clave (los SKU tienen espacios y "/": no sirven como ruta de campo).
+  for (const x of escrituras) {
+    await b.collection('productos').doc(x.id).set({ ml: x.ml, mlFecha: ahora, mlPor: 'Mercado Libre (aviso)' }, { merge: true });
+  }
+  return `ficha actualizada · ${escrituras.length} producto(s) con stock nuevo`;
+}
+
 // 6) Cuando entra un aviso, le pregunta a ML qué dice ESE recurso en ese momento (la orden, el envío, la publicación)
 // y lo anota en el mismo aviso (`detalle`, como texto). Corre en la región de la base (southamerica-east1).
 exports.mlAvisoDetalle = onDocumentCreated({
@@ -203,8 +225,16 @@ exports.mlAvisoDetalle = onDocumentCreated({
     const cta = await cuentas().doc(`${ev.params.emp}__${a.userId}`).get();
     if (!cta.exists) return ref.update({ detalleError: 'esa cuenta de ML no está conectada' });
     const token = await tokenValido(cta);
-    const d = await ml.get(a.resource, token);
+    const esItem = a.topic === 'items' && /^\/items\/MLA?\w+$/.test(a.resource);
+    // Para publicaciones se piden también los atributos de las variantes (ahí está el SKU de cada una).
+    const d = await ml.get(esItem ? `${a.resource}?include_attributes=all` : a.resource, token);
     const extra = {};
+    // INVENTARIO EN VIVO: el aviso de una publicación trae su estado y stock nuevos → se actualiza su ficha y el stock
+    // de ML de los productos con ese SKU, sin esperar a que alguien toque "Actualizar".
+    if (esItem && d && d.id) {
+      try { extra.inventario = await actualizarDesdeAviso(ev.params.emp, ml.normalizar(d)); }
+      catch (e) { extra.inventarioError = String(e.message || e).slice(0, 300); }
+    }
     // Reclamo: también la ficha de la devolución (puede no existir todavía: se anota el motivo y listo).
     const rd = ml.rutaDevolucion(a.resource);
     if (rd) {

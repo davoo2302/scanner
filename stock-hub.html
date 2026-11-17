@@ -276,6 +276,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
     <p class="muted" id="inv-fecha"></p>
     <div id="inv-panel" class="panel" style="margin-top:10px"></div>
     <div id="inv-revisar" class="card" style="display:none"></div>
+    <div class="seg" id="inv-vistas" style="margin-top:14px"></div>
     <div class="filtros" id="inv-filtros"></div>
     <input class="search" id="inv-q" placeholder="Buscar por nombre o SKU" autocomplete="off" enterkeyhint="search">
     <div id="inv-list" class="pubs"></div>
@@ -1839,6 +1840,12 @@ function descargar() {
 // Las fichas (empresas/{e}/publicaciones) las escribe la función mlSincronizar. `clase`:
 // activa · sin_stock (ML la frenó porque llegó a 0) · pausada (la pausó el dueño) · frenada (ML, otro motivo) · cerrada
 let invF = 'todos';
+// Pestañas de la lista: 'activas' (a la venta, la que se ve al entrar) · 'inactivas' (sin stock, pausadas, frenadas, cerradas) · 'todas'.
+let invVista = 'activas';
+const enVista = (p, v) => v === 'todas' || (v === 'activas') === (p.clase === 'activa');
+// A qué pestaña lleva cada recuadro/filtro (los que no están, dejan la pestaña como está).
+const VISTA_DE = { todos: 'todas', activa: 'activas', poco: 'activas', sin_stock: 'inactivas', pausada: 'inactivas', frenada: 'inactivas',
+  cerrada: 'inactivas', sinsku: 'todas', repetido: 'todas', catalogo: 'todas', full: 'todas' };
 const CLASE_TXT = { activa: 'Activa', sin_stock: 'Sin stock', pausada: 'Pausada por vos', frenada: 'Frenada por ML', cerrada: 'Cerrada', otro: 'Otro estado' };
 const MOTIVO_TXT = {
   out_of_stock: 'ML la pausó porque se quedó sin stock. Se reactiva sola cuando le cargás stock.',
@@ -1904,8 +1911,8 @@ const colorPub = (p, i) => p.clase === 'frenada' || p.clase === 'otro' || p.clas
 function renderInv() {
   paintMLEstado(); paintConexion();
   const el = $('#inv-list'); if (!el) return;
-  const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
-  $('#inv-revisar').style.display = 'none';
+  const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros'), vistas = $('#inv-vistas');
+  $('#inv-revisar').style.display = 'none'; vistas.style.display = 'none';
   if (state.invErr) { fecha.textContent = ''; panel.innerHTML = ''; fil.innerHTML = ''; el.innerHTML = `<p class="empty bad">${esc(state.invErr)}</p>`; return; }
   if (!state.pubs) { fecha.textContent = state.invCargando ? 'Cargando…' : ''; panel.innerHTML = fil.innerHTML = el.innerHTML = ''; return; }
   const todas = state.pubs.map(p => [p, infoPub(p)]);
@@ -1924,8 +1931,9 @@ function renderInv() {
   const ultima = Math.max(0, ...state.pubs.map(p => p.actualizada || 0));
   fecha.innerHTML = `<b>${unidades}</b> unidades a la venta en <b>${porProd.size}</b> productos`
     + (ultima ? ` · último cambio de Mercado Libre ${fmt(ultima)}` : '') + (state.invCargando ? ' · cargando…' : '');
+  const marcado = f => f === 'todos' ? invF === 'todos' && invVista === 'todas' : f === 'activa' ? invF === 'todos' && invVista === 'activas' : invF === f;
   const pk = (f, txt, cls) => { const n = cuenta(f);
-    return `<button class="pk ${n ? cls : 'ok'} ${invF === f ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
+    return `<button class="pk ${n ? cls : 'ok'} ${marcado(f) ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
   panel.innerHTML = pk('todos', 'Publicaciones', 'gris') + pk('activa', 'Activas', 'ok') + pk('poco', `Poco stock (${state.umbral} o menos)`, 'rojo')
     + pk('sin_stock', 'Sin stock', 'rojo') + pk('pausada', 'Pausadas por vos', 'gris') + pk('frenada', 'Frenadas por ML', 'rojo');
   // "Para revisar": lo que hay que arreglar en las publicaciones. Siempre visible (en verde si está todo bien).
@@ -1942,10 +1950,16 @@ function renderInv() {
   const extra = [['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
     .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
   fil.innerHTML = extra.map(([f, t, n]) => `<button class="${invF === f ? 'on' : ''}" data-act="inv-f" data-f="${f}">${t}<span>${n}</span></button>`).join('')
-    + (invF !== 'todos' ? '<button data-act="inv-f" data-f="todos">✕ Ver todas</button>' : '');
+    + (invF !== 'todos' ? '<button data-act="inv-quitar">✕ Quitar filtro</button>' : '');
 
+  // Pestañas. Si se está buscando, se busca en TODAS (para no "perder" una pausada buscándola en Activas).
   const toks = norm($('#inv-q').value).split(' ').filter(Boolean);
-  const lista = todas.filter(([p, i]) => INV_F[invF](p, i))
+  const vista = toks.length ? 'todas' : invVista;
+  const nV = v => todas.filter(([p]) => enVista(p, v)).length;
+  vistas.style.display = '';
+  vistas.innerHTML = [['activas', 'Activas'], ['inactivas', 'No activas'], ['todas', 'Todas']].map(([v, t]) =>
+    `<button class="${vista === v ? 'on' : ''}" data-act="inv-vista" data-v="${v}">${t} (${nV(v)})</button>`).join('');
+  const lista = todas.filter(([p, i]) => enVista(p, vista) && INV_F[invF](p, i))
     .filter(([p]) => { if (!toks.length) return true;
       const h = norm([p.titulo, p.sku, ...(p.variaciones || []).map(v => v.sku + ' ' + v.atributos)].join(' ')); return toks.every(t => h.includes(t)); })
     .sort((a, b) => gravedad(...a) - gravedad(...b) || (a[0].titulo || '').localeCompare(b[0].titulo || ''));
@@ -2122,7 +2136,15 @@ const A = {
   'cuenta': () => { ajSec = 'cuenta'; if ($('#modal').classList.contains('on')) closeModal().then(() => tab('ajustes')); else tab('ajustes'); },
   'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
-  'inv-f': b => { invF = invF === b.dataset.f && b.dataset.f !== 'todos' ? 'todos' : b.dataset.f; renderInv(); },
+  'inv-f': b => {
+    const f = b.dataset.f;
+    if (invF === f && f !== 'todos') { invF = 'todos'; renderInv(); return; } // tocar de nuevo = sacar el filtro
+    if (VISTA_DE[f]) invVista = VISTA_DE[f];
+    invF = (f === 'activa') ? 'todos' : f; // "Activas" es la pestaña misma, no un filtro aparte
+    renderInv();
+  },
+  'inv-vista': b => { invVista = b.dataset.v; invF = 'todos'; $('#inv-q').value = ''; renderInv(); },
+  'inv-quitar': () => { invF = 'todos'; renderInv(); },
   'inv-open': b => openPub(b.dataset.id),
   'prod-sinsku': () => {
     detId = null;

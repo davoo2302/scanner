@@ -87,6 +87,18 @@ SACADO a pedido del dueño: importar productos por Excel, pegar/cargar stock de 
 - Lección (el dueño lo marcó): antes de cambiar CÓMO funcionan los botones, preguntar; y "Actualizar ahora"/"Actualizar
   desde ML" duplicados confundían → un solo nombre por acción.
 
+## Hecho 2026-11-16 (noche, publicado): Ajustes como menú + INVENTARIO EN VIVO
+- Ajustes: lista de opciones (Depósito, Poco stock, Mercado Libre, Repetidos, Copia, Mi cuenta), cada una en su pantalla;
+  desplegable en el menú lateral; Mi cuenta / Cerrar sesión desde el nombre arriba a la derecha.
+- Inventario en vivo: `mlAvisoDetalle`, con un aviso `items`, pide la publicación (`include_attributes=all`), reescribe
+  `publicaciones/{id}` y el `ml` de los productos con ese SKU (búsqueda `array-contains-any`, no lee todo). La página
+  escucha `publicaciones` con onSnapshot y calcula unidades/productos sola. PROBADO: cinturón 4→5 en ML 22:26:17 →
+  ficha y producto actualizados 22:26:21 (4 s). El resumen `config/mlResumen` solo lo rehace "Actualizar".
+- Aviso `stock-locations` llega por `/user-products/{id}/stock` (solo cantidad); se muestra como "Cambió el stock".
+- Devolución del soporte: etiqueta generada, esperando que la despachen (dinero retenido hasta el envío).
+- Para el dueño NO hacen falta pasillos/ubicaciones (no tiene depósito); sí para el trabajo, cuando haya roles y varias empresas.
+- Propuesto, sin hacer (esperando su OK): botón "Conectar" cuando no hay cuenta + aviso rojo si se corta la conexión con ML.
+
 ## Ideas del dueño para más adelante (anotadas 2026-11-16)
 - **Roles:** dueño (ve todo, incluida la plata), encargado de inventario, depósito (ubicaciones, contar, mover). Hoy existen
   admin / empleado / consulta. Va en la página (qué se muestra) Y en las reglas (qué se puede leer/escribir).

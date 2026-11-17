@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -126,7 +126,7 @@ nav button.on{color:var(--ink);border-top-color:var(--yellow)}
 #toast.on{opacity:1;transform:none}
 #toast.err{background:var(--red);color:#fff}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
-/* ---------- rediseño inicio ---------- */
+/* ---------- rediseÃ±o inicio ---------- */
 .toprow{flex-wrap:wrap}
 .search{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238A949B' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px 50%;padding-left:44px}
 .btn.cta{background:var(--yellow);color:#16181A;flex:1 1 100%;order:3;font-size:19px}
@@ -166,7 +166,7 @@ button.kpi:hover{border-color:var(--muted)}
 .plano-nota{font-size:13px;margin:0 0 8px}
 .leyenda{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
 .leyenda i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
-/* Mercado Libre vs. depósito */
+/* Mercado Libre vs. depÃ³sito */
 .kpi.kml{grid-column:1/-1}
 .mlg{margin-top:18px}
 .mlg h4{margin:0 0 2px;font-size:17px;font-weight:600}
@@ -212,9 +212,17 @@ button.kpi:hover{border-color:var(--muted)}
 .vars{grid-column:2/-1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:14px;border-top:1px dashed var(--line);padding-top:6px}
 .vars .bad{font-weight:600}
 @media (max-width:959px){nav button{font-size:13px;padding:0 2px;line-height:1.15}}
-.ajustes{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
-.ajustes .card{margin-top:0}
+/* Ajustes: menÃº de opciones; cada una abre su propia pantalla */
+.aj-sec{display:none}.aj-sec.on{display:block}
+.aj-sec .card{margin-top:10px}
+.aj-volver{min-height:40px}
+.aj-op{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.aj-op .aj-ico{font-size:24px;width:32px;text-align:center}
+.aj-op b{font-size:17px}
 .aj-d{margin-bottom:12px}
+#mode{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.subnav{display:none}
+.flecha{display:none}
 details summary{cursor:pointer;color:var(--steel);font-weight:600;font-size:15px}
 .act-dia{font-family:var(--cond);font-size:20px;font-weight:700;margin:14px 0 2px;color:var(--muted)}
 .act{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--field);border:1px solid var(--line);border-left:6px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;text-align:left;color:var(--ink);font-weight:400;min-height:0}
@@ -224,7 +232,7 @@ details summary{cursor:pointer;color:var(--steel);font-weight:600;font-size:15px
 .act .h{font-family:var(--cond);font-size:18px;font-weight:700;color:var(--muted);white-space:nowrap}
 pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:50vh;overflow:auto}
 @media (min-width:960px){
-  /* Menú a un costado (como el /admin de zonaflex) */
+  /* MenÃº a un costado (como el /admin de zonaflex) */
   nav{top:0;bottom:0;right:auto;width:200px;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
   nav button{flex:0 0 auto;min-height:52px;text-align:left;padding:0 20px;border-top:0;border-left:4px solid transparent;font-size:17px}
   nav button.on{border-left-color:var(--yellow);background:var(--bg)}
@@ -237,8 +245,12 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   header{padding-left:max(16px,calc((100% - 1160px)/2 + 16px));padding-right:max(16px,calc((100% - 1160px)/2 + 16px))}
   main{max-width:1160px}
   .view:not(#v-inicio):not(#v-inv):not(#v-ml):not(#v-ajustes){max-width:640px;margin:0 auto}
-  #v-ajustes{max-width:1000px}
-  .ajustes{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  #v-ajustes{max-width:720px;margin:0 auto}
+  /* En la compu, Ajustes se despliega en el menÃº lateral */
+  .flecha{display:inline;font-size:13px;margin-left:4px;opacity:.7}
+  .subnav.on{display:flex;flex-direction:column}
+  .subnav button{flex:0 0 auto;min-height:40px;text-align:left;padding:0 20px 0 36px;font-size:15px;border-left:4px solid transparent;background:transparent;color:var(--muted);border-radius:0}
+  .subnav button.on{color:var(--ink);border-left-color:var(--steel)}
   #v-ml{max-width:900px}
   .toprow{flex-wrap:nowrap}
   .btn.cta{flex:0 0 auto;order:0;font-size:17px;padding:0 22px}
@@ -252,13 +264,13 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
 </style>
 </head>
 <body>
-<header><h1>Stock Hub</h1><div id="mode"></div></header>
+<header><h1>Stock Hub</h1><div id="mode" data-act="cuenta" role="button" tabindex="0" title="Mi cuenta"></div></header>
 
 <main>
   <section id="v-inv" class="view on">
     <div class="inv-top">
       <h2>Inventario</h2>
-      <button class="btn small" data-act="inv-traer" id="inv-traer">🔄 Actualizar desde Mercado Libre</button>
+      <button class="btn small" data-act="inv-traer" id="inv-traer">ðŸ”„ Actualizar desde Mercado Libre</button>
     </div>
     <p class="muted" id="inv-fecha"></p>
     <div id="inv-panel" class="panel" style="margin-top:10px"></div>
@@ -271,18 +283,18 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   <section id="v-ml" class="view">
     <div class="inv-top">
       <h2>Mercado Libre</h2>
-      <button class="btn small ghost" data-act="act-cargar">↻ Ver lo último</button>
+      <button class="btn small ghost" data-act="act-cargar">â†» Ver lo Ãºltimo</button>
     </div>
-    <p class="muted">Todo lo que Mercado Libre avisa de tu cuenta: ventas, cancelaciones, reclamos, devoluciones, envíos y cambios en tus publicaciones. Se graba solo, al momento.</p>
+    <p class="muted">Todo lo que Mercado Libre avisa de tu cuenta: ventas, cancelaciones, reclamos, devoluciones, envÃ­os y cambios en tus publicaciones. Se graba solo, al momento.</p>
     <div id="act-list" class="pubs"></div>
   </section>
 
   <section id="v-inicio" class="view">
     <div class="row toprow">
-      <input class="grow search" id="b-q" placeholder="Producto, SKU o ubicación" autocomplete="off" enterkeyhint="search">
-      <button class="btn ghost small" id="b-clear" data-act="b-clear" aria-label="Borrar búsqueda" style="display:none">✕</button>
+      <input class="grow search" id="b-q" placeholder="Producto, SKU o ubicaciÃ³n" autocomplete="off" enterkeyhint="search">
+      <button class="btn ghost small" id="b-clear" data-act="b-clear" aria-label="Borrar bÃºsqueda" style="display:none">âœ•</button>
       <button class="btn" data-act="b-scan">Escanear</button>
-      <button class="btn cta" id="i-guardar" data-act="go-guardar">+ Guardar en ubicación</button>
+      <button class="btn cta" id="i-guardar" data-act="go-guardar">+ Guardar en ubicaciÃ³n</button>
     </div>
     <div id="b-res"></div>
     <div id="i-home">
@@ -291,7 +303,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   </section>
 
   <section id="v-guardar" class="view">
-    <div class="row" style="margin-bottom:12px"><button class="btn ghost small" data-act="tab" data-v="inicio">← Ubicaciones</button></div>
+    <div class="row" style="margin-bottom:12px"><button class="btn ghost small" data-act="tab" data-v="inicio">â† Ubicaciones</button></div>
     <div class="step" id="s1"></div>
     <div class="step" id="s2"></div>
     <div class="step" id="s3"></div>
@@ -300,30 +312,25 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   <section id="v-movs" class="view"><div id="m-list"></div></section>
 
   <section id="v-ajustes" class="view">
-    <div class="inv-top"><h2>Ajustes</h2></div>
-    <div class="ajustes">
-      <div class="card aj" id="a-cuenta"></div>
-
-      <div class="card aj" id="a-ml">
-        <h2>Mercado Libre</h2>
-        <p class="muted aj-d" id="a-ml-estado"></p>
-        <div class="stack">
-          <button class="btn ghost wide" data-act="ml-importar" id="a-ml-imp">📥 Traer publicaciones nuevas</button>
-          <button class="btn ghost wide" data-act="ml-conectar" id="a-ml-con">🔗 Reconectar la cuenta</button>
-        </div>
-        <p class="muted" id="ml-res" style="font-size:14px;margin-top:8px"></p>
-        <small class="muted" style="margin-top:6px">"Traer publicaciones nuevas": cuando publicás algo nuevo en Mercado Libre, lo agrega como producto en la app (no toca los que ya están). Para actualizar stock y estados, usá el botón "Actualizar desde Mercado Libre" de Inventario.</small>
+    <!-- MenÃº de Ajustes: cada opciÃ³n abre su propia pantalla (una sola a la vez). -->
+    <div id="aj-menu">
+      <div class="inv-top"><h2>Ajustes</h2></div>
+      <div class="list aj-lista">
+        <button class="item aj-op" id="aj-op-dep" data-act="aj" data-s="dep"><span class="aj-ico">ðŸ¬</span><span><b>DepÃ³sito</b><small>Pasillos y tramos de tu depÃ³sito</small></span></button>
+        <button class="item aj-op" id="aj-op-poco" data-act="aj" data-s="poco"><span class="aj-ico">ðŸ”´</span><span><b>Avisos de poco stock</b><small>Desde cuÃ¡ntas unidades se marca en rojo</small></span></button>
+        <button class="item aj-op" id="aj-op-ml" data-act="aj" data-s="ml"><span class="aj-ico">ðŸ›’</span><span><b>Mercado Libre</b><small>ConexiÃ³n y traer publicaciones nuevas</small></span></button>
+        <button class="item aj-op" id="aj-op-dups" data-act="aj" data-s="dups"><span class="aj-ico">ðŸ§©</span><span><b>Productos repetidos</b><small>Unir productos creados dos veces</small></span></button>
+        <button class="item aj-op" id="aj-op-resp" data-act="aj" data-s="resp"><span class="aj-ico">ðŸ’¾</span><span><b>Copia de seguridad</b><small>Descargar tus datos</small></span></button>
+        <button class="item aj-op" id="aj-op-cuenta" data-act="aj" data-s="cuenta"><span class="aj-ico">ðŸ‘¤</span><span><b>Mi cuenta</b><small>Tus datos y cerrar sesiÃ³n</small></span></button>
       </div>
+      <p class="muted section" id="a-ver" style="text-align:center"></p>
+    </div>
 
-      <div class="card aj" id="a-umbral">
-        <h2>Poco stock</h2>
-        <p class="muted aj-d">Una publicación activa se marca en rojo cuando tiene esta cantidad o menos (en cualquiera de sus variantes).</p>
-        <div class="row"><input id="a-poco" type="number" inputmode="numeric" min="0" max="999" autocomplete="off" style="max-width:110px"><span class="grow muted">unidades o menos</span><button class="btn small" data-act="poco-save">Guardar</button></div>
-      </div>
-
-      <div class="card aj" id="a-dep">
-        <h2>Depósito</h2>
-        <p class="muted aj-d" id="a-dep-info">Cuántos pasillos hay y cuántos tramos tiene cada lado. Vale para todos los usuarios.</p>
+    <div class="aj-sec" data-s="dep" id="a-dep">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card">
+        <h2>DepÃ³sito</h2>
+        <p class="muted aj-d" id="a-dep-info">CuÃ¡ntos pasillos hay y cuÃ¡ntos tramos tiene cada lado. Vale para todos los usuarios.</p>
         <p class="bad" id="a-dep-aviso" style="margin-bottom:10px"></p>
         <div id="a-dep-edit" class="stack">
           <div class="row"><label for="a-pasillos" class="grow" style="margin:0">Cantidad de pasillos</label><input id="a-pasillos" type="number" inputmode="numeric" min="1" max="30" autocomplete="off" style="max-width:110px"></div>
@@ -331,25 +338,58 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
           <button class="btn small" data-act="tramos-save">Guardar pasillos y tramos</button>
         </div>
         <p id="a-dep-ro"></p>
-        <details style="margin-top:12px"><summary>¿Cómo se escriben las ubicaciones?</summary>
+        <details style="margin-top:12px"><summary>Â¿CÃ³mo se escriben las ubicaciones?</summary>
           <p style="margin-top:8px"><code>P1-A-T5</code> es pasillo 1, lado A (izquierda), tramo 5. El tramo 1 es el de la entrada del pasillo, en los dos lados. Si hace falta, se agrega el nivel: <code>P1-A-T5-N2</code>.</p>
-          <p class="muted" style="margin-top:6px">También se puede escribir a mano, por ejemplo "pasillo 2 tramo 5 nivel 3". La app lo traduce y no guarda nada que no entienda. Los QR de cada pasillo se imprimen aparte: contenido <code>P1</code>, texto "PASILLO 1".</p>
+          <p class="muted" style="margin-top:6px">TambiÃ©n se puede escribir a mano, por ejemplo "pasillo 2 tramo 5 nivel 3". La app lo traduce y no guarda nada que no entienda. Los QR de cada pasillo se imprimen aparte: contenido <code>P1</code>, texto "PASILLO 1".</p>
         </details>
       </div>
+    </div>
 
-      <div class="card aj" id="a-mant">
-        <h2>Productos repetidos</h2>
-        <p class="muted aj-d">Si alguien creó dos veces el mismo producto, acá se ven juntos y se pueden unir en uno (con sus ubicaciones y su stock).</p>
-        <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
-      </div>
-
-      <div class="card aj" id="a-resp">
-        <h2>Copia de seguridad</h2>
-        <p class="muted aj-d">Descarga un archivo con tus productos, ubicaciones y movimientos, por si algún día hace falta recuperarlos.</p>
-        <button class="btn ghost wide" data-act="x-json">⬇️ Descargar copia</button>
+    <div class="aj-sec" data-s="poco" id="a-umbral">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card">
+        <h2>Avisos de poco stock</h2>
+        <p class="muted aj-d">Una publicaciÃ³n activa se marca en rojo cuando tiene esta cantidad o menos (en cualquiera de sus variantes).</p>
+        <div class="row"><input id="a-poco" type="number" inputmode="numeric" min="0" max="999" autocomplete="off" style="max-width:110px"><span class="grow muted">unidades o menos</span><button class="btn small" data-act="poco-save">Guardar</button></div>
       </div>
     </div>
-    <p class="muted section" id="a-ver" style="text-align:center"></p>
+
+    <div class="aj-sec" data-s="ml" id="a-ml">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card">
+        <h2>Mercado Libre</h2>
+        <p class="muted aj-d" id="a-ml-estado"></p>
+        <div class="stack">
+          <button class="btn ghost wide" data-act="ml-importar" id="a-ml-imp">ðŸ“¥ Traer publicaciones nuevas</button>
+          <button class="btn ghost wide" data-act="ml-conectar" id="a-ml-con">ðŸ”— Reconectar la cuenta</button>
+        </div>
+        <p class="muted" id="ml-res" style="font-size:14px;margin-top:8px"></p>
+        <small class="muted" style="margin-top:6px">"Traer publicaciones nuevas": cuando publicÃ¡s algo nuevo en Mercado Libre, lo agrega como producto en la app (no toca los que ya estÃ¡n). Para actualizar stock y estados, usÃ¡ el botÃ³n "Actualizar desde Mercado Libre" de Inventario.</small>
+      </div>
+    </div>
+
+    <div class="aj-sec" data-s="dups" id="a-mant">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card">
+        <h2>Productos repetidos</h2>
+        <p class="muted aj-d">Si alguien creÃ³ dos veces el mismo producto, acÃ¡ se ven juntos y se pueden unir en uno (con sus ubicaciones y su stock).</p>
+        <button class="btn ghost wide" data-act="dups">Revisar productos repetidos</button>
+      </div>
+    </div>
+
+    <div class="aj-sec" data-s="resp" id="a-resp">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card">
+        <h2>Copia de seguridad</h2>
+        <p class="muted aj-d">Descarga un archivo con tus productos, ubicaciones y movimientos, por si algÃºn dÃ­a hace falta recuperarlos.</p>
+        <button class="btn ghost wide" data-act="x-json">â¬‡ï¸ Descargar copia</button>
+      </div>
+    </div>
+
+    <div class="aj-sec" data-s="cuenta">
+      <button class="btn ghost small aj-volver" data-act="aj" data-s="">â† Ajustes</button>
+      <div class="card" id="a-cuenta"></div>
+    </div>
   </section>
 </main>
 
@@ -358,7 +398,15 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
   <button data-act="tab" data-v="ml">Mercado Libre</button>
   <button data-act="tab" data-v="inicio">Ubicaciones</button>
   <button data-act="tab" data-v="movs">Movimientos</button>
-  <button data-act="tab" data-v="ajustes">Ajustes</button>
+  <button data-act="tab" data-v="ajustes" id="nav-aj">Ajustes <span class="flecha">â–¾</span></button>
+  <div class="subnav" id="subnav">
+    <button data-act="aj-nav" data-s="dep">DepÃ³sito</button>
+    <button data-act="aj-nav" data-s="poco">Poco stock</button>
+    <button data-act="aj-nav" data-s="ml">Mercado Libre</button>
+    <button data-act="aj-nav" data-s="dups">Productos repetidos</button>
+    <button data-act="aj-nav" data-s="resp">Copia de seguridad</button>
+    <button data-act="aj-nav" data-s="cuenta">Mi cuenta</button>
+  </div>
 </nav>
 
 <div id="modal"><div class="sheet" id="sheet"></div></div>
@@ -367,7 +415,7 @@ pre.crudo{white-space:pre-wrap;word-break:break-all;font-size:12px;background:va
 
 <script>
 /* ---------- utilidades ---------- */
-const VERSION = '2026-11-16 · ajustes';
+const VERSION = '2026-11-16 Â· ajustes';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -376,16 +424,16 @@ const stockKey = (pid, u) => pid + '__' + u;
 const fmt = f => new Date(f).toLocaleString('es-AR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 const cmpU = (a, b) => a.localeCompare(b, 'es', { numeric: true });
 
-/* ---------- ubicaciones: texto -> código ---------- */
+/* ---------- ubicaciones: texto -> cÃ³digo ---------- */
 // Acepta: P1, P1-A, p1a, P2-T3-N1, "PASILLO 1", "pasillo 2, tramo 5, nivel 3", "pasillo 1 lado a", "pasillo dos izquierda".
-// Devuelve el código (P1-A-T3-N2) o null si no lo entiende.
+// Devuelve el cÃ³digo (P1-A-T3-N2) o null si no lo entiende.
 const NUMS = { uno:1, una:1, primero:1, primer:1, dos:2, segundo:2, tres:3, tercero:3, tercer:3, cuatro:4, cuarto:4, cinco:5, quinto:5,
                seis:6, sexto:6, siete:7, septimo:7, ocho:8, octavo:8, nueve:9, noveno:9, diez:10, decimo:10 };
 const KW = { p:'P', pas:'P', pasi:'P', pasillo:'P', t:'T', tr:'T', tra:'T', tramo:'T', n:'N', niv:'N', nivel:'N', l:'L', lado:'L' };
 const FILL = new Set(['de', 'del', 'el', 'la', 'y', 'en', 'nro', 'num', 'numero', 'ubicacion', 'ubic']);
 const SIDEW = { izq:'A', izquierda:'A', izquierdo:'A', der:'B', derecha:'B', derecho:'B' };
 function parseUbic(txt) {
-  let s = norm(txt).replace(/n\s*[°º]/g, ' ').replace(/[°º]/g, ' ');
+  let s = norm(txt).replace(/n\s*[Â°Âº]/g, ' ').replace(/[Â°Âº]/g, ' ');
   s = s.replace(/([a-z])(\d)/g, '$1 $2').replace(/(\d)([a-z])/g, '$1 $2');
   const tk = s.split(/[^a-z0-9]+/).filter(Boolean);
   if (!tk.length) return null;
@@ -424,7 +472,7 @@ let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem('ubic_cfg') || '{}'); } catch (e) {}
 const saveCfg = () => localStorage.setItem('ubic_cfg', JSON.stringify(cfg));
 
-// Configuración fija del depósito: cualquier dispositivo que abra el link se conecta a Firebase y pide login.
+// ConfiguraciÃ³n fija del depÃ³sito: cualquier dispositivo que abra el link se conecta a Firebase y pide login.
 // No es secreta: solo identifica el proyecto. El acceso lo controlan las reglas y la lista de usuarios.
 const CONFIG_FIJA = {
   empresa: 'propia',
@@ -487,7 +535,7 @@ function movData(pid, u, delta, tipo, extra) {
            cantidad: Math.abs(delta), delta, usuario: usuarioActual(), ...(state.me ? { email: state.me.email } : {}),
            fecha: Date.now(), ...(extra || {}) };
 }
-// Registro de cambios de productos (eliminar, renombrar, SKU, códigos, importación).
+// Registro de cambios de productos (eliminar, renombrar, SKU, cÃ³digos, importaciÃ³n).
 const logProd = (pid, tipo, extra) => B.log(movData(pid, '', 0, tipo, extra));
 
 // Movimiento de "fijar cantidad": carga (primera vez en ese tramo) o ajuste (ya estaba).
@@ -506,7 +554,7 @@ const Local = {
     state.productos = d.productos || {}; state.stock = d.stock || {}; state.movs = d.movs || [];
     state.dep = cfg.dep || null;
   },
-  guardarDep(dep) { cfg.dep = dep; saveCfg(); state.dep = dep; depCambio(); toast('Depósito guardado'); },
+  guardarDep(dep) { cfg.dep = dep; saveCfg(); state.dep = dep; depCambio(); toast('DepÃ³sito guardado'); },
   persist() {
     try {
       localStorage.setItem(this.key, JSON.stringify({ productos: state.productos, stock: state.stock, movs: state.movs.slice(0, 3000) }));
@@ -566,7 +614,7 @@ const Local = {
 const FBV = '10.12.2';
 const Fb = {
   async init() {
-    if (!cfg.fb || !cfg.fb.apiKey || !cfg.fb.projectId) throw new Error('falta la configuración');
+    if (!cfg.fb || !cfg.fb.apiKey || !cfg.fb.projectId) throw new Error('falta la configuraciÃ³n');
     if (!cfg.empresa) throw new Error('falta el identificador de empresa');
     for (const m of ['app', 'auth', 'firestore']) await loadScript(`https://www.gstatic.com/firebasejs/${FBV}/firebase-${m}-compat.js`);
     if (!firebase.apps.length) firebase.initializeApp(cfg.fb);
@@ -586,7 +634,7 @@ const Fb = {
     if (!u || u.activo !== true) {
       // Motivo exacto, para no adivinar.
       const ruta = `empresas/${cfg.empresa}/usuarios/${email}`;
-      const motivo = u ? `Figura en la lista, pero "activo" no es true (es ${JSON.stringify(u.activo)}${typeof u.activo === 'string' ? ', está como texto: tiene que ser tipo boolean' : ''}).`
+      const motivo = u ? `Figura en la lista, pero "activo" no es true (es ${JSON.stringify(u.activo)}${typeof u.activo === 'string' ? ', estÃ¡ como texto: tiene que ser tipo boolean' : ''}).`
         : errLect ? `No se pudo leer la lista: ${errLect.code || ''} ${errLect.message || errLect}`
         : 'No existe ese documento en la lista.';
       noAutorizado(email, motivo, ruta, !u && !!errLect);
@@ -609,7 +657,7 @@ const Fb = {
     }, onErr);
   },
   // Inventario de ML: se lee A PEDIDO (al entrar y al tocar "Actualizar"), no en vivo, para no gastar lecturas.
-  // 1 lectura del resumen + 1 del umbral + 1 por publicación.
+  // 1 lectura del resumen + 1 del umbral + 1 por publicaciÃ³n.
   async cargarPubs() {
     state.invCargando = true; renderInv();
     try {
@@ -625,12 +673,12 @@ const Fb = {
       state.invErr = '';
     } catch (e) {
       state.invErr = e.code === 'permission-denied'
-        ? 'Todavía no hay permiso para leer las publicaciones (falta publicar las reglas de Firebase).'
+        ? 'TodavÃ­a no hay permiso para leer las publicaciones (falta publicar las reglas de Firebase).'
         : 'No se pudo leer el inventario: ' + (e.message || e);
     }
     state.invCargando = false; renderInv();
   },
-  // Avisos de ML (grabadora): los últimos 150, a pedido (al abrir la sección o tocar "Ver lo último").
+  // Avisos de ML (grabadora): los Ãºltimos 150, a pedido (al abrir la secciÃ³n o tocar "Ver lo Ãºltimo").
   async cargarAvisos() {
     state.actCargando = true; renderAct();
     try {
@@ -645,12 +693,12 @@ const Fb = {
   guardarUmbral(n) {
     state.umbral = n; renderInv();
     this.base.collection('config').doc('inventario').set({ pocoStock: n, actualizado: Date.now(), por: usuarioActual() }, { merge: true })
-      .catch(e => toast('No se guardó: ' + e.message, 'err'));
+      .catch(e => toast('No se guardÃ³: ' + e.message, 'err'));
   },
   guardarProducto(p) {
     state.productos[p.id] = p; refresh();
     const { id, ...d } = p;
-    this.base.collection('productos').doc(id).set(d).catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+    this.base.collection('productos').doc(id).set(d).catch(e => toast('No se sincronizÃ³: ' + e.message, 'err'));
   },
   guardarProductos(list) {
     list.forEach(p => { state.productos[p.id] = p; }); refresh();
@@ -660,7 +708,7 @@ const Fb = {
       b.commit().catch(e => toast('Error al importar: ' + e.message, 'err'));
     }
   },
-  // Importación: set con merge en el id fijo; los SKU se suman, no se pisan.
+  // ImportaciÃ³n: set con merge en el id fijo; los SKU se suman, no se pisan.
   importarProductos(list) {
     const FV = firebase.firestore.FieldValue;
     list.forEach(p => { const o = state.productos[p.id];
@@ -684,15 +732,15 @@ const Fb = {
       const s = await this.base.collection('productos').get({ source: 'server' });
       const o = {}; s.forEach(d => { o[d.id] = { id: d.id, ...d.data() }; });
       state.productos = o;
-    } catch (e) { toast('Sin conexión con el servidor: se usa la lista que hay en este dispositivo.', 'err'); }
+    } catch (e) { toast('Sin conexiÃ³n con el servidor: se usa la lista que hay en este dispositivo.', 'err'); }
   },
-  // Stock de ML: set con merge, así solo cambian los SKU que vienen y no se pisa el resto del producto.
+  // Stock de ML: set con merge, asÃ­ solo cambian los SKU que vienen y no se pisa el resto del producto.
   guardarML(list) {
     const extra = mlLocal(list); refresh();
     for (let i = 0; i < list.length; i += 400) {
       const b = this.db.batch();
       list.slice(i, i + 400).forEach(x => b.set(this.base.collection('productos').doc(x.id), { ml: x.ml, ...extra }, { merge: true }));
-      b.commit().catch(e => toast('No se guardó el stock de ML: ' + e.message, 'err'));
+      b.commit().catch(e => toast('No se guardÃ³ el stock de ML: ' + e.message, 'err'));
     }
   },
   unir(plan) {
@@ -715,16 +763,16 @@ const Fb = {
       { productoId: pid, ubicacion: u, cantidad: firebase.firestore.FieldValue.increment(delta), actualizado: Date.now() }, { merge: true });
     const { id, ...m } = movData(pid, u, delta, tipo);
     b.set(this.base.collection('movimientos').doc(), m);
-    b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+    b.commit().catch(e => toast('No se sincronizÃ³: ' + e.message, 'err'));
   },
-  // Fija la cantidad exacta del tramo (no suma ni resta). 0 = está acá, sin contar.
+  // Fija la cantidad exacta del tramo (no suma ni resta). 0 = estÃ¡ acÃ¡, sin contar.
   fijar(pid, u, real, ml, extra) {
     const b = this.db.batch();
     const { id, ...m } = movFijar(pid, u, real, ml, extra);
     b.set(this.base.collection('stock').doc(stockKey(pid, u)),
       { productoId: pid, ubicacion: u, cantidad: real, sinCant: real === 0, actualizado: Date.now() }, { merge: true });
     b.set(this.base.collection('movimientos').doc(), m);
-    b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+    b.commit().catch(e => toast('No se sincronizÃ³: ' + e.message, 'err'));
   },
   quitar(pid, u, extra) {
     const k = stockKey(pid, u), cur = (state.stock[k] || {}).cantidad || 0;
@@ -733,7 +781,7 @@ const Fb = {
     const { id, ...m } = movData(pid, u, -cur, 'quitado', { anterior: cur, ...(extra || {}) });
     b.set(this.base.collection('movimientos').doc(), m);
     delete state.stock[k]; refresh();
-    b.commit().catch(e => toast('No se sincronizó: ' + e.message, 'err'));
+    b.commit().catch(e => toast('No se sincronizÃ³: ' + e.message, 'err'));
   },
   borrarProducto(pid) {
     const b = this.db.batch();
@@ -747,12 +795,12 @@ const Fb = {
   guardarDep(dep) {
     state.dep = dep; depCambio();
     this.base.collection('config').doc('deposito').set(dep)
-      .then(() => toast('Depósito guardado para todos'))
+      .then(() => toast('DepÃ³sito guardado para todos'))
       .catch(e => toast(e.code === 'permission-denied' ? 'No se pudo guardar: falta actualizar las reglas de Firebase (bloque config) o no sos admin.' : 'No se pudo guardar: ' + e.message, 'err'));
   },
   log(m) {
     const { id, ...d } = m;
-    this.base.collection('movimientos').add(d).catch(e => toast('No se registró: ' + e.message, 'err'));
+    this.base.collection('movimientos').add(d).catch(e => toast('No se registrÃ³: ' + e.message, 'err'));
   },
   borrar() { toast('En modo Firebase los datos se borran desde la consola de Firebase', 'err'); }
 };
@@ -762,12 +810,12 @@ const GLOGO = '<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true
 function pedirLogin() {
   return new Promise(resolve => {
     $('#login-box').innerHTML = `<h2>Stock Hub</h2>
-      <p>Entrá con tu cuenta de Google. Solo pueden entrar las cuentas autorizadas por el depósito.</p>
+      <p>EntrÃ¡ con tu cuenta de Google. Solo pueden entrar las cuentas autorizadas por el depÃ³sito.</p>
       <button class="gbtn" id="g-login">${GLOGO}Entrar con Google</button>
       <p class="muted" id="login-msg" style="margin-top:14px"></p>`;
     $('#login').classList.add('on');
     $('#g-login').onclick = async () => {
-      const msg = $('#login-msg'); msg.textContent = 'Abriendo Google…';
+      const msg = $('#login-msg'); msg.textContent = 'Abriendo Googleâ€¦';
       try {
         const p = new firebase.auth.GoogleAuthProvider();
         p.setCustomParameters({ prompt: 'select_account' });
@@ -776,10 +824,10 @@ function pedirLogin() {
         resolve(r.user);
       } catch (e) {
         const c = e && e.code || '';
-        msg.textContent = c === 'auth/popup-blocked' ? 'El navegador bloqueó la ventana de Google. Permití ventanas emergentes para esta página y tocá de nuevo.'
-          : c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' ? 'Se cerró la ventana sin entrar. Tocá de nuevo.'
-          : c === 'auth/unauthorized-domain' ? 'Falta autorizar este dominio en Firebase (Authentication > Configuración > Dominios autorizados).'
-          : c === 'auth/operation-not-allowed' ? 'Falta activar Google en Firebase (Authentication > Método de acceso).'
+        msg.textContent = c === 'auth/popup-blocked' ? 'El navegador bloqueÃ³ la ventana de Google. PermitÃ­ ventanas emergentes para esta pÃ¡gina y tocÃ¡ de nuevo.'
+          : c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' ? 'Se cerrÃ³ la ventana sin entrar. TocÃ¡ de nuevo.'
+          : c === 'auth/unauthorized-domain' ? 'Falta autorizar este dominio en Firebase (Authentication > ConfiguraciÃ³n > Dominios autorizados).'
+          : c === 'auth/operation-not-allowed' ? 'Falta activar Google en Firebase (Authentication > MÃ©todo de acceso).'
           : 'No se pudo entrar: ' + (e.message || e);
       }
     };
@@ -787,21 +835,21 @@ function pedirLogin() {
 }
 function noAutorizado(email, motivo, ruta, esError) {
   $('#login-box').innerHTML = `<h2>${esError ? 'No se pudo verificar' : 'Sin acceso'}</h2>
-    <p>La cuenta <b>${esc(email)}</b> ${esError ? 'no se pudo verificar.' : 'no está autorizada en este depósito.'}</p>
+    <p>La cuenta <b>${esc(email)}</b> ${esError ? 'no se pudo verificar.' : 'no estÃ¡ autorizada en este depÃ³sito.'}</p>
     <div style="text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:14px">
-      <b>Motivo:</b> ${esc(motivo || '')}<br><b>Se buscó en:</b> <span style="word-break:break-all">${esc(ruta || '')}</span>
+      <b>Motivo:</b> ${esc(motivo || '')}<br><b>Se buscÃ³ en:</b> <span style="word-break:break-all">${esc(ruta || '')}</span>
     </div>
     <button class="btn main" id="g-reint" style="margin-bottom:10px">Reintentar</button>
     <button class="btn ghost wide" id="g-otra" style="margin-bottom:10px">Entrar con otra cuenta</button>
-    ${CONFIG_FIJA ? '' : '<button class="btn ghost wide" id="g-cfg">Revisar configuración</button>'}`;
+    ${CONFIG_FIJA ? '' : '<button class="btn ghost wide" id="g-cfg">Revisar configuraciÃ³n</button>'}`;
   $('#login').classList.add('on');
   $('#g-reint').onclick = () => location.reload();
   $('#g-otra').onclick = cerrarSesion;
   if ($('#g-cfg')) $('#g-cfg').onclick = () => { $('#login').classList.remove('on'); fillAjustes(); tab('ajustes'); };
 }
 function errorConexion(e) {
-  $('#login-box').innerHTML = `<h2>Sin conexión</h2>
-    <p>No se pudo conectar con la base del depósito. Revisá que haya internet y reintentá.</p>
+  $('#login-box').innerHTML = `<h2>Sin conexiÃ³n</h2>
+    <p>No se pudo conectar con la base del depÃ³sito. RevisÃ¡ que haya internet y reintentÃ¡.</p>
     <p class="muted" style="font-size:13px;word-break:break-all">${esc((e && (e.code || e.message)) || e || '')}</p>
     <button class="btn main" id="g-reint">Reintentar</button>`;
   $('#login').classList.add('on');
@@ -809,7 +857,7 @@ function errorConexion(e) {
 }
 async function cerrarSesion() {
   try { await firebase.auth().signOut(); } catch (e) {}
-  // Borra la copia de los datos que quedó guardada en este navegador.
+  // Borra la copia de los datos que quedÃ³ guardada en este navegador.
   try { await firebase.firestore().terminate(); await firebase.firestore().clearPersistence(); } catch (e) {}
   location.reload();
 }
@@ -834,18 +882,18 @@ function buscar(q, lim = 40) {
     return toks.every(t => h.includes(t));
   }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')).slice(0, lim);
 }
-// Un registro se muestra si tiene cantidad o si se guardó en 0 a propósito ("está acá, sin contar").
+// Un registro se muestra si tiene cantidad o si se guardÃ³ en 0 a propÃ³sito ("estÃ¡ acÃ¡, sin contar").
 const visible = s => s.cantidad > 0 || !!s.sinCant;
-const cantChip = s => s.cantidad > 0 ? '×' + s.cantidad : 'sin contar';
+const cantChip = s => s.cantidad > 0 ? 'Ã—' + s.cantidad : 'sin contar';
 const cantTxt = s => s.cantidad > 0 ? s.cantidad + ' u.' : 'sin contar';
 const stockDe = pid => Object.values(state.stock).filter(s => s.productoId === pid && visible(s)).sort((a, b) => cmpU(a.ubicacion, b.ubicacion));
 const stockEn = (pid, u) => (state.stock[stockKey(pid, u)] || {}).cantidad || 0;
 const total = pid => stockDe(pid).reduce((a, s) => a + s.cantidad, 0);
 const chips = pid => stockDe(pid).map(s => `<span class="chip">${esc(s.ubicacion)}<span>${cantChip(s)}</span></span>`).join('');
 const ubicsBig = pid => stockDe(pid).map(s => `<button class="ubic" data-act="d-go" data-u="${esc(s.ubicacion)}"><span class="u">${esc(s.ubicacion)}</span><span class="n">${cantTxt(s)}</span></button>`).join('');
-/* ---------- Mercado Libre vs. depósito ---------- */
-// En el producto: ml = { SKU: stock en ML } (una por publicación; '_' si no tiene SKU), mlFecha, mlPor.
-// Cada publicación se compara contra el TOTAL del depósito (todas sus ubicaciones), no contra un tramo.
+/* ---------- Mercado Libre vs. depÃ³sito ---------- */
+// En el producto: ml = { SKU: stock en ML } (una por publicaciÃ³n; '_' si no tiene SKU), mlFecha, mlPor.
+// Cada publicaciÃ³n se compara contra el TOTAL del depÃ³sito (todas sus ubicaciones), no contra un tramo.
 const ML_SIN = '_';
 function mlLocal(list) {
   const extra = { mlFecha: Date.now(), mlPor: usuarioActual() };
@@ -857,8 +905,8 @@ function mlDe(p) {
   const ks = skus.length ? skus.filter(s => typeof ml[s] === 'number') : (typeof ml[ML_SIN] === 'number' ? [ML_SIN] : []);
   return ks.map(k => ({ k, sku: k === ML_SIN ? '' : k, n: ml[k] }));
 }
-// tipo: riesgo (ML dice más y todo está contado) · revisar (ML dice más pero hay ubicaciones sin contar)
-//       falta (hay más de lo publicado) · ok (coincide)
+// tipo: riesgo (ML dice mÃ¡s y todo estÃ¡ contado) Â· revisar (ML dice mÃ¡s pero hay ubicaciones sin contar)
+//       falta (hay mÃ¡s de lo publicado) Â· ok (coincide)
 function estadoML(p) {
   const pubs = mlDe(p); if (!pubs.length) return null;
   const st = stockDe(p.id), real = st.reduce((a, s) => a + (s.cantidad || 0), 0);
@@ -868,15 +916,15 @@ function estadoML(p) {
   return { pubs, real, sinContar, tipo, ubic: st.length, dif: Math.max(...pubs.map(x => Math.abs(x.n - real))) };
 }
 const ML_TIT = {
-  riesgo: ['Mercado Libre dice más de lo que hay', 'Se puede vender algo que no está y terminar cancelando la venta.'],
-  revisar: ['Mercado Libre dice más, pero hay ubicaciones sin contar', 'Contá esas ubicaciones para saber si falta mercadería.'],
-  falta: ['Hay más de lo que dice Mercado Libre', 'Mercadería que se podría estar vendiendo. Si hay ventas sin despachar, es normal que sobren esas.'],
+  riesgo: ['Mercado Libre dice mÃ¡s de lo que hay', 'Se puede vender algo que no estÃ¡ y terminar cancelando la venta.'],
+  revisar: ['Mercado Libre dice mÃ¡s, pero hay ubicaciones sin contar', 'ContÃ¡ esas ubicaciones para saber si falta mercaderÃ­a.'],
+  falta: ['Hay mÃ¡s de lo que dice Mercado Libre', 'MercaderÃ­a que se podrÃ­a estar vendiendo. Si hay ventas sin despachar, es normal que sobren esas.'],
   ok: ['Coincide con Mercado Libre', '']
 };
 function mlLinea(x, e) {
   const d = e.real - x.n;
-  const fin = d < 0 ? (e.sinContar ? '' : ` · <span class="bad">faltan ${-d}</span>`) : d > 0 ? ` · sobran ${d} sin publicar` : ' · coincide';
-  return `${x.sku ? esc(x.sku) + ': ' : ''}ML ${x.n} · depósito ${e.real}${e.sinContar ? ' + sin contar' : ''}${!e.ubic ? ' (sin ubicación)' : ''}${fin}`;
+  const fin = d < 0 ? (e.sinContar ? '' : ` Â· <span class="bad">faltan ${-d}</span>`) : d > 0 ? ` Â· sobran ${d} sin publicar` : ' Â· coincide';
+  return `${x.sku ? esc(x.sku) + ': ' : ''}ML ${x.n} Â· depÃ³sito ${e.real}${e.sinContar ? ' + sin contar' : ''}${!e.ubic ? ' (sin ubicaciÃ³n)' : ''}${fin}`;
 }
 function resumenML() {
   const r = { con: 0, riesgo: 0, revisar: 0, falta: 0, ok: 0 };
@@ -885,16 +933,16 @@ function resumenML() {
 }
 function kpiML() {
   const r = resumenML(), n = r.riesgo + r.revisar + r.falta;
-  if (!r.con) return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b>—</b><small>Cargá el stock de ML para comparar →</small></button>`;
-  const det = [r.riesgo && `${r.riesgo} ${r.riesgo === 1 ? 'puede' : 'pueden'} terminar en venta cancelada`, r.revisar && `${r.revisar} para revisar`, r.falta && `${r.falta} con stock sin publicar`].filter(Boolean).join(' · ');
-  return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b class="${r.riesgo ? 'warn' : n ? '' : 'ok'}">${n}</b><small>${det || `Los ${r.con} productos coinciden`} →</small></button>`;
+  if (!r.con) return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b>â€”</b><small>CargÃ¡ el stock de ML para comparar â†’</small></button>`;
+  const det = [r.riesgo && `${r.riesgo} ${r.riesgo === 1 ? 'puede' : 'pueden'} terminar en venta cancelada`, r.revisar && `${r.revisar} para revisar`, r.falta && `${r.falta} con stock sin publicar`].filter(Boolean).join(' Â· ');
+  return `<button class="kpi kml" data-act="ml-ver"><small>Diferencias con Mercado Libre</small><b class="${r.riesgo ? 'warn' : n ? '' : 'ok'}">${n}</b><small>${det || `Los ${r.con} productos coinciden`} â†’</small></button>`;
 }
 function openML() {
   detId = null;
   const todos = prods().map(p => [p, estadoML(p)]).filter(x => x[1]);
   if (!todos.length) {
     openModal(`<h3>Diferencias con Mercado Libre</h3>
-      <p style="margin-bottom:12px">Todavía no hay stock de Mercado Libre anotado. Cargalo desde Ajustes (pegando SKU y stock, o con el Excel de tus publicaciones) o desde cada producto.</p>
+      <p style="margin-bottom:12px">TodavÃ­a no hay stock de Mercado Libre anotado. Cargalo desde Ajustes (pegando SKU y stock, o con el Excel de tus publicaciones) o desde cada producto.</p>
       ${puede() ? '<button class="btn main" data-act="ml-cargar">Ir a Inventario y actualizar desde Mercado Libre</button>' : ''}
       <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
     return;
@@ -908,24 +956,24 @@ function openML() {
   };
   const ok = todos.filter(x => x[1].tipo === 'ok').length, sinDato = prods().length - todos.length;
   openModal(`<h3>Diferencias con Mercado Libre</h3>
-    <p class="muted">Compara el stock de cada publicación con el total del depósito (todas sus ubicaciones).
+    <p class="muted">Compara el stock de cada publicaciÃ³n con el total del depÃ³sito (todas sus ubicaciones).
       Coinciden: ${ok}.${sinDato ? ` Sin dato de ML: ${sinDato}.` : ''}</p>
     ${grupo('riesgo')}${grupo('revisar')}${grupo('falta')}
     ${ok === todos.length ? '<p style="margin-top:14px"><b>Todo coincide.</b></p>' : ''}
     ${puede() ? '<button class="btn ghost wide" data-act="ml-cargar" style="margin-top:16px">Ir a Inventario</button>' : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cerrar</button>`);
 }
-// Bloque del detalle del producto: comparación y, si puede editar, un casillero por SKU.
+// Bloque del detalle del producto: comparaciÃ³n y, si puede editar, un casillero por SKU.
 function mlDetalle(p) {
   const e = estadoML(p), keys = (p.skus || []).length ? p.skus : [ML_SIN];
   return `<div class="section stack"><h4>Stock en Mercado Libre</h4>
     ${e ? `<p class="${e.tipo === 'riesgo' ? 'bad' : ''}">${ML_TIT[e.tipo][0]}</p>${e.pubs.map(x => `<small style="display:block">${mlLinea(x, e)}</small>`).join('')}` : '<p class="muted">Sin dato de Mercado Libre.</p>'}
-    ${puede() ? `<div class="mlrows">${keys.map((k, i) => `<label for="d-ml${i}">${k === ML_SIN ? 'Stock en la publicación' : esc(k)}</label><input id="d-ml${i}" data-mlsku="${esc(k)}" type="number" inputmode="numeric" min="0" value="${typeof p.ml?.[k] === 'number' ? p.ml[k] : ''}" placeholder="—" autocomplete="off">`).join('')}</div>
+    ${puede() ? `<div class="mlrows">${keys.map((k, i) => `<label for="d-ml${i}">${k === ML_SIN ? 'Stock en la publicaciÃ³n' : esc(k)}</label><input id="d-ml${i}" data-mlsku="${esc(k)}" type="number" inputmode="numeric" min="0" value="${typeof p.ml?.[k] === 'number' ? p.ml[k] : ''}" placeholder="â€”" autocomplete="off">`).join('')}</div>
       <button class="btn small" data-act="d-ml">Guardar stock de ML</button>` : ''}
     ${p.mlFecha ? `<small style="display:block">Anotado ${fmt(p.mlFecha)}${p.mlPor ? ' por ' + esc(p.mlPor) : ''}</small>` : ''}
   </div>`;
 }
-// Conexión automática con Mercado Libre: las funciones están en el mismo proyecto de Firebase (carpeta stock-hub/).
+// ConexiÃ³n automÃ¡tica con Mercado Libre: las funciones estÃ¡n en el mismo proyecto de Firebase (carpeta stock-hub/).
 async function mlLlamar(nombre) {
   if (cfg.modo !== 'firebase') throw new Error('Esto necesita el modo Firebase.');
   await loadScript(`https://www.gstatic.com/firebasejs/${FBV}/firebase-functions-compat.js`);
@@ -933,31 +981,31 @@ async function mlLlamar(nombre) {
 }
 async function mlConectarCuenta() {
   const res = $('#ml-res');
-  try { res.textContent = 'Preparando la conexión…'; const r = await mlLlamar('mlConectar'); location.href = r.url; }
+  try { res.textContent = 'Preparando la conexiÃ³nâ€¦'; const r = await mlLlamar('mlConectar'); location.href = r.url; }
   catch (e) { res.textContent = 'No se pudo: ' + (e.message || e); }
 }
 async function mlTraer() {
   const res = $('#ml-res');
-  res.textContent = 'Trayendo las publicaciones de Mercado Libre… puede tardar un minuto.';
+  res.textContent = 'Trayendo las publicaciones de Mercado Libreâ€¦ puede tardar un minuto.';
   try {
     const r = await mlLlamar('mlSincronizar');
-    res.textContent = `Listo: ${r.publicaciones} publicaciones leídas, ${r.actualizados} productos actualizados.`
-      + (r.completados ? ` A ${r.completados} productos que no tenían SKU se les puso el de Mercado Libre.` : '')
+    res.textContent = `Listo: ${r.publicaciones} publicaciones leÃ­das, ${r.actualizados} productos actualizados.`
+      + (r.completados ? ` A ${r.completados} productos que no tenÃ­an SKU se les puso el de Mercado Libre.` : '')
       + (r.omitidas ? ` Sin contar (pausadas o en Full): ${r.omitidas}.` : '')
       + (r.sinSku ? ` Sin SKU: ${r.sinSku}.` : '')
-      + (r.sinProductoTotal ? ` SKU de ML que no están en el depósito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? '…' : '') + ')' : ''}.` : '');
+      + (r.sinProductoTotal ? ` SKU de ML que no estÃ¡n en el depÃ³sito: ${r.sinProductoTotal}${r.sinProducto.length ? ' (' + r.sinProducto.join(', ') + (r.sinProductoTotal > r.sinProducto.length ? 'â€¦' : '') + ')' : ''}.` : '');
     B.cargarPubs();
   } catch (e) { res.textContent = 'No se pudo traer: ' + (e.message || e); }
 }
 async function mlImportarProductos() {
   const res = $('#ml-res');
-  if (!confirm('Esto crea en la app un producto por cada publicación de Mercado Libre que todavía no esté. No toca los productos que ya tenés. ¿Seguir?')) return;
-  res.textContent = 'Importando las publicaciones de Mercado Libre… puede tardar un minuto.';
+  if (!confirm('Esto crea en la app un producto por cada publicaciÃ³n de Mercado Libre que todavÃ­a no estÃ©. No toca los productos que ya tenÃ©s. Â¿Seguir?')) return;
+  res.textContent = 'Importando las publicaciones de Mercado Libreâ€¦ puede tardar un minuto.';
   try {
     const r = await mlLlamar('mlImportar');
     await B.refrescarProductos(); B.cargarPubs();
-    res.textContent = `Listo: ${r.publicaciones} publicaciones leídas. Productos creados: ${r.creados}. Ya estaban: ${r.yaExistian}.`
-      + (r.completados ? ` A ${r.completados} que no tenían SKU se les puso el de Mercado Libre.` : '')
+    res.textContent = `Listo: ${r.publicaciones} publicaciones leÃ­das. Productos creados: ${r.creados}. Ya estaban: ${r.yaExistian}.`
+      + (r.completados ? ` A ${r.completados} que no tenÃ­an SKU se les puso el de Mercado Libre.` : '')
       + (r.sinSku ? ` Creados SIN SKU (hay que ponerles uno a mano): ${r.sinSku}.` : '')
       + (r.omitidas ? ` No se importaron (cerradas o en Full): ${r.omitidas}.` : '');
     renderInicio();
@@ -968,27 +1016,27 @@ function itemHTML(p, act) {
   return `<button class="item" data-act="${act}" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc(skus)}</small><small>Stock total: ${total(p.id)}</small></button>`;
 }
 
-/* ---------- vista previa del código (escaneo de ubicación) ---------- */
+/* ---------- vista previa del cÃ³digo (escaneo de ubicaciÃ³n) ---------- */
 function ubicPrev(el, txt, btn) {
   const t = String(txt || '').trim();
   const u = t ? parseUbic(t) : null;
-  if (el) el.innerHTML = !t ? '' : u ? `Código: <b class="code">${esc(u)}</b>` : '<span class="bad">No lo entiendo como ubicación.</span>';
+  if (el) el.innerHTML = !t ? '' : u ? `CÃ³digo: <b class="code">${esc(u)}</b>` : '<span class="bad">No lo entiendo como ubicaciÃ³n.</span>';
   if (btn) btn.disabled = !u;
   return u;
 }
 
-/* ---------- pestaña Guardar ---------- */
-// Flujo rápido: pasillo → lado → tramo (botones) → nombre y SKU (escritos) → cantidad → Guardar.
-// La cantidad FIJA lo que hay en ese tramo (no suma). 0 = está acá, sin contar.
+/* ---------- pestaÃ±a Guardar ---------- */
+// Flujo rÃ¡pido: pasillo â†’ lado â†’ tramo (botones) â†’ nombre y SKU (escritos) â†’ cantidad â†’ Guardar.
+// La cantidad FIJA lo que hay en ese tramo (no suma). 0 = estÃ¡ acÃ¡, sin contar.
 const g = { P: '', L: '', ubic: '', pid: '', nombre: '', sku: '', cant: '', ml: '', mlOpen: false, cantOpen: false };
-// Configuración del depósito: compartida en Firebase (empresas/{empresa}/config/deposito), la edita solo el admin.
+// ConfiguraciÃ³n del depÃ³sito: compartida en Firebase (empresas/{empresa}/config/deposito), la edita solo el admin.
 // { pasillos: 4, tramos: { 'P1-A': 9, 'P1-B': 9, ... } }
 const lim = (v, a, b, d) => { const n = parseInt(v, 10); return n >= a && n <= b ? n : d; };
-const maxTramos = () => lim(cfg.tramos, 1, 60, 15);   // valor por defecto si un lado no está configurado
+const maxTramos = () => lim(cfg.tramos, 1, 60, 15);   // valor por defecto si un lado no estÃ¡ configurado
 const maxPasillos = () => lim(state.dep?.pasillos ?? cfg.pasillos, 1, 30, 4);
 const tramosDe = pl => lim(state.dep?.tramos?.[pl], 1, 60, maxTramos());
 const tramosMax = () => { let m = 1; for (let p = 1; p <= maxPasillos(); p++) m = Math.max(m, tramosDe(`P${p}-A`), tramosDe(`P${p}-B`)); return m; };
-// Botones de tramo: cuantos menos tramos, más grandes.
+// Botones de tramo: cuantos menos tramos, mÃ¡s grandes.
 function estiloTramos(n) {
   const [c, h, f] = n <= 4 ? [n, 96, 44] : n <= 9 ? [3, 84, 40] : n <= 16 ? [4, 72, 34] : [5, 62, 30];
   return `grid-template-columns:repeat(${c},1fr);--th:${h}px;--tf:${f}px`;
@@ -998,31 +1046,31 @@ const recEn = (pid, u) => { const r = state.stock[stockKey(pid, u)]; return r &&
 function renderG() {
   const s1 = $('#s1'), s2 = $('#s2'), s3 = $('#s3');
 
-  // 1. Ubicación
+  // 1. UbicaciÃ³n
   s1.className = 'step' + (g.ubic ? ' done' : '');
-  let h = `<h2><span class="num">1</span>Ubicación</h2>`;
+  let h = `<h2><span class="num">1</span>UbicaciÃ³n</h2>`;
   if (g.ubic) {
     const ml = /^(P\d+-[AB])(?:-T(\d+))?$/.exec(g.ubic);
     h += `<div class="row"><span class="plate">${esc(g.ubic)}</span><span class="grow"></span><button class="btn ghost small" data-act="u-x">${ml ? 'Cambiar pasillo o lado' : 'Cambiar'}</button></div>`;
     if (ml) {
-      // Cambio rápido de tramo sin volver atrás: tocás el número y listo.
+      // Cambio rÃ¡pido de tramo sin volver atrÃ¡s: tocÃ¡s el nÃºmero y listo.
       const pl = ml[1], act = ml[2] ? parseInt(ml[2], 10) : 0;
       h += `<p class="muted" style="margin-top:10px">Cambiar de tramo en ${esc(pl)}:</p>
         <div class="tchico" style="margin-top:6px">${Array.from({ length: tramosDe(pl) }, (_, i) => `<button data-act="u-tq" data-u="${esc(pl)}-T${i + 1}" class="${i + 1 === act ? 'on' : ''}" aria-label="Tramo ${i + 1}">${i + 1}</button>`).join('')}</div>`;
     }
   } else if (!g.P) {
     if (g.pid && stockDe(g.pid).length) {
-      h += `<p class="muted" style="margin-bottom:4px">Este producto ya está en:</p>
+      h += `<p class="muted" style="margin-bottom:4px">Este producto ya estÃ¡ en:</p>
         <div style="margin-bottom:12px">${stockDe(g.pid).map(s => `<button class="chip" data-act="u-pick" data-u="${esc(s.ubicacion)}">${esc(s.ubicacion)}<span>${cantChip(s)}</span></button>`).join('')}</div>
-        <p class="muted" style="margin-bottom:8px">Tocá una o elegí el pasillo:</p>`;
+        <p class="muted" style="margin-bottom:8px">TocÃ¡ una o elegÃ­ el pasillo:</p>`;
     }
     h += `<div class="pasillos">${Array.from({ length: maxPasillos() }, (_, i) => `<button data-act="u-p" data-v="P${i + 1}"><small>PASILLO</small><span>${i + 1}</span></button>`).join('')}</div>`;
   } else if (!g.L) {
-    h += `<div class="row" style="margin-bottom:10px"><span class="plate sm">PASILLO ${esc(g.P.slice(1))}</span><span class="grow"></span><button class="btn ghost small" data-act="u-back">← Pasillo</button></div>
+    h += `<div class="row" style="margin-bottom:10px"><span class="plate sm">PASILLO ${esc(g.P.slice(1))}</span><span class="grow"></span><button class="btn ghost small" data-act="u-back">â† Pasillo</button></div>
       <div class="lados"><button data-act="u-l" data-v="A"><span>A</span>Izquierda</button><button data-act="u-l" data-v="B"><span>B</span>Derecha</button></div>`;
   } else {
     const pl = g.P + '-' + g.L;
-    h += `<div class="row" style="margin-bottom:10px"><span class="plate sm">${esc(pl)}</span><span class="grow"></span><button class="btn ghost small" data-act="u-back">← Lado</button></div>
+    h += `<div class="row" style="margin-bottom:10px"><span class="plate sm">${esc(pl)}</span><span class="grow"></span><button class="btn ghost small" data-act="u-back">â† Lado</button></div>
       <p class="muted" style="margin-bottom:8px">Tramo:</p>
       <div class="tramos" style="${estiloTramos(tramosDe(pl))}">${Array.from({ length: tramosDe(pl) }, (_, i) => `<button data-act="u-t" data-u="${esc(pl)}-T${i + 1}">${i + 1}</button>`).join('')}</div>
       <button class="btn ghost wide" data-act="u-t" data-u="${esc(pl)}">Sin tramo (guardar en ${esc(pl)})</button>`;
@@ -1034,7 +1082,7 @@ function renderG() {
   if (g.pid) {
     const p = state.productos[g.pid] || {};
     s2.innerHTML = `<h2><span class="num">2</span>Producto</h2>
-      <div class="row"><div class="grow"><b id="g-p-name">${esc(p.nombre || '…')}</b>
+      <div class="row"><div class="grow"><b id="g-p-name">${esc(p.nombre || 'â€¦')}</b>
       <div class="muted">SKU: ${esc((p.skus || []).join(' / ') || 'sin SKU')}</div></div>
       <button class="btn ghost small" data-act="p-x">Cambiar</button></div>`;
   } else {
@@ -1054,22 +1102,22 @@ function renderG() {
   const val = g.cant !== '' ? g.cant : (rec ? String(rec.cantidad) : '');
   s3.className = 'step';
   s3.innerHTML = `<h2><span class="num">3</span>Guardar</h2>
-    ${rec ? `<p class="adjinfo">Ya ${rec.cantidad > 0 ? `había <b>${rec.cantidad}</b>` : 'estaba registrado, <b>sin contar</b>,'} en ${esc(g.ubic)}.${abierta ? ' El número que pongas reemplaza al anterior.' : ''}</p>` : ''}
+    ${rec ? `<p class="adjinfo">Ya ${rec.cantidad > 0 ? `habÃ­a <b>${rec.cantidad}</b>` : 'estaba registrado, <b>sin contar</b>,'} en ${esc(g.ubic)}.${abierta ? ' El nÃºmero que pongas reemplaza al anterior.' : ''}</p>` : ''}
     ${abierta ? `<label for="g-cant">Cantidad (opcional)</label>
-      <div class="qty"><button data-act="q-m" aria-label="Restar uno">−</button><input id="g-cant" type="number" inputmode="numeric" min="0" value="${esc(val)}" placeholder="0" aria-label="Cantidad" enterkeyhint="done"><button data-act="q-p" aria-label="Sumar uno">+</button></div>
+      <div class="qty"><button data-act="q-m" aria-label="Restar uno">âˆ’</button><input id="g-cant" type="number" inputmode="numeric" min="0" value="${esc(val)}" placeholder="0" aria-label="Cantidad" enterkeyhint="done"><button data-act="q-p" aria-label="Sumar uno">+</button></div>
       ${g.mlOpen
-        ? `<div style="margin-bottom:12px"><label for="g-ml">Stock que dice Mercado Libre, de la publicación (opcional)</label><input id="g-ml" type="number" inputmode="numeric" min="0" value="${esc(g.ml)}" placeholder="Ej: 30" autocomplete="off"></div>`
+        ? `<div style="margin-bottom:12px"><label for="g-ml">Stock que dice Mercado Libre, de la publicaciÃ³n (opcional)</label><input id="g-ml" type="number" inputmode="numeric" min="0" value="${esc(g.ml)}" placeholder="Ej: 30" autocomplete="off"></div>`
         : `<button class="btn ghost small" data-act="ml-open" style="margin-bottom:12px">+ Anotar stock de Mercado Libre</button>`}`
       : `<button class="btn ghost small" data-act="cant-open" style="margin-bottom:12px">+ Poner cantidad (opcional)</button>`}
     <button class="btn main" id="g-save" data-act="save">Guardar</button>
-    ${rec ? `<button class="btn ghost wide" data-act="quitar" style="margin-top:10px">Ya no está acá: quitar de ${esc(g.ubic)}</button>` : ''}
-    ${state.me || cfg.usuario ? '' : '<p class="muted" style="margin-top:8px">Poné tu nombre en Ajustes para que quede registrado quién guarda.</p>'}`;
+    ${rec ? `<button class="btn ghost wide" data-act="quitar" style="margin-top:10px">Ya no estÃ¡ acÃ¡: quitar de ${esc(g.ubic)}</button>` : ''}
+    ${state.me || cfg.usuario ? '' : '<p class="muted" style="margin-top:8px">PonÃ© tu nombre en Ajustes para que quede registrado quiÃ©n guarda.</p>'}`;
   updSave();
 }
 
 function updSave() {
   const b = $('#g-save'); if (!b) return;
-  const falta = !g.ubic ? 'Falta elegir la ubicación' : !(g.pid || g.nombre.trim() || g.sku.trim()) ? 'Falta el producto' : '';
+  const falta = !g.ubic ? 'Falta elegir la ubicaciÃ³n' : !(g.pid || g.nombre.trim() || g.sku.trim()) ? 'Falta el producto' : '';
   b.disabled = !!falta;
   b.textContent = falta || 'Guardar';
 }
@@ -1085,7 +1133,7 @@ function gSearch() {
   if (!q) { el.innerHTML = ''; return; }
   const r = buscar(q, 6);
   el.innerHTML = r.length
-    ? `<p class="muted">¿Es alguno de estos? Tocalo. Si no, seguí: se crea al guardar.</p>` + r.map(p => itemHTML(p, 'p-pick')).join('')
+    ? `<p class="muted">Â¿Es alguno de estos? Tocalo. Si no, seguÃ­: se crea al guardar.</p>` + r.map(p => itemHTML(p, 'p-pick')).join('')
     : `<p class="muted">Producto nuevo: se crea al guardar.</p>`;
 }
 
@@ -1113,13 +1161,13 @@ function resolverProducto() {
   const nombre = g.nombre.trim(), sku = g.sku.trim();
   const ps = sku ? bySku(sku) : null;
   const pn = nombre ? prods().find(p => norm(p.nombre) === norm(nombre)) : null;
-  if (ps && pn && ps.id !== pn.id) { toast(`El SKU "${sku}" ya es de "${ps.nombre}". Tocá ese producto o cambiá el SKU.`, 'err'); return null; }
+  if (ps && pn && ps.id !== pn.id) { toast(`El SKU "${sku}" ya es de "${ps.nombre}". TocÃ¡ ese producto o cambiÃ¡ el SKU.`, 'err'); return null; }
   if (ps) return { pid: ps.id, nuevo: false };
   if (pn) {
     if (sku) { logProd(pn.id, 'prod_sku', { accion: 'agregado', valor: sku }); B.guardarProducto({ ...pn, skus: [...(pn.skus || []), sku] }); }
     return { pid: pn.id, nuevo: false };
   }
-  if (!nombre) { toast('Escribí el nombre del producto', 'err'); focusEl('#g-nombre'); return null; }
+  if (!nombre) { toast('EscribÃ­ el nombre del producto', 'err'); focusEl('#g-nombre'); return null; }
   const p = { id: uid('p'), nombre, skus: sku ? [sku] : [], codigos: [], creado: Date.now() };
   B.guardarProducto(p);
   return { pid: p.id, nuevo: true };
@@ -1128,12 +1176,12 @@ function resolverProducto() {
 function limpiarProducto() { g.pid = ''; g.nombre = ''; g.sku = ''; g.cant = ''; g.ml = ''; g.mlOpen = false; g.cantOpen = false; }
 
 function doSave() {
-  if (!g.ubic) { toast('Elegí pasillo, lado y tramo', 'err'); return; }
+  if (!g.ubic) { toast('ElegÃ­ pasillo, lado y tramo', 'err'); return; }
   const raw = String($('#g-cant')?.value ?? '').trim();
   const n = raw === '' ? 0 : parseInt(raw, 10);
-  if (raw !== '' && !/^\d+$/.test(raw)) { toast('La cantidad tiene que ser un número entero (0 o más)', 'err'); return; }
+  if (raw !== '' && !/^\d+$/.test(raw)) { toast('La cantidad tiene que ser un nÃºmero entero (0 o mÃ¡s)', 'err'); return; }
   const mlRaw = String(g.ml).trim(), ml = mlRaw === '' ? null : parseInt(mlRaw, 10);
-  if (mlRaw !== '' && !(ml >= 0)) { toast('El stock de Mercado Libre tiene que ser un número (0 o más)', 'err'); return; }
+  if (mlRaw !== '' && !(ml >= 0)) { toast('El stock de Mercado Libre tiene que ser un nÃºmero (0 o mÃ¡s)', 'err'); return; }
 
   const r = resolverProducto(); if (!r) return;
   const otros = stockDe(r.pid).filter(x => x.ubicacion !== g.ubic);
@@ -1141,7 +1189,7 @@ function doSave() {
   terminarGuardado(r, n, ml, false);
 }
 
-// El producto ya figura en otra ubicación: ¿se movió o está repartido?
+// El producto ya figura en otra ubicaciÃ³n: Â¿se moviÃ³ o estÃ¡ repartido?
 let pendMov = null;
 function preguntarMovido(r, n, ml, otros) {
   pendMov = { r, n, ml, u: g.ubic };
@@ -1150,23 +1198,23 @@ function preguntarMovido(r, n, ml, otros) {
   const lleva = n > 0 ? `queda con ${n} u.` : sumaOtros > 0 ? `se lleva las ${sumaOtros} u.` : 'sin contar';
   detId = null;
   openModal(`<h3>${esc(nombre)}</h3>
-    <p style="margin-bottom:8px">Ya está en:</p>
+    <p style="margin-bottom:8px">Ya estÃ¡ en:</p>
     <div style="margin-bottom:14px">${otros.map(x => `<span class="chip">${esc(x.ubicacion)}<span>${cantChip(x)}</span></span>`).join('')}</div>
     <div class="stack">
-      <button class="btn main" data-act="mov-si">Lo moví a ${esc(g.ubic)}<br><small style="color:inherit;opacity:.8;font-weight:500">Se borra de ${otros.length > 1 ? 'las otras ubicaciones' : esc(otros[0].ubicacion)} · ${lleva}</small></button>
-      <button class="btn ghost wide" data-act="mov-no">Está en los dos lugares</button>
+      <button class="btn main" data-act="mov-si">Lo movÃ­ a ${esc(g.ubic)}<br><small style="color:inherit;opacity:.8;font-weight:500">Se borra de ${otros.length > 1 ? 'las otras ubicaciones' : esc(otros[0].ubicacion)} Â· ${lleva}</small></button>
+      <button class="btn ghost wide" data-act="mov-no">EstÃ¡ en los dos lugares</button>
       <button class="btn ghost wide" data-act="close">Cancelar</button>
     </div>`);
   const b = $('[data-act="mov-si"]'); if (b) { b.style.minHeight = '68px'; b.style.lineHeight = '1.25'; }
 }
 
-// El stock de ML anotado al guardar también queda en el producto, en la publicación de su SKU.
-// Con varios SKU se usa el que se escribió; si no se sabe cuál es, se avisa y queda solo en el historial.
+// El stock de ML anotado al guardar tambiÃ©n queda en el producto, en la publicaciÃ³n de su SKU.
+// Con varios SKU se usa el que se escribiÃ³; si no se sabe cuÃ¡l es, se avisa y queda solo en el historial.
 function mlAlGuardar(pid, ml) {
   if (ml == null) return;
   const skus = state.productos[pid]?.skus || [], t = norm(g.sku);
   const k = !skus.length ? ML_SIN : skus.length === 1 ? skus[0] : skus.find(s => norm(s) === t);
-  if (!k) { toast('Tiene varios SKU: el stock de ML anotalo desde el producto, en cada publicación.', 'err'); return; }
+  if (!k) { toast('Tiene varios SKU: el stock de ML anotalo desde el producto, en cada publicaciÃ³n.', 'err'); return; }
   B.guardarML([{ id: pid, ml: { [k]: ml } }]);
 }
 function terminarGuardado(r, n, ml, movido) {
@@ -1175,18 +1223,18 @@ function terminarGuardado(r, n, ml, movido) {
   if (movido) {
     const otros = stockDe(pid).filter(x => x.ubicacion !== u);
     if (n === 0) n = otros.reduce((a, x) => a + (x.cantidad || 0), 0);
-    // El destino guarda de dónde vino, así el historial muestra el traslado completo en un solo renglón.
+    // El destino guarda de dÃ³nde vino, asÃ­ el historial muestra el traslado completo en un solo renglÃ³n.
     B.fijar(pid, u, n, ml, { desde: otros.map(x => ({ u: x.ubicacion, n: x.cantidad || 0 })), ...(ml != null ? { mlTotal: n } : {}) });
     otros.forEach(x => B.quitar(pid, x.ubicacion, { movidoA: u }));
     beep();
-    toast(`Movido: ${nombre} ahora está solo en ${u} (${n > 0 ? n + ' u.' : 'sin contar'})`);
+    toast(`Movido: ${nombre} ahora estÃ¡ solo en ${u} (${n > 0 ? n + ' u.' : 'sin contar'})`);
     mlAlGuardar(pid, ml);
     limpiarProducto(); renderG(); focusEl('#g-nombre');
     return;
   }
   const rec = recEn(pid, u);
   if (rec && rec.cantidad === n && ml == null) {
-    toast(`Sin cambios: ${nombre} ya tenía ${n > 0 ? n : '0 (sin contar)'} en ${u}`);
+    toast(`Sin cambios: ${nombre} ya tenÃ­a ${n > 0 ? n : '0 (sin contar)'} en ${u}`);
     limpiarProducto(); renderG(); focusEl('#g-nombre'); return;
   }
   const resto = stockDe(pid).filter(x => x.ubicacion !== u).reduce((a, x) => a + (x.cantidad || 0), 0);
@@ -1196,20 +1244,20 @@ function terminarGuardado(r, n, ml, movido) {
   toast(rec
     ? `Actualizado: ${nombre} en ${u}, de ${rec.cantidad > 0 ? rec.cantidad : 'sin contar'} a ${cuanto}`
     : `${r.nuevo ? 'Creado y guardado' : 'Guardado'}: ${nombre} en ${u} (${cuanto})`);
-  mlAlGuardar(pid, ml);   // después del aviso de guardado, para que su advertencia no quede tapada
+  mlAlGuardar(pid, ml);   // despuÃ©s del aviso de guardado, para que su advertencia no quede tapada
   limpiarProducto(); renderG(); focusEl('#g-nombre');
 }
 
 function doQuitar() {
   if (!g.pid || !g.ubic) return;
   const nombre = state.productos[g.pid]?.nombre || '';
-  if (!confirm(`¿Quitar "${nombre}" de ${g.ubic}?`)) return;
+  if (!confirm(`Â¿Quitar "${nombre}" de ${g.ubic}?`)) return;
   B.quitar(g.pid, g.ubic);
   toast(`Quitado: ${nombre} ya no figura en ${g.ubic}`);
   limpiarProducto(); renderG();
 }
 
-/* ---------- pestaña Buscar ---------- */
+/* ---------- pestaÃ±a Buscar ---------- */
 let bF = 'todos';
 function bFiltroDesde(q) {
   const u = parseUbic(q);
@@ -1217,7 +1265,7 @@ function bFiltroDesde(q) {
   bF = m ? m[1] : 'todos';
 }
 const stockItem = s => `<button class="item" data-act="d-open" data-id="${esc(s.productoId)}"><span class="chip">${esc(s.ubicacion)}<span>${cantChip(s)}</span></span><b>${esc(state.productos[s.productoId]?.nombre || 'Producto')}</b></button>`;
-// Lista agrupada por ubicación (P1-A-T1, P1-A-T2…), en el orden en que se camina el pasillo.
+// Lista agrupada por ubicaciÃ³n (P1-A-T1, P1-A-T2â€¦), en el orden en que se camina el pasillo.
 function agrupada(arr) {
   let out = '', ult = null;
   ordenar(arr).forEach(s => {
@@ -1228,7 +1276,7 @@ function agrupada(arr) {
 }
 const ordenar = arr => arr.sort((a, b) => cmpU(a.ubicacion, b.ubicacion) || (state.productos[a.productoId]?.nombre || '').localeCompare(state.productos[b.productoId]?.nombre || ''));
 
-// El botón de guardar está junto al buscador: se oculta mientras hay búsqueda o si el rol no puede guardar.
+// El botÃ³n de guardar estÃ¡ junto al buscador: se oculta mientras hay bÃºsqueda o si el rol no puede guardar.
 function showGuardar() { const ig = $('#i-guardar'); if (ig) ig.style.display = puede() && !$('#b-q').value.trim() ? '' : 'none'; }
 function bSearch() {
   const el = $('#b-res'); const q = $('#b-q').value.trim();
@@ -1265,69 +1313,69 @@ function bSearch() {
   const r = buscar(q);
   el.innerHTML = '<div class="list">' + (r.length
     ? r.map(p => `<button class="item" data-act="d-open" data-id="${esc(p.id)}"><b>${esc(p.nombre)}</b><small>${esc((p.skus || []).join(' / ') || 'Sin SKU')}</small><div>${chips(p.id) || '<small>Sin stock ubicado</small>'}</div></button>`).join('')
-    : `<p class="empty">No hay coincidencias.</p><button class="btn ghost small" data-act="b-new">Crear producto “${esc(q)}”</button>`) + '</div>';
+    : `<p class="empty">No hay coincidencias.</p><button class="btn ghost small" data-act="b-new">Crear producto â€œ${esc(q)}â€</button>`) + '</div>';
 }
 
-/* ---------- pestaña Movimientos ---------- */
+/* ---------- pestaÃ±a Movimientos ---------- */
 function movDelta(m) { return typeof m.delta === 'number' ? m.delta : (m.tipo === 'retiro' ? -m.cantidad : m.cantidad); }
 const hora = f => new Date(f).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-const signo = d => d < 0 ? '−' + Math.abs(d) : d > 0 ? '+' + d : '0';
+const signo = d => d < 0 ? 'âˆ’' + Math.abs(d) : d > 0 ? '+' + d : '0';
 const esTraslado = m => (m.tipo === 'quitado' && !!m.movidoA) || (Array.isArray(m.desde) && m.desde.length > 0);
 const uTxt = n => n > 0 ? n + ' u.' : 'sin contar';
-const habia = n => n > 0 ? `había ${n} u.` : 'estaba sin contar';
-// Cómo se muestra cada movimiento: símbolo, color y texto.
-//  + verde = entró / se cargó · − rojo = se quitó · ±/= azul = conteo · ⇄ gris = traslado (no es pérdida) · ✎ = cambio de producto
+const habia = n => n > 0 ? `habÃ­a ${n} u.` : 'estaba sin contar';
+// CÃ³mo se muestra cada movimiento: sÃ­mbolo, color y texto.
+//  + verde = entrÃ³ / se cargÃ³ Â· âˆ’ rojo = se quitÃ³ Â· Â±/= azul = conteo Â· â‡„ gris = traslado (no es pÃ©rdida) Â· âœŽ = cambio de producto
 function vistaMov(m) {
   const d = movDelta(m);
-  if (m.tipo === 'quitado' && m.movidoA) return { q: '⇄' + (m.anterior > 0 ? m.anterior : ''), cls: 'mv', et: 'traslado',
+  if (m.tipo === 'quitado' && m.movidoA) return { q: 'â‡„' + (m.anterior > 0 ? m.anterior : ''), cls: 'mv', et: 'traslado',
     det: `Trasladado a ${esc(m.movidoA)} (${habia(m.anterior)})` };
-  if (esTraslado(m)) return { q: '⇄' + (m.contado > 0 ? m.contado : ''), cls: 'mv', et: 'traslado',
-    det: `Trasladado desde ${m.desde.map(x => `${esc(x.u)} (${habia(x.n)})`).join(', ')} · quedó ${uTxt(m.contado)}${mlTxt(m)}` };
-  if (m.tipo === 'carga') return { q: m.contado > 0 ? '+' + m.contado : '+', cls: 'in', et: 'carga', det: `Carga en esta ubicación: ${uTxt(m.contado)}${mlTxt(m)}` };
+  if (esTraslado(m)) return { q: 'â‡„' + (m.contado > 0 ? m.contado : ''), cls: 'mv', et: 'traslado',
+    det: `Trasladado desde ${m.desde.map(x => `${esc(x.u)} (${habia(x.n)})`).join(', ')} Â· quedÃ³ ${uTxt(m.contado)}${mlTxt(m)}` };
+  if (m.tipo === 'carga') return { q: m.contado > 0 ? '+' + m.contado : '+', cls: 'in', et: 'carga', det: `Carga en esta ubicaciÃ³n: ${uTxt(m.contado)}${mlTxt(m)}` };
   if (m.tipo === 'ajuste') return { q: d === 0 ? '=' : signo(d), cls: 'adj', et: 'conteo',
-    det: `Conteo: había ${m.anterior > 0 ? esc(m.anterior) : '0 (sin contar)'}, quedó ${m.contado > 0 ? esc(m.contado) : '0 (sin contar)'}${mlTxt(m)}` };
-  if (m.tipo === 'quitado') return { q: m.anterior > 0 ? '−' + m.anterior : '−', cls: 'out', et: 'quitado', det: `Quitado de esta ubicación (${habia(m.anterior)})` };
+    det: `Conteo: habÃ­a ${m.anterior > 0 ? esc(m.anterior) : '0 (sin contar)'}, quedÃ³ ${m.contado > 0 ? esc(m.contado) : '0 (sin contar)'}${mlTxt(m)}` };
+  if (m.tipo === 'quitado') return { q: m.anterior > 0 ? 'âˆ’' + m.anterior : 'âˆ’', cls: 'out', et: 'quitado', det: `Quitado de esta ubicaciÃ³n (${habia(m.anterior)})` };
   return { q: signo(d), cls: d < 0 ? 'out' : 'in', et: m.tipo === 'retiro' ? 'retiro' : 'ingreso', det: '' };
 }
-const tipoTxt = m => ' · ' + vistaMov(m).et;
-// El renglón "quitado" de un traslado nuevo ya está incluido en el renglón del destino: no se repite.
+const tipoTxt = m => ' Â· ' + vistaMov(m).et;
+// El renglÃ³n "quitado" de un traslado nuevo ya estÃ¡ incluido en el renglÃ³n del destino: no se repite.
 function sinDuplicados(movs) {
   const cubiertos = new Set();
   movs.forEach(m => { if (Array.isArray(m.desde)) m.desde.forEach(x => cubiertos.add(m.productoId + '|' + x.u + '|' + m.ubicacion)); });
   return movs.filter(m => !(m.tipo === 'quitado' && m.movidoA && cubiertos.has(m.productoId + '|' + m.ubicacion + '|' + m.movidoA)));
 }
-const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado' + (Array.isArray(m.ubicaciones) && m.ubicaciones.length ? ` (estaba en ${m.ubicaciones.map(x => `${esc(x.u)}${x.n > 0 ? ' ×' + x.n : ''}`).join(', ')})` : '')
-  : m.tipo === 'prod_nombre' ? `Nombre cambiado: "${esc(m.antes)}" → "${esc(m.despues)}"`
+const PROD_TXT = m => m.tipo === 'prod_eliminado' ? 'Producto eliminado' + (Array.isArray(m.ubicaciones) && m.ubicaciones.length ? ` (estaba en ${m.ubicaciones.map(x => `${esc(x.u)}${x.n > 0 ? ' Ã—' + x.n : ''}`).join(', ')})` : '')
+  : m.tipo === 'prod_nombre' ? `Nombre cambiado: "${esc(m.antes)}" â†’ "${esc(m.despues)}"`
   : m.tipo === 'prod_sku' ? `SKU ${esc(m.accion)}: ${esc(m.valor)}`
-  : m.tipo === 'prod_codigo' ? `Código de barras ${esc(m.accion)}: ${esc(m.valor)}`
+  : m.tipo === 'prod_codigo' ? `CÃ³digo de barras ${esc(m.accion)}: ${esc(m.valor)}`
   : m.tipo === 'prod_unido' ? `Unido con ${esc(m.unidos)} repetido${m.unidos > 1 ? 's' : ''}`
   : m.tipo === 'prod_ml' ? `Stock de Mercado Libre anotado: ${esc(m.valor)}`
   : m.tipo === 'ml_carga' ? `Stock de Mercado Libre cargado en ${esc(m.cantidadImportada)} productos`
-  : m.tipo === 'importacion' ? `Importación: ${esc(m.cantidadImportada)} productos nuevos` : '';
+  : m.tipo === 'importacion' ? `ImportaciÃ³n: ${esc(m.cantidadImportada)} productos nuevos` : '';
 const esProd = m => String(m.tipo || '').startsWith('prod_') || m.tipo === 'importacion' || m.tipo === 'ml_carga';
-// Los movimientos nuevos guardan mlTotal (total del depósito al guardar); los viejos solo tienen lo contado en el tramo.
+// Los movimientos nuevos guardan mlTotal (total del depÃ³sito al guardar); los viejos solo tienen lo contado en el tramo.
 function mlTxt(m) {
   if (m.ml == null) return '';
   const r = m.mlTotal ?? m.contado, d = m.ml - r;
-  return ` · Mercado Libre decía ${esc(m.ml)}${m.mlTotal != null ? `, total en el depósito ${esc(r)}` : ''}${d ? ` (diferencia ${d > 0 ? '+' : ''}${d})` : ' (coincide)'}`;
+  return ` Â· Mercado Libre decÃ­a ${esc(m.ml)}${m.mlTotal != null ? `, total en el depÃ³sito ${esc(r)}` : ''}${d ? ` (diferencia ${d > 0 ? '+' : ''}${d})` : ' (coincide)'}`;
 }
 function miniMov(m) {
-  if (esProd(m)) return `<div class="mini"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? '✕' : '✎'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div class="muted">${PROD_TXT(m)} · ${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}</div></div></div>`;
+  if (esProd(m)) return `<div class="mini"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? 'âœ•' : 'âœŽ'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div class="muted">${PROD_TXT(m)} Â· ${hora(m.fecha)}${m.usuario ? ' Â· ' + esc(m.usuario) : ''}</div></div></div>`;
   const v = vistaMov(m);
   return `<div class="mini"><div class="q ${v.cls}">${v.q}</div>
     <div><b>${esc(m.nombre || state.productos[m.productoId]?.nombre || 'Producto')}</b> ${rutaHTML(m, 'font-size:15px')}
-    <div class="muted">${hora(m.fecha)}${m.usuario ? ' · ' + esc(m.usuario) : ''}${tipoTxt(m)}</div></div></div>`;
+    <div class="muted">${hora(m.fecha)}${m.usuario ? ' Â· ' + esc(m.usuario) : ''}${tipoTxt(m)}</div></div></div>`;
 }
-// Ubicación del movimiento; si fue un traslado, origen → destino.
+// UbicaciÃ³n del movimiento; si fue un traslado, origen â†’ destino.
 function rutaHTML(m, st) {
   const c = u => `<span class="chip"${st ? ` style="${st}"` : ''}>${esc(u)}</span>`;
-  if (m.tipo === 'quitado' && m.movidoA) return `<span class="ruta">${c(m.ubicacion)}<span aria-label="a">→</span>${c(m.movidoA)}</span>`;
-  if (Array.isArray(m.desde) && m.desde.length) return `<span class="ruta">${m.desde.map(x => c(x.u)).join('')}<span aria-label="a">→</span>${c(m.ubicacion)}</span>`;
+  if (m.tipo === 'quitado' && m.movidoA) return `<span class="ruta">${c(m.ubicacion)}<span aria-label="a">â†’</span>${c(m.movidoA)}</span>`;
+  if (Array.isArray(m.desde) && m.desde.length) return `<span class="ruta">${m.desde.map(x => c(x.u)).join('')}<span aria-label="a">â†’</span>${c(m.ubicacion)}</span>`;
   return c(m.ubicacion);
 }
 
-/* ---------- pestaña Inicio ---------- */
-// En pantallas angostas el mapa se dibuja "desde arriba", con cuadros más grandes.
+/* ---------- pestaÃ±a Inicio ---------- */
+// En pantallas angostas el mapa se dibuja "desde arriba", con cuadros mÃ¡s grandes.
 const mqCel = window.matchMedia ? window.matchMedia('(max-width: 599px)') : null;
 const esCelular = () => !!(mqCel && mqCel.matches);
 if (mqCel) { const f = () => renderInicio(); mqCel.addEventListener ? mqCel.addEventListener('change', f) : mqCel.addListener && mqCel.addListener(f); }
@@ -1345,13 +1393,13 @@ function planoCelular(porTramo, porPas) {
       const p = k + 1, c = porPas(p);
       let g = '';
       for (let i = 1; i <= filas; i++) g += celda(p, 'A', i) + celda(p, 'B', i);
-      return `<div class="pcol"><button class="pcol-h" data-act="i-pas" data-v="P${p}"><b>P${p}</b><small class="muted">${c ? c + ' prod.' : 'vacío'}</small></button>
+      return `<div class="pcol"><button class="pcol-h" data-act="i-pas" data-v="P${p}"><b>P${p}</b><small class="muted">${c ? c + ' prod.' : 'vacÃ­o'}</small></button>
         <div class="pcol-ab"><span>A</span><span>B</span></div><div class="cells pgrid">${g}</div></div>`;
     }).join('')}</div>`;
 }
 function renderInicio() {
   const el = $('#i-body'); if (!el) return;
-  const btn = $('#i-guardar'); if (btn) btn.textContent = g.ubic ? `Seguir guardando en ${g.ubic}` : '+ Guardar en ubicación';
+  const btn = $('#i-guardar'); if (btn) btn.textContent = g.ubic ? `Seguir guardando en ${g.ubic}` : '+ Guardar en ubicaciÃ³n';
   const ps = prods(), conU = ps.filter(p => stockDe(p.id).length > 0).length, sinU = ps.length - conU;
   const pct = ps.length ? Math.round(conU * 100 / ps.length) : 0;
   const rec = (cfg.recientes || []).filter(id => state.productos[id]);
@@ -1378,34 +1426,34 @@ function renderInicio() {
       <div class="kpi"><small>Productos</small><b>${ps.length}</b></div>
       <div class="kpi"><small>Tramos ocupados</small><b>${tOcup} <small class="muted" style="display:inline;font-family:var(--sans);font-size:15px;font-weight:500">de ${tTot}</small></b><div class="bar"><span style="width:${tPct}%"></span></div></div>
       <div class="kpi"><small>Movimientos hoy</small><b>${movsHoy.length}</b></div>
-      ${sinU ? `<button class="kpi" data-act="sin-ubic"><small>Sin ubicación</small><b class="warn">${sinU}</b><small>Ver lista →</small></button>`
-        : '<div class="kpi"><small>Sin ubicación</small><b class="ok">0</b></div>'}
-    </div>` : '<p class="muted" style="margin-top:16px">Todavía no hay productos cargados.</p>'}
-    <div class="card c-mapa"><h2>Mapa del depósito <small class="muted">Tocá un tramo para ver qué hay</small></h2>
+      ${sinU ? `<button class="kpi" data-act="sin-ubic"><small>Sin ubicaciÃ³n</small><b class="warn">${sinU}</b><small>Ver lista â†’</small></button>`
+        : '<div class="kpi"><small>Sin ubicaciÃ³n</small><b class="ok">0</b></div>'}
+    </div>` : '<p class="muted" style="margin-top:16px">TodavÃ­a no hay productos cargados.</p>'}
+    <div class="card c-mapa"><h2>Mapa del depÃ³sito <small class="muted">TocÃ¡ un tramo para ver quÃ© hay</small></h2>
       ${esCelular() ? planoCelular(porTramo, porPas) : `<div class="mapa">${Array.from({ length: maxPasillos() }, (_, i) => { const c = porPas(i + 1);
-        return `<div><button class="pas-h" data-act="i-pas" data-v="P${i + 1}"><b>PASILLO ${i + 1}</b><small>${c ? c + ' producto' + pl(c) : 'Vacío'}</small></button>${lado(i + 1, 'A')}${lado(i + 1, 'B')}</div>`; }).join('')}</div>`}
-      <div class="leyenda"><span><i></i>Vacío</span><span><i class="l1" style="background:color-mix(in srgb,var(--green) 45%,var(--field))"></i>1 producto</span><span><i style="background:color-mix(in srgb,var(--green) 72%,var(--field))"></i>2</span><span><i style="background:var(--green)"></i>3 o más</span></div>
+        return `<div><button class="pas-h" data-act="i-pas" data-v="P${i + 1}"><b>PASILLO ${i + 1}</b><small>${c ? c + ' producto' + pl(c) : 'VacÃ­o'}</small></button>${lado(i + 1, 'A')}${lado(i + 1, 'B')}</div>`; }).join('')}</div>`}
+      <div class="leyenda"><span><i></i>VacÃ­o</span><span><i class="l1" style="background:color-mix(in srgb,var(--green) 45%,var(--field))"></i>1 producto</span><span><i style="background:color-mix(in srgb,var(--green) 72%,var(--field))"></i>2</span><span><i style="background:var(--green)"></i>3 o mÃ¡s</span></div>
     </div>
-    ${rec.length ? `<div class="card c-recs"><h2>Últimos buscados</h2><div class="list" style="margin-top:0">${rec.map(id => { const p = state.productos[id];
-        return `<button class="item" data-act="d-open" data-id="${esc(id)}"><b>${esc(p.nombre)}</b><div>${chips(id) || '<small>Sin ubicación todavía</small>'}</div></button>`; }).join('')}</div></div>` : ''}
+    ${rec.length ? `<div class="card c-recs"><h2>Ãšltimos buscados</h2><div class="list" style="margin-top:0">${rec.map(id => { const p = state.productos[id];
+        return `<button class="item" data-act="d-open" data-id="${esc(id)}"><b>${esc(p.nombre)}</b><div>${chips(id) || '<small>Sin ubicaciÃ³n todavÃ­a</small>'}</div></button>`; }).join('')}</div></div>` : ''}
     <div class="card c-movs"><h2>Movimientos de hoy ${movsHoy.length ? `<button class="btn ghost small" data-act="tab" data-v="movs" style="min-height:36px">Ver todos (${movsHoy.length})</button>` : ''}</h2>
-      ${movsHoy.length ? movsHoy.slice(0, 6).map(miniMov).join('') : '<p class="muted">Hoy todavía no se guardó nada.</p>'}
+      ${movsHoy.length ? movsHoy.slice(0, 6).map(miniMov).join('') : '<p class="muted">Hoy todavÃ­a no se guardÃ³ nada.</p>'}
     </div>`;
 }
 function openSinUbic() {
   detId = null;
   const r = prods().filter(p => stockDe(p.id).length === 0).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-  openModal(`<h3>Sin ubicación (${r.length})</h3>
+  openModal(`<h3>Sin ubicaciÃ³n (${r.length})</h3>
     <div class="list">${r.slice(0, 300).map(p => itemHTML(p, 'd-open')).join('')}</div>
-    ${r.length > 300 ? '<p class="muted" style="margin-top:8px">Se muestran los primeros 300. Usá el buscador para los demás.</p>' : ''}
+    ${r.length > 300 ? '<p class="muted" style="margin-top:8px">Se muestran los primeros 300. UsÃ¡ el buscador para los demÃ¡s.</p>' : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
 }
 
 function renderMovs() {
   const el = $('#m-list');
-  if (!state.movs.length) { el.innerHTML = '<p class="empty">Todavía no hay movimientos. Guardá algo desde Inicio > Guardar en ubicación.</p>'; return; }
+  if (!state.movs.length) { el.innerHTML = '<p class="empty">TodavÃ­a no hay movimientos. GuardÃ¡ algo desde Inicio > Guardar en ubicaciÃ³n.</p>'; return; }
   el.innerHTML = sinDuplicados(state.movs.slice(0, 150)).map(m => {
-    if (esProd(m)) return `<div class="mov"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? '✕' : '✎'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div><small>${PROD_TXT(m)}</small></div>
+    if (esProd(m)) return `<div class="mov"><div class="q ${m.tipo === 'prod_eliminado' ? 'out' : 'adj'}">${m.tipo === 'prod_eliminado' ? 'âœ•' : 'âœŽ'}</div><div><b>${esc(m.nombre || 'Productos')}</b><div><small>${PROD_TXT(m)}</small></div>
       <small>${fmt(m.fecha)}${m.usuario ? ' por ' + esc(m.usuario) : ''}</small></div></div>`;
     const v = vistaMov(m);
     return `<div class="mov"><div class="q ${v.cls}">${v.q}</div>
@@ -1436,15 +1484,15 @@ async function closeModal() {
 async function scan(title, cb, opts = {}) {
   detId = null;
   openModal(`<h3>${esc(title)}</h3><div id="reader"></div>
-    <p class="muted" id="sc-msg" style="margin-bottom:10px">Apuntá la cámara al código.</p>
-    <button class="btn ghost small wide" data-act="sc-cam" style="margin-bottom:10px">Cambiar cámara (si no enfoca)</button>
+    <p class="muted" id="sc-msg" style="margin-bottom:10px">ApuntÃ¡ la cÃ¡mara al cÃ³digo.</p>
+    <button class="btn ghost small wide" data-act="sc-cam" style="margin-bottom:10px">Cambiar cÃ¡mara (si no enfoca)</button>
     <div class="row"><input class="grow" id="sc-in" placeholder="${opts.ubic ? 'O escribila: P1-A-T5 o pasillo 1 lado a tramo 5' : 'O escribilo a mano'}" autocomplete="off"><button class="btn small" id="sc-ok" data-act="sc-ok">Usar</button></div>
     ${opts.ubic ? '<p class="prev" id="sc-prev"></p>' : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cancelar</button>`);
   scanCb = cb; scanUbic = !!opts.ubic;
   if (scanUbic) $('#sc-ok').disabled = true;
   try { await loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'); }
-  catch (e) { const m = $('#sc-msg'); if (m) m.textContent = 'No se pudo cargar el lector. Revisá la conexión o escribí el código.'; return; }
+  catch (e) { const m = $('#sc-msg'); if (m) m.textContent = 'No se pudo cargar el lector. RevisÃ¡ la conexiÃ³n o escribÃ­ el cÃ³digo.'; return; }
   if (!$('#reader')) return;
   const F = Html5QrcodeSupportedFormats;
   const s = new Html5Qrcode('reader', { verbose: false,
@@ -1460,11 +1508,11 @@ async function scan(title, cb, opts = {}) {
   } catch (e) {
     if (scanner === s) scanner = null;
     const m = $('#sc-msg');
-    if (m) m.textContent = 'No se pudo abrir la cámara (' + (e.message || e) + '). Revisá los permisos o escribí el código.';
+    if (m) m.textContent = 'No se pudo abrir la cÃ¡mara (' + (e.message || e) + '). RevisÃ¡ los permisos o escribÃ­ el cÃ³digo.';
   }
 }
-// Cámara: en celulares con varias cámaras traseras (ej. Samsung S24) el navegador puede elegir la gran angular,
-// que no enfoca de cerca. Se pide más resolución y enfoque continuo, y se puede elegir otra cámara (queda guardada).
+// CÃ¡mara: en celulares con varias cÃ¡maras traseras (ej. Samsung S24) el navegador puede elegir la gran angular,
+// que no enfoca de cerca. Se pide mÃ¡s resoluciÃ³n y enfoque continuo, y se puede elegir otra cÃ¡mara (queda guardada).
 function camConstraints() {
   const vc = { width: { ideal: 1920 }, height: { ideal: 1080 } };
   if (cfg.camId) vc.deviceId = { exact: cfg.camId }; else vc.facingMode = { ideal: 'environment' };
@@ -1490,7 +1538,7 @@ async function cambiarCamara() {
     try { cams = await Html5Qrcode.getCameras(); } catch (e) {}
     const traseras = cams.filter(c => /back|rear|tras|environment|posterior/i.test(c.label || ''));
     const lista = traseras.length ? traseras : cams;
-    if (lista.length < 2) { msg('Este celular muestra una sola cámara. Probá alejarlo un poco (25-30 cm).'); return; }
+    if (lista.length < 2) { msg('Este celular muestra una sola cÃ¡mara. ProbÃ¡ alejarlo un poco (25-30 cm).'); return; }
     let actual = cfg.camId;
     try { actual = actual || s.getRunningTrackSettings().deviceId; } catch (e) {}
     const i = lista.findIndex(c => c.id === actual);
@@ -1499,15 +1547,15 @@ async function cambiarCamara() {
     try { await s.stop(); } catch (e) {}
     if (scanner !== s) return;
     await startCam(s);
-    msg(`Cámara ${lista.indexOf(sig) + 1} de ${lista.length}. Si sigue sin enfocar, tocá "Cambiar cámara" otra vez.`);
+    msg(`CÃ¡mara ${lista.indexOf(sig) + 1} de ${lista.length}. Si sigue sin enfocar, tocÃ¡ "Cambiar cÃ¡mara" otra vez.`);
   } catch (e) {
-    msg('No se pudo cambiar la cámara (' + (e.message || e) + ').');
+    msg('No se pudo cambiar la cÃ¡mara (' + (e.message || e) + ').');
   } finally { camBusy = false; }
 }
-// Filtro contra lecturas falsas de códigos de barras.
-// Los QR y códigos con letras se aceptan al primer intento (traen corrección de errores).
-// Los numéricos (EAN/UPC) se aceptan solo si el dígito verificador da bien (13 y 12 dígitos)
-// y si el mismo número se lee 2 veces seguidas.
+// Filtro contra lecturas falsas de cÃ³digos de barras.
+// Los QR y cÃ³digos con letras se aceptan al primer intento (traen correcciÃ³n de errores).
+// Los numÃ©ricos (EAN/UPC) se aceptan solo si el dÃ­gito verificador da bien (13 y 12 dÃ­gitos)
+// y si el mismo nÃºmero se lee 2 veces seguidas.
 function digitoOk(c) {
   if (!/^\d+$/.test(c) || (c.length !== 12 && c.length !== 13)) return true;
   const d = c.split('').map(Number), chk = d.pop();
@@ -1535,11 +1583,11 @@ async function finishScan(txt) {
 
 function openVincular(code, ctx) {
   modalCtx = ctx; vincCode = code; detId = null;
-  openModal(`<h3>Código nuevo</h3>
-    <p style="margin-bottom:12px">El código <b>${esc(code)}</b> no está asociado a ningún producto.</p>
-    <button class="btn main" data-act="v-new">Crear producto con este código</button>
+  openModal(`<h3>CÃ³digo nuevo</h3>
+    <p style="margin-bottom:12px">El cÃ³digo <b>${esc(code)}</b> no estÃ¡ asociado a ningÃºn producto.</p>
+    <button class="btn main" data-act="v-new">Crear producto con este cÃ³digo</button>
     <div class="section stack"><label for="v-q">O vinculalo a un producto que ya existe</label>
-    <input id="v-q" placeholder="Buscá por nombre o SKU" autocomplete="off"><div class="list" id="v-res"></div></div>
+    <input id="v-q" placeholder="BuscÃ¡ por nombre o SKU" autocomplete="off"><div class="list" id="v-res"></div></div>
     <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cancelar</button>`);
 }
 function vSearch() {
@@ -1549,11 +1597,11 @@ function vSearch() {
 function linkCode(pid) {
   const p = state.productos[pid]; if (!p) return;
   const otro = byCode(vincCode);
-  if (otro && otro.id !== pid) { toast('Ese código ya es de: ' + otro.nombre, 'err'); return; }
+  if (otro && otro.id !== pid) { toast('Ese cÃ³digo ya es de: ' + otro.nombre, 'err'); return; }
   logProd(pid, 'prod_codigo', { accion: 'agregado', valor: vincCode });
   B.guardarProducto({ ...p, codigos: [...new Set([...(p.codigos || []), vincCode])] });
   const ctx = modalCtx;
-  closeModal().then(() => { toast('Código vinculado a ' + p.nombre); after(pid, ctx); });
+  closeModal().then(() => { toast('CÃ³digo vinculado a ' + p.nombre); after(pid, ctx); });
 }
 
 function openCrear(pref, ctx) {
@@ -1561,15 +1609,15 @@ function openCrear(pref, ctx) {
   openModal(`<h3>Crear producto</h3><div class="stack">
     <div><label for="c-n">Nombre</label><input id="c-n" value="${esc(pref.nombre || '')}" placeholder="Secador 2441 negro" autocomplete="off"></div>
     <div><label for="c-s">SKU de venta (opcional)</label><input id="c-s" placeholder="Como figura en la etiqueta de ML" autocomplete="off"></div>
-    <div><label for="c-c">Código de barras (opcional)</label><input id="c-c" value="${esc(pref.codigo || '')}" inputmode="numeric" autocomplete="off"></div>
+    <div><label for="c-c">CÃ³digo de barras (opcional)</label><input id="c-c" value="${esc(pref.codigo || '')}" inputmode="numeric" autocomplete="off"></div>
     <button class="btn main" data-act="c-ok">Crear producto</button>
     <button class="btn ghost wide" data-act="close">Cancelar</button></div>`);
 }
 function crear() {
   const n = $('#c-n').value.trim(), s = $('#c-s').value.trim(), c = $('#c-c').value.replace(/\s/g, '');
-  if (!n) { toast('Poné un nombre', 'err'); return; }
+  if (!n) { toast('PonÃ© un nombre', 'err'); return; }
   const ps = s && bySku(s); if (ps) { toast('Ese SKU ya es de: ' + ps.nombre, 'err'); return; }
-  const pc = c && byCode(c); if (pc) { toast('Ese código ya es de: ' + pc.nombre, 'err'); return; }
+  const pc = c && byCode(c); if (pc) { toast('Ese cÃ³digo ya es de: ' + pc.nombre, 'err'); return; }
   const p = { id: uid('p'), nombre: n, skus: s ? [s] : [], codigos: c ? [c] : [], creado: Date.now() };
   B.guardarProducto(p);
   const ctx = modalCtx;
@@ -1582,29 +1630,29 @@ function openDetalle(pid) {
   $('#modal').classList.add('on');
   renderDetalle();
 }
-const tagHTML = (v, act) => `<span class="tag">${esc(v)}<button data-act="${act}" data-v="${esc(v)}" aria-label="Quitar ${esc(v)}">×</button></span>`;
+const tagHTML = (v, act) => `<span class="tag">${esc(v)}<button data-act="${act}" data-v="${esc(v)}" aria-label="Quitar ${esc(v)}">Ã—</button></span>`;
 function renderDetalle() {
   const p = state.productos[detId]; if (!p) return;
   const hay = stockDe(p.id).length;
   $('#sheet').innerHTML = `<h3>${esc(p.nombre)}</h3>
     ${hay ? `<div class="ubics">${ubicsBig(p.id)}</div>
     <p style="margin-top:6px"><b>Stock total: ${total(p.id)}</b>${hay > 1 ? ` en ${hay} ubicaciones` : ''}</p>
-    ${puede() ? '<p class="muted">Tocá una ubicación para cambiar la cantidad o quitarla.</p>' : ''}` : '<p class="muted">Sin ubicación todavía.</p>'}
-    ${puede() ? '<button class="btn ghost wide" data-act="d-g" style="margin-top:10px">Guardar en otra ubicación</button>' : ''}
+    ${puede() ? '<p class="muted">TocÃ¡ una ubicaciÃ³n para cambiar la cantidad o quitarla.</p>' : ''}` : '<p class="muted">Sin ubicaciÃ³n todavÃ­a.</p>'}
+    ${puede() ? '<button class="btn ghost wide" data-act="d-g" style="margin-top:10px">Guardar en otra ubicaciÃ³n</button>' : ''}
     ${mlDetalle(p)}
     ${!puede() ? `<div class="section stack"><h4>SKU de venta</h4><div>${esc((p.skus || []).join(' / ') || 'Sin SKU')}</div></div>
     <button class="btn ghost wide" data-act="close" style="margin-top:18px">Cerrar</button>` : `
     <div class="section stack"><h4>SKU de venta</h4>
       <div>${(p.skus || []).map(s => tagHTML(s, 'd-rs')).join('') || '<span class="muted">Sin SKU.</span>'}</div>
-      <p class="muted">Si el mismo producto está en otra publicación con otro SKU, agregalo acá y comparten el stock.</p>
+      <p class="muted">Si el mismo producto estÃ¡ en otra publicaciÃ³n con otro SKU, agregalo acÃ¡ y comparten el stock.</p>
       <div class="row"><input class="grow" id="d-s" placeholder="Otro SKU" autocomplete="off"><button class="btn small" data-act="d-as">Agregar</button></div></div>
-    <div class="section stack"><h4>Códigos de barras</h4>
-      <div>${(p.codigos || []).map(c => tagHTML(c, 'd-rc')).join('') || '<span class="muted">Sin códigos.</span>'}</div>
-      <div class="row"><input class="grow" id="d-c" placeholder="Código" inputmode="numeric" autocomplete="off"><button class="btn small" data-act="d-ac">Agregar</button><button class="btn small ghost" data-act="d-sc">Escanear</button></div></div>
+    <div class="section stack"><h4>CÃ³digos de barras</h4>
+      <div>${(p.codigos || []).map(c => tagHTML(c, 'd-rc')).join('') || '<span class="muted">Sin cÃ³digos.</span>'}</div>
+      <div class="row"><input class="grow" id="d-c" placeholder="CÃ³digo" inputmode="numeric" autocomplete="off"><button class="btn small" data-act="d-ac">Agregar</button><button class="btn small ghost" data-act="d-sc">Escanear</button></div></div>
     <div class="section stack"><h4>Nombre</h4>
       <div class="row"><input class="grow" id="d-n" value="${esc(p.nombre)}" autocomplete="off"><button class="btn small" data-act="d-name">Cambiar</button></div></div>
     ${esAdmin() ? `<div class="section stack"><h4>Eliminar producto</h4>
-      <p class="muted">Se borra el producto con sus SKU y códigos${hay ? ' y sus ubicaciones (' + stockDe(p.id).map(x => esc(x.ubicacion)).join(', ') + ')' : ''}. En el historial queda registrado quién lo eliminó y dónde estaba.</p>
+      <p class="muted">Se borra el producto con sus SKU y cÃ³digos${hay ? ' y sus ubicaciones (' + stockDe(p.id).map(x => esc(x.ubicacion)).join(', ') + ')' : ''}. En el historial queda registrado quiÃ©n lo eliminÃ³ y dÃ³nde estaba.</p>
       <button class="btn wide" style="background:var(--red)" data-act="d-del">Eliminar producto</button>
     </div>` : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:18px">Cerrar</button>`}`;
@@ -1616,13 +1664,13 @@ function updP(fn) {
 function addCode(pid, raw) {
   const c = String(raw || '').replace(/\s/g, ''); if (!c) return;
   const o = byCode(c);
-  if (o) { toast(o.id === pid ? 'Ya tiene ese código' : 'Ese código ya es de: ' + o.nombre, 'err'); return; }
+  if (o) { toast(o.id === pid ? 'Ya tiene ese cÃ³digo' : 'Ese cÃ³digo ya es de: ' + o.nombre, 'err'); return; }
   const p = state.productos[pid]; if (!p) return;
   logProd(pid, 'prod_codigo', { accion: 'agregado', valor: c });
   B.guardarProducto({ ...p, codigos: [...(p.codigos || []), c] });
-  toast('Código agregado');
+  toast('CÃ³digo agregado');
 }
-// Atajo: del detalle a Guardar con producto (y ubicación) ya cargados.
+// Atajo: del detalle a Guardar con producto (y ubicaciÃ³n) ya cargados.
 function goGuardar(pid, u) {
   closeModal().then(() => {
     limpiarProducto(); g.pid = pid; g.ubic = u || ''; g.P = ''; g.L = '';
@@ -1631,7 +1679,7 @@ function goGuardar(pid, u) {
 }
 
 /* ---------- ajustes ---------- */
-// Cuando cambia la configuración del depósito: redibuja sin borrar lo que se está escribiendo.
+// Cuando cambia la configuraciÃ³n del depÃ³sito: redibuja sin borrar lo que se estÃ¡ escribiendo.
 function depCambio() {
   refresh(); pintarDep();
   const enG = $('#v-guardar')?.classList.contains('on');
@@ -1656,47 +1704,48 @@ function pintarDep() {
   if (!$('#a-dep')) return;
   const adm = esAdmin();
   $('#a-dep-edit').style.display = adm ? '' : 'none';
-  $('#a-dep-info').textContent = adm ? 'Cuántos pasillos hay y cuántos tramos tiene cada lado. Vale para todos los usuarios.' : 'Lo configura el administrador.';
-  // Sin configuración guardada la app usa valores de ejemplo: avisarlo para que no parezca un error.
+  $('#a-dep-info').textContent = adm ? 'CuÃ¡ntos pasillos hay y cuÃ¡ntos tramos tiene cada lado. Vale para todos los usuarios.' : 'Lo configura el administrador.';
+  // Sin configuraciÃ³n guardada la app usa valores de ejemplo: avisarlo para que no parezca un error.
   $('#a-dep-aviso').textContent = state.dep ? '' : adm
-    ? `Todavía no configuraste tu depósito. Estos números son de ejemplo (${maxPasillos()} pasillos de ${maxTramos()} tramos): cambialos por los reales y tocá Guardar.`
-    : 'El administrador todavía no configuró el depósito.';
+    ? `TodavÃ­a no configuraste tu depÃ³sito. Estos nÃºmeros son de ejemplo (${maxPasillos()} pasillos de ${maxTramos()} tramos): cambialos por los reales y tocÃ¡ Guardar.`
+    : 'El administrador todavÃ­a no configurÃ³ el depÃ³sito.';
   const ro = [];
-  for (let p = 1; p <= maxPasillos(); p++) ro.push(`P${p}: A ${tramosDe(`P${p}-A`)} · B ${tramosDe(`P${p}-B`)}`);
+  for (let p = 1; p <= maxPasillos(); p++) ro.push(`P${p}: A ${tramosDe(`P${p}-A`)} Â· B ${tramosDe(`P${p}-B`)}`);
   $('#a-dep-ro').innerHTML = adm ? '' : ro.map(esc).join('<br>');
   const editando = document.activeElement && (document.activeElement.id === 'a-pasillos' || document.activeElement.closest?.('#a-deptab'));
   if (adm && !editando) { $('#a-pasillos').value = maxPasillos(); pintarTabla(maxPasillos(), {}); }
 }
 const ROL_TXT = { admin: 'Administrador', empleado: 'Empleado', consulta: 'Solo consulta' };
-// Ajustes en tarjetas: cada una se muestra según el rol (administrador / empleado / consulta).
+// Ajustes en tarjetas: cada una se muestra segÃºn el rol (administrador / empleado / consulta).
 function paintCuenta() {
   const c = $('#a-cuenta'); if (!c) return;
   const ver = (id, si) => { const e = $(id); if (e) e.style.display = si ? '' : 'none'; };
-  c.style.display = state.me ? '' : 'none';
-  ver('#a-ml', puede()); ver('#a-ml-imp', esAdmin()); ver('#a-ml-con', esAdmin());
-  ver('#a-umbral', esAdmin()); ver('#a-mant', esAdmin()); ver('#a-resp', esAdmin());
-  if (state.me) c.innerHTML = `<h2>Tu cuenta</h2>
+  // Opciones de Ajustes segÃºn el rol (se esconden en el menÃº de la pantalla y en el del costado).
+  const roles = { ml: puede(), poco: esAdmin(), dups: esAdmin(), resp: esAdmin(), cuenta: !!state.me };
+  Object.entries(roles).forEach(([s, si]) => { ver('#aj-op-' + s, si); ver(`#subnav [data-s="${s}"]`, si); });
+  ver('#a-ml-imp', esAdmin()); ver('#a-ml-con', esAdmin());
+  if (state.me) c.innerHTML = `<h2>Mi cuenta</h2>
     <p><b>${esc(state.me.nombre)}</b><br><span class="muted">${esc(state.me.email)}</span></p>
     <p style="margin:8px 0 12px"><span class="est ${state.me.rol === 'admin' ? 'ok' : ''}">${ROL_TXT[state.me.rol]}</span></p>
-    <button class="btn ghost wide" data-act="logout">Cerrar sesión</button>`;
+    <button class="btn ghost wide" data-act="logout">Cerrar sesiÃ³n</button>`;
   paintMLEstado();
 }
 function paintMLEstado() {
   const e = $('#a-ml-estado'); if (!e) return;
   const r = state.mlRes;
-  e.innerHTML = r && r.fecha ? `✅ Cuenta conectada · última actualización <b>${fmt(r.fecha)}</b> · ${r.total} publicaciones`
-    : state.invErr ? esc(state.invErr) : 'Todavía no se trajo nada de Mercado Libre.';
+  e.innerHTML = r && r.fecha ? `âœ… Cuenta conectada Â· Ãºltima actualizaciÃ³n <b>${fmt(r.fecha)}</b> Â· ${r.total} publicaciones`
+    : state.invErr ? esc(state.invErr) : 'TodavÃ­a no se trajo nada de Mercado Libre.';
 }
 function fillAjustes() {
   pintarDep();
-  $('#a-ver').textContent = 'Versión ' + VERSION;
+  $('#a-ver').textContent = 'VersiÃ³n ' + VERSION;
   const i = $('#a-poco'); if (i) i.value = state.umbral;
 }
 function setMode() {
   let t = 'Solo este celular';
-  if (cfg.modo === 'firebase') t = state.fbFallo ? 'Firebase falló, usando este celular' : (state.me ? state.me.nombre.split(' ')[0] + ' · ' : '') + cfg.empresa + (state.pend ? ' (sincronizando)' : '');
-  if (!navigator.onLine) t += ', sin conexión';
-  $('#mode').textContent = t;
+  if (cfg.modo === 'firebase') t = state.fbFallo ? 'Firebase fallÃ³, usando este celular' : (state.me ? state.me.nombre.split(' ')[0] + ' Â· ' : '') + cfg.empresa + (state.pend ? ' (sincronizando)' : '');
+  if (!navigator.onLine) t += ', sin conexiÃ³n';
+  $('#mode').textContent = t + (state.me ? ' â–¾' : '');
 }
 
 /* ---------- duplicados ---------- */
@@ -1705,7 +1754,7 @@ function gruposDuplicados() {
   prods().forEach(p => { const k = norm(p.nombre); if (!g.has(k)) g.set(k, []); g.get(k).push(p); });
   return [...g.values()].filter(x => x.length > 1);
 }
-// Une un grupo de productos repetidos en uno solo: suma SKU y códigos, pasa las ubicaciones y borra los sobrantes.
+// Une un grupo de productos repetidos en uno solo: suma SKU y cÃ³digos, pasa las ubicaciones y borra los sobrantes.
 function planUnion(grupo) {
   const ord = grupo.slice().sort((a, b) => stockDe(b.id).length - stockDe(a.id).length
     || (String(b.id).startsWith('n_') - String(a.id).startsWith('n_')) || (a.creado || 0) - (b.creado || 0));
@@ -1717,7 +1766,7 @@ function planUnion(grupo) {
     const s = state.stock[key]; stockDel.push(key);
     if (!visible(s)) return;
     const t = destino[s.ubicacion];
-    // Si los dos estaban en el mismo tramo, es la misma mercadería: se queda con el número mayor (no se suma).
+    // Si los dos estaban en el mismo tramo, es la misma mercaderÃ­a: se queda con el nÃºmero mayor (no se suma).
     destino[s.ubicacion] = t ? { ...t, cantidad: Math.max(t.cantidad || 0, s.cantidad || 0), sinCant: Math.max(t.cantidad || 0, s.cantidad || 0) === 0 }
       : { productoId: k.id, ubicacion: s.ubicacion, cantidad: s.cantidad || 0, sinCant: !(s.cantidad > 0), actualizado: Date.now() };
   }));
@@ -1729,10 +1778,10 @@ function openDups() {
   detId = null;
   const gr = gruposDuplicados(), sobran = gr.reduce((a, x) => a + x.length - 1, 0);
   openModal(`<h3>Productos repetidos</h3>
-    ${gr.length ? `<p style="margin-bottom:10px">Hay <b>${gr.length}</b> producto${gr.length > 1 ? 's' : ''} cargado${gr.length > 1 ? 's' : ''} más de una vez (${sobran} sobrante${sobran > 1 ? 's' : ''}).
+    ${gr.length ? `<p style="margin-bottom:10px">Hay <b>${gr.length}</b> producto${gr.length > 1 ? 's' : ''} cargado${gr.length > 1 ? 's' : ''} mÃ¡s de una vez (${sobran} sobrante${sobran > 1 ? 's' : ''}).
       Al unir, queda uno solo por nombre, con todos sus SKU y ubicaciones. Queda registrado en el historial.</p>
       <button class="btn main" data-act="dups-ok" style="margin-bottom:12px">Unir los ${gr.length} repetidos</button>
-      <div class="list">${gr.map(x => `<div class="item"><b>${esc(x[0].nombre)}</b><small>${x.length} veces · ${[...new Set(x.flatMap(p => stockDe(p.id).map(s => s.ubicacion)))].map(esc).join(', ') || 'sin ubicación'}</small></div>`).join('')}</div>`
+      <div class="list">${gr.map(x => `<div class="item"><b>${esc(x[0].nombre)}</b><small>${x.length} veces Â· ${[...new Set(x.flatMap(p => stockDe(p.id).map(s => s.ubicacion)))].map(esc).join(', ') || 'sin ubicaciÃ³n'}</small></div>`).join('')}</div>`
       : '<p class="muted">No hay productos repetidos.</p>'}
     <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
 }
@@ -1741,7 +1790,7 @@ async function unirDuplicados() {
   await B.refrescarProductos();
   const gr = gruposDuplicados(); let n = 0;
   for (const x of gr) { await B.unir(planUnion(x)); n += x.length - 1; }
-  closeModal(); toast(gr.length ? `Listo: se unieron ${gr.length} productos (${n} sobrantes eliminados)` : 'No había repetidos');
+  closeModal(); toast(gr.length ? `Listo: se unieron ${gr.length} productos (${n} sobrantes eliminados)` : 'No habÃ­a repetidos');
 }
 
 function descargar() {
@@ -1751,28 +1800,28 @@ function descargar() {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 
-/* ---------- Inventario: lo que dice Mercado Libre de cada publicación ---------- */
-// Las fichas (empresas/{e}/publicaciones) las escribe la función mlSincronizar. `clase`:
-// activa · sin_stock (ML la frenó porque llegó a 0) · pausada (la pausó el dueño) · frenada (ML, otro motivo) · cerrada
+/* ---------- Inventario: lo que dice Mercado Libre de cada publicaciÃ³n ---------- */
+// Las fichas (empresas/{e}/publicaciones) las escribe la funciÃ³n mlSincronizar. `clase`:
+// activa Â· sin_stock (ML la frenÃ³ porque llegÃ³ a 0) Â· pausada (la pausÃ³ el dueÃ±o) Â· frenada (ML, otro motivo) Â· cerrada
 let invF = 'todos';
 const CLASE_TXT = { activa: 'Activa', sin_stock: 'Sin stock', pausada: 'Pausada por vos', frenada: 'Frenada por ML', cerrada: 'Cerrada', otro: 'Otro estado' };
 const MOTIVO_TXT = {
-  out_of_stock: 'ML la pausó porque se quedó sin stock. Se reactiva sola cuando le cargás stock.',
-  warning: 'ML marcó un problema en la publicación. Revisala en Mercado Libre.',
-  waiting_for_patch: 'ML te pide que corrijas algo de la publicación.',
-  held: 'Retenida por Mercado Libre.', forbidden: 'Bloqueada por Mercado Libre (no cumple alguna política).',
-  under_review: 'En revisión por Mercado Libre.', suspended: 'Suspendida por Mercado Libre.', banned: 'Dada de baja por Mercado Libre.',
-  picture_download_pending: 'Mercado Libre está procesando las fotos.', expired: 'Venció.', deleted: 'Eliminada.',
+  out_of_stock: 'ML la pausÃ³ porque se quedÃ³ sin stock. Se reactiva sola cuando le cargÃ¡s stock.',
+  warning: 'ML marcÃ³ un problema en la publicaciÃ³n. Revisala en Mercado Libre.',
+  waiting_for_patch: 'ML te pide que corrijas algo de la publicaciÃ³n.',
+  held: 'Retenida por Mercado Libre.', forbidden: 'Bloqueada por Mercado Libre (no cumple alguna polÃ­tica).',
+  under_review: 'En revisiÃ³n por Mercado Libre.', suspended: 'Suspendida por Mercado Libre.', banned: 'Dada de baja por Mercado Libre.',
+  picture_download_pending: 'Mercado Libre estÃ¡ procesando las fotos.', expired: 'VenciÃ³.', deleted: 'Eliminada.',
 };
 function motivoPub(p) {
-  if (p.clase === 'pausada') return 'La pausaste vos. Se vuelve a vender cuando la reactivás.';
+  if (p.clase === 'pausada') return 'La pausaste vos. Se vuelve a vender cuando la reactivÃ¡s.';
   if (p.clase === 'activa') return '';
   const m = (p.subEstado || []).map(s => MOTIVO_TXT[s] || `Motivo de ML: ${s}`);
   if (!m.length && p.estado === 'under_review') m.push(MOTIVO_TXT.under_review);
-  if (!m.length && p.estado === 'inactive') m.push('Mercado Libre la dejó inactiva.');
+  if (!m.length && p.estado === 'inactive') m.push('Mercado Libre la dejÃ³ inactiva.');
   return m.join(' ');
 }
-// Una línea por variante (o una sola si no tiene), con lo contado en el depósito del producto de ese SKU.
+// Una lÃ­nea por variante (o una sola si no tiene), con lo contado en el depÃ³sito del producto de ese SKU.
 function lineasPub(p) {
   const base = (p.variaciones || []).length ? p.variaciones.map(v => ({ etq: v.atributos || 'Variante', sku: v.sku, ml: v.stock || 0 }))
     : [{ etq: '', sku: p.sku, ml: p.stock || 0 }];
@@ -1782,9 +1831,9 @@ function lineasPub(p) {
     return { ...l, pid: pr ? pr.id : null, real: ub.reduce((a, s) => a + (s.cantidad || 0), 0), ubic: ub.length };
   });
 }
-// Cuántas veces aparece cada SKU, contando aparte las publicaciones propias y las de catálogo.
-// La de catálogo comparte SKU y stock con la propia: eso NO es un repetido. Repetido de verdad = el mismo SKU en dos
-// publicaciones propias (o en dos de catálogo): dos productos distintos con el mismo SKU.
+// CuÃ¡ntas veces aparece cada SKU, contando aparte las publicaciones propias y las de catÃ¡logo.
+// La de catÃ¡logo comparte SKU y stock con la propia: eso NO es un repetido. Repetido de verdad = el mismo SKU en dos
+// publicaciones propias (o en dos de catÃ¡logo): dos productos distintos con el mismo SKU.
 let skuCache = { pubs: null, m: null };
 function skuCuenta() {
   if (skuCache.pubs === state.pubs) return skuCache.m;
@@ -1811,7 +1860,7 @@ const INV_F = {
   pausada: (p) => p.clase === 'pausada', frenada: (p) => p.clase === 'frenada' || p.clase === 'otro', cerrada: (p) => p.clase === 'cerrada',
   sinsku: (p, i) => i.sinSku, repetido: (p, i) => i.repetido, catalogo: (p) => p.catalogo, sinubic: (p, i) => i.sinUbic, dif: (p, i) => i.dif, full: (p) => p.full,
 };
-// Qué tan grave es, para ordenar la lista: lo rojo primero.
+// QuÃ© tan grave es, para ordenar la lista: lo rojo primero.
 const gravedad = (p, i) => p.clase === 'frenada' || p.clase === 'otro' ? 0 : p.clase === 'sin_stock' ? 1 : i.poco ? 2 : p.clase === 'pausada' ? 3 : p.clase === 'cerrada' ? 5 : 4;
 // Color de la etiqueta de estado (solo por el estado; "poco stock" lleva su propia etiqueta roja).
 const colorEst = p => p.clase === 'activa' ? 'ok' : p.clase === 'pausada' || p.clase === 'cerrada' ? '' : 'rojo';
@@ -1823,35 +1872,35 @@ function renderInv() {
   const fecha = $('#inv-fecha'), panel = $('#inv-panel'), fil = $('#inv-filtros');
   $('#inv-revisar').style.display = 'none';
   if (state.invErr) { fecha.textContent = ''; panel.innerHTML = ''; fil.innerHTML = ''; el.innerHTML = `<p class="empty bad">${esc(state.invErr)}</p>`; return; }
-  if (!state.pubs) { fecha.textContent = state.invCargando ? 'Cargando…' : ''; panel.innerHTML = fil.innerHTML = el.innerHTML = ''; return; }
+  if (!state.pubs) { fecha.textContent = state.invCargando ? 'Cargandoâ€¦' : ''; panel.innerHTML = fil.innerHTML = el.innerHTML = ''; return; }
   const todas = state.pubs.map(p => [p, infoPub(p)]);
   if (!todas.length) {
     fecha.textContent = ''; panel.innerHTML = fil.innerHTML = '';
-    el.innerHTML = '<p class="empty">Todavía no hay publicaciones. Tocá "Actualizar desde Mercado Libre".</p>'; return;
+    el.innerHTML = '<p class="empty">TodavÃ­a no hay publicaciones. TocÃ¡ "Actualizar desde Mercado Libre".</p>'; return;
   }
   const cuenta = f => todas.filter(([p, i]) => INV_F[f](p, i)).length;
   const r = state.mlRes;
-  fecha.innerHTML = (r ? `<b>${r.unidades}</b> unidades a la venta en <b>${r.productos ?? '—'}</b> productos · ` : '')
-    + (r && r.fecha ? `actualizado ${fmt(r.fecha)}` : '') + (state.invCargando ? ' · cargando…' : '');
+  fecha.innerHTML = (r ? `<b>${r.unidades}</b> unidades a la venta en <b>${r.productos ?? 'â€”'}</b> productos Â· ` : '')
+    + (r && r.fecha ? `actualizado ${fmt(r.fecha)}` : '') + (state.invCargando ? ' Â· cargandoâ€¦' : '');
   const pk = (f, txt, cls) => { const n = cuenta(f);
     return `<button class="pk ${n ? cls : 'ok'} ${invF === f ? 'on' : ''} ${f === 'todos' ? 'tot' : ''}" data-act="inv-f" data-f="${f}"><small>${txt}</small><b>${n}</b></button>`; };
   panel.innerHTML = pk('todos', 'Publicaciones', 'gris') + pk('activa', 'Activas', 'ok') + pk('poco', `Poco stock (${state.umbral} o menos)`, 'rojo')
     + pk('sin_stock', 'Sin stock', 'rojo') + pk('pausada', 'Pausadas por vos', 'gris') + pk('frenada', 'Frenadas por ML', 'rojo');
-  // "Para revisar": lo que hay que arreglar en las publicaciones. Siempre visible (en verde si está todo bien).
+  // "Para revisar": lo que hay que arreglar en las publicaciones. Siempre visible (en verde si estÃ¡ todo bien).
   const prodSin = prods().filter(p => !(p.skus || []).length).length;
   const rev = (f, n, txt, ayuda, info) => `<button class="rev ${info ? 'info' : n ? 'mal' : ''} ${invF === f ? 'on' : ''}" data-act="${f === 'prodsin' ? 'prod-sinsku' : 'inv-f'}" data-f="${f}">
-    <b>${info ? n : n || '✓'}</b><span><span style="font-weight:600">${txt}</span><small>${ayuda}</small></span></button>`;
+    <b>${info ? n : n || 'âœ“'}</b><span><span style="font-weight:600">${txt}</span><small>${ayuda}</small></span></button>`;
   const rv = $('#inv-revisar'); rv.style.display = '';
   rv.innerHTML = `<h2>Para revisar</h2><div class="revs">
-    ${rev('sinsku', cuenta('sinsku'), 'Publicaciones sin SKU', 'Ponéselo en Mercado Libre (en cada variante) y tocá Actualizar.')}
+    ${rev('sinsku', cuenta('sinsku'), 'Publicaciones sin SKU', 'PonÃ©selo en Mercado Libre (en cada variante) y tocÃ¡ Actualizar.')}
     ${rev('repetido', cuenta('repetido'), 'SKU repetido', 'Dos publicaciones tuyas con el mismo SKU: si son productos distintos, poneles SKU distinto en Mercado Libre.')}
-    ${rev('prodsin', prodSin, 'Productos de la app sin SKU', 'Se completan solos al tocar Actualizar, si la publicación ya tiene SKU.')}
-    ${rev('catalogo', cuenta('catalogo'), 'Publicaciones de catálogo', 'Compiten en la ficha de catálogo de Mercado Libre. Es normal: solo para que sepas cuáles son.', true)}
+    ${rev('prodsin', prodSin, 'Productos de la app sin SKU', 'Se completan solos al tocar Actualizar, si la publicaciÃ³n ya tiene SKU.')}
+    ${rev('catalogo', cuenta('catalogo'), 'Publicaciones de catÃ¡logo', 'Compiten en la ficha de catÃ¡logo de Mercado Libre. Es normal: solo para que sepas cuÃ¡les son.', true)}
   </div>`;
-  const extra = [['sinubic', 'Sin ubicación'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
+  const extra = [['sinubic', 'Sin ubicaciÃ³n'], ['dif', 'Con diferencia'], ['cerrada', 'Cerradas'], ['full', 'En Full']]
     .map(([f, t]) => [f, t, cuenta(f)]).filter(x => x[2] || invF === x[0]);
   fil.innerHTML = extra.map(([f, t, n]) => `<button class="${invF === f ? 'on' : ''}" data-act="inv-f" data-f="${f}">${t}<span>${n}</span></button>`).join('')
-    + (invF !== 'todos' ? '<button data-act="inv-f" data-f="todos">✕ Ver todas</button>' : '');
+    + (invF !== 'todos' ? '<button data-act="inv-f" data-f="todos">âœ• Ver todas</button>' : '');
 
   const toks = norm($('#inv-q').value).split(' ').filter(Boolean);
   const lista = todas.filter(([p, i]) => INV_F[invF](p, i))
@@ -1867,21 +1916,21 @@ function renderInv() {
       ${p.foto ? `<img src="${esc(p.foto)}" alt="" loading="lazy">` : '<span class="sinfoto"></span>'}
       <span><span class="t">${esc(p.titulo)}</span>
         <small>${varios ? `${i.ls.length} variantes` : esc(p.sku || 'Sin SKU')}</small>
-        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est rojo">Sin SKU</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">Catálogo</span>' : ''}${i.repetido ? '<span class="est rojo">SKU repetido</span>' : ''}
+        <span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}${i.sinSku ? '<span class="est rojo">Sin SKU</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">CatÃ¡logo</span>' : ''}${i.repetido ? '<span class="est rojo">SKU repetido</span>' : ''}
         ${p.clase !== 'activa' && motivoPub(p) ? `<small>${esc(motivoPub(p))}</small>` : ''}</span>
       <span class="st"><small>en ML</small><b class="${i.poco || p.clase === 'sin_stock' ? 'bad' : ''}">${stock}</b>
         ${!varios ? `<small>${conts.length ? `contado ${conts[0].real}` : 'sin contar'}</small>` : ''}</span>
-      ${varios ? `<span class="vars">${i.ls.map(l => `<span>${esc(l.etq)}${l.sku ? '' : ' <span class="muted">(sin SKU)</span>'}</span><span class="${p.clase === 'activa' && l.ml <= state.umbral ? 'bad' : ''}">${l.ml}${l.ubic ? ` · contado ${l.real}` : ''}</span>`).join('')}</span>` : ''}
+      ${varios ? `<span class="vars">${i.ls.map(l => `<span>${esc(l.etq)}${l.sku ? '' : ' <span class="muted">(sin SKU)</span>'}</span><span class="${p.clase === 'activa' && l.ml <= state.umbral ? 'bad' : ''}">${l.ml}${l.ubic ? ` Â· contado ${l.real}` : ''}</span>`).join('')}</span>` : ''}
     </button>`;
   }).join('');
 }
-// Explicación de catálogo en la ficha. ML une la publicación propia y la de catálogo con `item_relations` (ida y vuelta).
+// ExplicaciÃ³n de catÃ¡logo en la ficha. ML une la publicaciÃ³n propia y la de catÃ¡logo con `item_relations` (ida y vuelta).
 function catalogoTxt(p) {
   const her = (p.relacionadas || []).map(pubDeItem).filter(Boolean);
   const nom = her.map(h => `"${esc(h.titulo)}"`).join(', ');
-  if (p.catalogo) return `<p class="muted" style="margin-top:8px"><b>Publicación de catálogo</b>: compite en la ficha del producto de Mercado Libre. `
-    + (her.length ? `Comparte SKU y stock con tu publicación ${nom}: el stock se cuenta una sola vez.` : 'Está directamente en el catálogo, sin publicación hermana.') + '</p>';
-  if (her.length) return `<p class="muted" style="margin-top:8px">Tiene una <b>publicación hermana de catálogo</b>: ${nom}. Comparten SKU y stock; el stock se cuenta una sola vez.</p>`;
+  if (p.catalogo) return `<p class="muted" style="margin-top:8px"><b>PublicaciÃ³n de catÃ¡logo</b>: compite en la ficha del producto de Mercado Libre. `
+    + (her.length ? `Comparte SKU y stock con tu publicaciÃ³n ${nom}: el stock se cuenta una sola vez.` : 'EstÃ¡ directamente en el catÃ¡logo, sin publicaciÃ³n hermana.') + '</p>';
+  if (her.length) return `<p class="muted" style="margin-top:8px">Tiene una <b>publicaciÃ³n hermana de catÃ¡logo</b>: ${nom}. Comparten SKU y stock; el stock se cuenta una sola vez.</p>`;
   return '';
 }
 function openPub(id) {
@@ -1889,76 +1938,76 @@ function openPub(id) {
   detId = null;
   const i = infoPub(p), mot = motivoPub(p);
   openModal(`<h3>${esc(p.titulo)}</h3>
-    <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">Catálogo</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
+    <p><span class="est ${colorEst(p)}">${CLASE_TXT[p.clase] || p.clase}</span>${i.poco ? '<span class="est rojo">Poco stock</span>' : ''}${p.catalogo ? '<span class="est" style="border-color:var(--steel);color:var(--steel)">CatÃ¡logo</span>' : ''}${p.full ? '<span class="est">Full</span>' : ''}</p>
     ${mot ? `<p style="margin-top:8px">${esc(mot)}</p>` : ''}
     ${catalogoTxt(p)}
-    ${i.repetido ? `<p class="bad" style="margin-top:8px">Este SKU también está en otra publicación tuya (que no es de catálogo). Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
+    ${i.repetido ? `<p class="bad" style="margin-top:8px">Este SKU tambiÃ©n estÃ¡ en otra publicaciÃ³n tuya (que no es de catÃ¡logo). Si son productos distintos, poneles un SKU distinto en Mercado Libre.</p>` : ''}
     <div class="list">${i.ls.map(l => `<div class="item"><b>${esc(l.etq || 'Stock')}</b>
-      <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponéselo en Mercado Libre y en la app, igual en los dos)'}</small>
-      <small>En Mercado Libre: <b style="display:inline">${l.ml}</b>${l.ubic ? ` · contado en el depósito: <b style="display:inline">${l.real}</b>${l.real !== l.ml ? ` <span class="bad">(diferencia ${l.real - l.ml > 0 ? '+' : ''}${l.real - l.ml})</span>` : ' (coincide)'}` : ' · sin ubicación en el depósito'}</small>
+      <small>SKU: ${l.sku ? esc(l.sku) : '<span class="bad">sin SKU</span> (ponÃ©selo en Mercado Libre y en la app, igual en los dos)'}</small>
+      <small>En Mercado Libre: <b style="display:inline">${l.ml}</b>${l.ubic ? ` Â· contado en el depÃ³sito: <b style="display:inline">${l.real}</b>${l.real !== l.ml ? ` <span class="bad">(diferencia ${l.real - l.ml > 0 ? '+' : ''}${l.real - l.ml})</span>` : ' (coincide)'}` : ' Â· sin ubicaciÃ³n en el depÃ³sito'}</small>
       ${l.pid ? `<div>${chips(l.pid)}</div><button class="btn ghost small" data-act="d-open" data-id="${esc(l.pid)}" style="margin-top:6px">Ver ficha del producto</button>` : ''}
     </div>`).join('')}</div>
-    <small style="margin-top:10px">Publicación ${esc(p.id)}${p.precio != null ? ` · $ ${Number(p.precio).toLocaleString('es-AR')}` : ''}${p.actualizada ? ` · datos de ML del ${fmt(p.actualizada)}` : ''}</small>
-    ${p.link ? `<a class="btn ghost wide" href="${esc(p.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;font-weight:600;margin-top:12px;text-decoration:none">Abrir en Mercado Libre ↗</a>` : ''}
+    <small style="margin-top:10px">PublicaciÃ³n ${esc(p.id)}${p.precio != null ? ` Â· $ ${Number(p.precio).toLocaleString('es-AR')}` : ''}${p.actualizada ? ` Â· datos de ML del ${fmt(p.actualizada)}` : ''}</small>
+    ${p.link ? `<a class="btn ghost wide" href="${esc(p.link)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:8px;font-weight:600;margin-top:12px;text-decoration:none">Abrir en Mercado Libre â†—</a>` : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:10px">Cerrar</button>`);
 }
 async function invTraer() {
   const b = $('#inv-traer'); if (!b || b.disabled) return;
-  b.disabled = true; b.textContent = 'Actualizando… (puede tardar un minuto)';
+  b.disabled = true; b.textContent = 'Actualizandoâ€¦ (puede tardar un minuto)';
   try {
     const r = await mlLlamar('mlSincronizar');
     await Promise.all([B.cargarPubs(), B.refrescarProductos()]);
     toast(`Listo: ${r.publicaciones} publicaciones actualizadas` + (r.completados ? `. A ${r.completados} productos se les puso el SKU de Mercado Libre` : ''));
   } catch (e) { toast('No se pudo actualizar: ' + (e.message || e), 'err'); }
-  b.disabled = false; b.textContent = '🔄 Actualizar desde Mercado Libre';
+  b.disabled = false; b.textContent = 'ðŸ”„ Actualizar desde Mercado Libre';
 }
 
 /* ---------- Actividad de Mercado Libre (avisos grabados por mlAvisos) ---------- */
-// Cada aviso trae `detalle` = lo que decía ML de ese recurso en ese momento (texto JSON). Acá se traduce a una frase.
-const ENVIO_TXT = { pending: 'pendiente', handling: 'preparándose', ready_to_ship: 'listo para despachar', shipped: 'en camino',
+// Cada aviso trae `detalle` = lo que decÃ­a ML de ese recurso en ese momento (texto JSON). AcÃ¡ se traduce a una frase.
+const ENVIO_TXT = { pending: 'pendiente', handling: 'preparÃ¡ndose', ready_to_ship: 'listo para despachar', shipped: 'en camino',
   delivered: 'entregado', not_delivered: 'no entregado', cancelled: 'cancelado', to_be_agreed: 'a acordar' };
 const DEV_TXT = { pending: 'esperando que la compradora la despache', label_generated: 'con etiqueta, falta despacharla', shipped: 'en camino de vuelta',
-  delivered: 'te llegó la devolución', cancelled: 'devolución cancelada', closed: 'devolución cerrada', expired: 'devolución vencida', failed: 'devolución fallida' };
+  delivered: 'te llegÃ³ la devoluciÃ³n', cancelled: 'devoluciÃ³n cancelada', closed: 'devoluciÃ³n cerrada', expired: 'devoluciÃ³n vencida', failed: 'devoluciÃ³n fallida' };
 const jsonSeguro = t => { try { return t ? JSON.parse(t) : null; } catch (e) { return null; } };
 const pubDeItem = id => (state.pubs || []).find(p => p.id === id);
 function fraseAviso(a) {
   const d = jsonSeguro(a.detalle), t = a.topic;
-  const base = { ico: '•', color: '', foto: null, txt: `Aviso de ML (${t})`, sub: a.resource };
-  if (!d) return { ...base, sub: a.detalleError ? 'No se pudo consultar: ' + a.detalleError : 'Consultando a Mercado Libre…' };
+  const base = { ico: 'â€¢', color: '', foto: null, txt: `Aviso de ML (${t})`, sub: a.resource };
+  if (!d) return { ...base, sub: a.detalleError ? 'No se pudo consultar: ' + a.detalleError : 'Consultando a Mercado Libreâ€¦' };
   if (t === 'items' || t === 'stock-locations') {
     const cl = d.status === 'active' ? 'activa' : d.status === 'paused' ? ((d.sub_status || []).includes('out_of_stock') ? 'sin_stock'
       : (d.sub_status || []).some(s => s !== 'paused_by_seller') ? 'frenada' : 'pausada') : d.status === 'closed' ? 'cerrada' : 'frenada';
-    return { ico: '🏷️', foto: (d.thumbnail || '').replace('http://', 'https://') || pubDeItem(d.id)?.foto,
+    return { ico: 'ðŸ·ï¸', foto: (d.thumbnail || '').replace('http://', 'https://') || pubDeItem(d.id)?.foto,
       color: cl === 'activa' ? 'ok' : cl === 'pausada' ? '' : 'rojo',
-      txt: `${d.title || d.id}`, sub: `Publicación: ${(CLASE_TXT[cl] || cl).toLowerCase()} · stock en ML ${d.available_quantity ?? '—'}` };
+      txt: `${d.title || d.id}`, sub: `PublicaciÃ³n: ${(CLASE_TXT[cl] || cl).toLowerCase()} Â· stock en ML ${d.available_quantity ?? 'â€”'}` };
   }
   if (t === 'orders_v2') {
-    const its = (d.order_items || []).map(o => `${o.quantity}× ${o.item.title}`).join(', ');
+    const its = (d.order_items || []).map(o => `${o.quantity}Ã— ${o.item.title}`).join(', ');
     const p = pubDeItem(d.order_items?.[0]?.item?.id);
     const tags = d.tags || [];
     const est = d.status === 'cancelled' ? 'Venta cancelada' : d.status === 'paid' ? 'Venta pagada' : `Venta (${d.status})`;
-    const extra = [tags.includes('delivered') && 'entregada', (d.mediations || []).length && 'con reclamo', d.total_amount != null && `$ ${Number(d.total_amount).toLocaleString('es-AR')}`].filter(Boolean).join(' · ');
-    return { ico: '🛒', foto: p?.foto, color: d.status === 'cancelled' || (d.mediations || []).length ? 'rojo' : 'ok', txt: `${est}: ${its}`, sub: `Orden ${d.id}${extra ? ' · ' + extra : ''}` };
+    const extra = [tags.includes('delivered') && 'entregada', (d.mediations || []).length && 'con reclamo', d.total_amount != null && `$ ${Number(d.total_amount).toLocaleString('es-AR')}`].filter(Boolean).join(' Â· ');
+    return { ico: 'ðŸ›’', foto: p?.foto, color: d.status === 'cancelled' || (d.mediations || []).length ? 'rojo' : 'ok', txt: `${est}: ${its}`, sub: `Orden ${d.id}${extra ? ' Â· ' + extra : ''}` };
   }
-  if (t === 'shipments') return { ico: '🚚', color: 'azul', txt: `Envío ${ENVIO_TXT[d.status] || d.status}${d.substatus ? ' (' + d.substatus + ')' : ''}`, sub: `Envío ${d.id}${d.order_id ? ' · orden ' + d.order_id : ''}` };
-  if (t === 'flex-handshakes') return { ico: '🤝', color: 'azul', txt: 'Flex: el paquete pasó al chofer', sub: a.resource };
+  if (t === 'shipments') return { ico: 'ðŸšš', color: 'azul', txt: `EnvÃ­o ${ENVIO_TXT[d.status] || d.status}${d.substatus ? ' (' + d.substatus + ')' : ''}`, sub: `EnvÃ­o ${d.id}${d.order_id ? ' Â· orden ' + d.order_id : ''}` };
+  if (t === 'flex-handshakes') return { ico: 'ðŸ¤', color: 'azul', txt: 'Flex: el paquete pasÃ³ al chofer', sub: a.resource };
   if (t === 'post_purchase' || t === 'claims') {
     const dev = jsonSeguro(a.devolucion), dv = Array.isArray(dev) ? dev[0] : dev;
     const ml = (d.players || []).some(p => p.role === 'mediator');
-    const que = d.type === 'mediations' ? 'Reclamo' : d.type === 'returns' ? 'Devolución' : `Reclamo (${d.type})`;
+    const que = d.type === 'mediations' ? 'Reclamo' : d.type === 'returns' ? 'DevoluciÃ³n' : `Reclamo (${d.type})`;
     const estado = d.status === 'opened' ? 'abierto' : d.status === 'closed' ? 'cerrado' : d.status;
-    return { ico: '⚠️', color: d.status === 'closed' ? '' : 'rojo',
-      txt: `${que} ${estado}${ml ? ' · interviene Mercado Libre' : ''}`,
-      sub: `Orden ${d.resource_id || '—'}${dv && dv.status ? ' · ' + (DEV_TXT[dv.status] || 'devolución: ' + dv.status) : ''}${d.resolution ? ' · resuelto: ' + (d.resolution.reason || '') : ''}` };
+    return { ico: 'âš ï¸', color: d.status === 'closed' ? '' : 'rojo',
+      txt: `${que} ${estado}${ml ? ' Â· interviene Mercado Libre' : ''}`,
+      sub: `Orden ${d.resource_id || 'â€”'}${dv && dv.status ? ' Â· ' + (DEV_TXT[dv.status] || 'devoluciÃ³n: ' + dv.status) : ''}${d.resolution ? ' Â· resuelto: ' + (d.resolution.reason || '') : ''}` };
   }
-  if (t === 'questions') return { ico: '❓', color: 'azul', txt: `Pregunta: ${(d.text || '').slice(0, 120)}`, sub: d.status === 'ANSWERED' ? 'respondida' : 'sin responder' };
+  if (t === 'questions') return { ico: 'â“', color: 'azul', txt: `Pregunta: ${(d.text || '').slice(0, 120)}`, sub: d.status === 'ANSWERED' ? 'respondida' : 'sin responder' };
   return base;
 }
 function renderAct() {
   const el = $('#act-list'); if (!el) return;
   if (state.actErr) { el.innerHTML = `<p class="empty bad">${esc(state.actErr)}</p>`; return; }
-  if (!state.avisos) { el.innerHTML = `<p class="empty">${state.actCargando ? 'Cargando…' : ''}</p>`; return; }
-  if (!state.avisos.length) { el.innerHTML = '<p class="empty">Todavía no llegó ningún aviso de Mercado Libre.</p>'; return; }
+  if (!state.avisos) { el.innerHTML = `<p class="empty">${state.actCargando ? 'Cargandoâ€¦' : ''}</p>`; return; }
+  if (!state.avisos.length) { el.innerHTML = '<p class="empty">TodavÃ­a no llegÃ³ ningÃºn aviso de Mercado Libre.</p>'; return; }
   // ML manda varios avisos iguales del mismo recurso: se muestra solo cuando cambia lo que dice.
   const crono = [...state.avisos].sort((a, b) => a.recibido - b.recibido), ultimo = {}, vis = [];
   crono.forEach(a => { const f = fraseAviso(a), k = f.txt + '|' + f.sub;
@@ -1972,45 +2021,58 @@ function renderAct() {
       ${f.foto ? `<img src="${esc(f.foto)}" alt="" loading="lazy">` : `<span class="ico">${f.ico}</span>`}
       <span><b>${esc(f.txt)}</b><small>${esc(f.sub)}</small></span>
       <span class="h">${dd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</span></button>`;
-  }).join('') + (state.actCargando ? '<p class="muted">Actualizando…</p>' : '');
+  }).join('') + (state.actCargando ? '<p class="muted">Actualizandoâ€¦</p>' : '');
 }
 function openAviso(id) {
   const a = (state.avisos || []).find(x => x.id === id); if (!a) return;
   detId = null;
   const f = fraseAviso(a), d = jsonSeguro(a.detalle), dev = jsonSeguro(a.devolucion);
   openModal(`<h3>${esc(f.txt)}</h3><p class="muted">${esc(f.sub)}</p>
-    <small style="margin-top:8px">Recibido ${new Date(a.recibido).toLocaleString('es-AR')} · tema ${esc(a.topic)} · ${esc(a.resource)}${a.intentos > 1 ? ` · ML lo mandó ${a.intentos} veces` : ''}</small>
+    <small style="margin-top:8px">Recibido ${new Date(a.recibido).toLocaleString('es-AR')} Â· tema ${esc(a.topic)} Â· ${esc(a.resource)}${a.intentos > 1 ? ` Â· ML lo mandÃ³ ${a.intentos} veces` : ''}</small>
     ${esAdmin() ? `<details style="margin-top:12px"><summary>Dato crudo de Mercado Libre (para revisar)</summary>
-      <pre class="crudo">${esc(JSON.stringify(d, null, 1) || a.detalleError || '—')}</pre>
-      ${dev || a.devolucionError ? `<p style="margin-top:8px"><b>Devolución</b></p><pre class="crudo">${esc(dev ? JSON.stringify(dev, null, 1) : a.devolucionError)}</pre>` : ''}</details>` : ''}
+      <pre class="crudo">${esc(JSON.stringify(d, null, 1) || a.detalleError || 'â€”')}</pre>
+      ${dev || a.devolucionError ? `<p style="margin-top:8px"><b>DevoluciÃ³n</b></p><pre class="crudo">${esc(dev ? JSON.stringify(dev, null, 1) : a.devolucionError)}</pre>` : ''}</details>` : ''}
     <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
 }
 
-/* ---------- navegación y eventos ---------- */
+/* ---------- navegaciÃ³n y eventos ---------- */
 function tab(v) {
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   if (v === 'inicio') renderInicio();
   if (v === 'inv') renderInv();
   if (v === 'ml') { renderAct(); B.cargarAvisos(); }
-  if (v === 'ajustes') { const i = $('#a-poco'); if (i) i.value = state.umbral; }
+  $('#subnav').classList.toggle('on', v === 'ajustes');
+  if (v === 'ajustes') { const i = $('#a-poco'); if (i) i.value = state.umbral; ajIr(ajSec); }
+  window.scrollTo(0, 0);
+}
+// Ajustes: '' = la lista de opciones; si no, la pantalla de esa opciÃ³n sola.
+let ajSec = '';
+function ajIr(s) {
+  ajSec = s || '';
+  $('#aj-menu').style.display = ajSec ? 'none' : '';
+  document.querySelectorAll('.aj-sec').forEach(x => x.classList.toggle('on', x.dataset.s === ajSec));
+  document.querySelectorAll('#subnav button').forEach(b => b.classList.toggle('on', b.dataset.s === ajSec));
+  if (ajSec === 'dep') pintarDep();
   window.scrollTo(0, 0);
 }
 
 function refresh() {
   if ($('#g-res')) gSearch();
-  const pn = $('#g-p-name'); if (pn && g.pid) pn.textContent = state.productos[g.pid]?.nombre || '…';
+  const pn = $('#g-p-name'); if (pn && g.pid) pn.textContent = state.productos[g.pid]?.nombre || 'â€¦';
   bSearch(); renderMovs(); renderInicio(); renderInv(); setMode(); paintCuenta();
   const it = $('#inv-traer'); if (it) it.style.display = puede() ? '' : 'none';
-  const au = $('#a-umbral'); if (au) au.style.display = esAdmin() ? '' : 'none';
   showGuardar();
   if (detId && !scanner && $('#modal').classList.contains('on')) renderDetalle();
 }
 
 function cantInput() { return $('#g-cant'); }
 const A = {
-  'tab': b => { const v = b.dataset.v; if ($('#modal').classList.contains('on')) closeModal().then(() => tab(v)); else tab(v); },
+  'tab': b => { const v = b.dataset.v; if (v === 'ajustes') ajSec = ''; if ($('#modal').classList.contains('on')) closeModal().then(() => tab(v)); else tab(v); },
   'go-guardar': () => { if (!puede()) return; tab('guardar'); renderG(); },
+  'aj': b => ajIr(b.dataset.s),
+  'aj-nav': b => { ajSec = b.dataset.s; tab('ajustes'); },
+  'cuenta': () => { ajSec = 'cuenta'; if ($('#modal').classList.contains('on')) closeModal().then(() => tab('ajustes')); else tab('ajustes'); },
   'b-clear': () => { $('#b-q').value = ''; bF = 'todos'; bSearch(); $('#b-q').focus(); },
   'sin-ubic': () => openSinUbic(),
   'inv-f': b => { invF = invF === b.dataset.f && b.dataset.f !== 'todos' ? 'todos' : b.dataset.f; renderInv(); },
@@ -2019,7 +2081,7 @@ const A = {
     detId = null;
     const l = prods().filter(p => !(p.skus || []).length).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
     openModal(`<h3>Productos de la app sin SKU (${l.length})</h3>
-      <p class="muted">Sin SKU, la app no puede unir el producto con su publicación de Mercado Libre (ni su stock). Si la publicación ya tiene SKU en Mercado Libre, se completa solo al tocar "Actualizar desde Mercado Libre". Si no, ponéselo en Mercado Libre primero.</p>
+      <p class="muted">Sin SKU, la app no puede unir el producto con su publicaciÃ³n de Mercado Libre (ni su stock). Si la publicaciÃ³n ya tiene SKU en Mercado Libre, se completa solo al tocar "Actualizar desde Mercado Libre". Si no, ponÃ©selo en Mercado Libre primero.</p>
       <div class="list">${l.length ? l.slice(0, 300).map(p => itemHTML(p, 'd-open')).join('') : '<p class="empty">Todos los productos tienen SKU.</p>'}</div>
       <button class="btn ghost wide" data-act="close" style="margin-top:12px">Cerrar</button>`);
   },
@@ -2029,7 +2091,7 @@ const A = {
   'poco-save': () => {
     if (!esAdmin()) return;
     const n = parseInt($('#a-poco').value, 10);
-    if (!(n >= 0 && n <= 999)) { toast('Poné un número entre 0 y 999', 'err'); return; }
+    if (!(n >= 0 && n <= 999)) { toast('PonÃ© un nÃºmero entre 0 y 999', 'err'); return; }
     B.guardarUmbral(n); toast(`Listo: poco stock = ${n} o menos`);
   },
   'ml-ver': () => openML(),
@@ -2046,7 +2108,7 @@ const A = {
       ml[i.dataset.mlsku] = parseInt(v, 10);
       txt.push((i.dataset.mlsku === ML_SIN ? '' : i.dataset.mlsku + ' ') + v);
     });
-    if (mal) { toast('El stock de Mercado Libre tiene que ser un número entero (0 o más)', 'err'); return; }
+    if (mal) { toast('El stock de Mercado Libre tiene que ser un nÃºmero entero (0 o mÃ¡s)', 'err'); return; }
     if (JSON.stringify(ml) === JSON.stringify(p.ml || {})) { toast('Sin cambios'); return; }
     logProd(detId, 'prod_ml', { valor: txt.join(', ') || 'borrado' });
     updP(x => { x.ml = ml; x.mlFecha = Date.now(); x.mlPor = usuarioActual(); return x; });
@@ -2064,11 +2126,11 @@ const A = {
   'tramos-save': () => {
     if (!esAdmin()) return;
     const p = parseInt($('#a-pasillos').value, 10);
-    if (!(p >= 1 && p <= 30)) { toast('Pasillos: poné un número entre 1 y 30', 'err'); return; }
+    if (!(p >= 1 && p <= 30)) { toast('Pasillos: ponÃ© un nÃºmero entre 1 y 30', 'err'); return; }
     const vals = leerTabla(), tramos = {};
     for (let i = 1; i <= p; i++) for (const l of ['A', 'B']) {
       const k = `P${i}-${l}`, n = parseInt(vals[k], 10);
-      if (!(n >= 1 && n <= 60)) { toast(`Pasillo ${i} lado ${l}: poné un número entre 1 y 60`, 'err'); return; }
+      if (!(n >= 1 && n <= 60)) { toast(`Pasillo ${i} lado ${l}: ponÃ© un nÃºmero entre 1 y 60`, 'err'); return; }
       tramos[k] = n;
     }
     B.guardarDep({ pasillos: p, tramos, actualizado: Date.now(), por: usuarioActual() });
@@ -2083,7 +2145,7 @@ const A = {
   'q-m': () => { const el = cantInput(), v = parseInt(el.value, 10); g.cant = String(Math.max(0, (isNaN(v) ? 0 : v) - 1)); el.value = g.cant; },
   'q-p': () => { const el = cantInput(), v = parseInt(el.value, 10); g.cant = String((isNaN(v) ? 0 : v) + 1); el.value = g.cant; },
   'save': doSave,
-  'b-scan': () => scan('Escaneá un producto o el QR de un pasillo', c => {
+  'b-scan': () => scan('EscaneÃ¡ un producto o el QR de un pasillo', c => {
     const u = parseUbic(c);
     if (u) { tab('inicio'); $('#b-q').value = u; bFiltroDesde(u); bSearch(); } else onCode(c, 'buscar');
   }),
@@ -2099,7 +2161,7 @@ const A = {
   'sc-cam': () => cambiarCamara(),
   'sc-ok': () => {
     const v = $('#sc-in')?.value || '';
-    if (scanUbic && !parseUbic(v)) { toast('No entiendo esa ubicación', 'err'); return; }
+    if (scanUbic && !parseUbic(v)) { toast('No entiendo esa ubicaciÃ³n', 'err'); return; }
     finishScan(v);
   },
   'd-as': () => {
@@ -2112,12 +2174,12 @@ const A = {
   'd-rs': b => { logProd(detId, 'prod_sku', { accion: 'quitado', valor: b.dataset.v }); updP(p => { p.skus = p.skus.filter(x => x !== b.dataset.v); return p; }); },
   'd-ac': () => addCode(detId, $('#d-c').value),
   'd-rc': b => { logProd(detId, 'prod_codigo', { accion: 'quitado', valor: b.dataset.v }); updP(p => { p.codigos = p.codigos.filter(x => x !== b.dataset.v); return p; }); },
-  'd-sc': () => { const id = detId; scan('Escaneá el código de barras', c => { openDetalle(id); addCode(id, c); }); },
+  'd-sc': () => { const id = detId; scan('EscaneÃ¡ el cÃ³digo de barras', c => { openDetalle(id); addCode(id, c); }); },
   'd-del': () => {
     const p = state.productos[detId]; if (!p) return;
     if (!esAdmin()) return;
     const ubs = stockDe(p.id).map(x => `${x.ubicacion} (${x.cantidad > 0 ? x.cantidad + ' u.' : 'sin contar'})`);
-    if (!confirm(`¿Eliminar "${p.nombre}"?${ubs.length ? '\n\nTambién se borra de: ' + ubs.join(', ') : ''}\n\nNo se puede deshacer. Queda registrado en el historial.`)) return;
+    if (!confirm(`Â¿Eliminar "${p.nombre}"?${ubs.length ? '\n\nTambiÃ©n se borra de: ' + ubs.join(', ') : ''}\n\nNo se puede deshacer. Queda registrado en el historial.`)) return;
     const id = detId, nombre = p.nombre;
     closeModal().then(() => { B.borrarProducto(id); if (g.pid === id) { g.pid = ''; renderG(); } toast('Producto eliminado: ' + nombre); });
   },
@@ -2127,8 +2189,8 @@ const A = {
     updP(x => { x.nombre = v; return x; }); toast('Nombre actualizado');
   },
   'dups': () => { if (esAdmin()) openDups(); },
-  'dups-ok': () => { if (confirm('¿Unir los productos repetidos? No se puede deshacer, pero queda registrado en el historial.')) unirDuplicados(); },
-  'logout': () => { if (confirm('¿Cerrar sesión en este dispositivo?')) cerrarSesion(); },
+  'dups-ok': () => { if (confirm('Â¿Unir los productos repetidos? No se puede deshacer, pero queda registrado en el historial.')) unirDuplicados(); },
+  'logout': () => { if (confirm('Â¿Cerrar sesiÃ³n en este dispositivo?')) cerrarSesion(); },
   'x-json': descargar
 };
 
